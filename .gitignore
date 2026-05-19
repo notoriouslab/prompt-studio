@@ -1,0 +1,21 @@
+# OS / editor
+.DS_Store
+*.swp
+*~
+
+# Claude Code per-machine state
+.claude/
+
+# Personal reference (not for upstream)
+demo.md
+
+# Node (in case anyone adds tooling later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local secrets (never commit)
+.env
+.env.*
+*.secrets.json

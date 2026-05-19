@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>prompt-studio-v3</title>
+  <style>
+    :root {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+      --radius-sm: .375rem; --radius-md: .5rem; --radius-lg: .75rem; --radius-xl: 1rem;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.08); --shadow-md: 0 10px 28px rgba(0,0,0,.12);
+    }
+    :root, [data-theme="light"] {
+      --color-bg:#f7f6f2; --color-surface:#fbfbf9; --color-surface-2:#f1efe9; --color-surface-3:#ebe7de; --color-border:#d7d2c8;
+      --color-text:#25211b; --color-text-muted:#6f6a61; --color-primary:#01696f; --color-primary-2:#0c4e54; --color-chip:#e4efee;
+      --color-code:#f4f1ea; --color-success:#2c6a2c; --color-success-bg:#dce9d5; --color-warning:#8d5b16; --color-warning-bg:#f3e7cf;
+      --color-danger:#8f2c47; --color-danger-bg:#f2dbe4;
+    }
+    [data-theme="dark"] {
+      --color-bg:#171614; --color-surface:#1d1b18; --color-surface-2:#25231f; --color-surface-3:#2b2823; --color-border:#3a3732;
+      --color-text:#ece7de; --color-text-muted:#a49d92; --color-primary:#5aa6af; --color-primary-2:#3b838b; --color-chip:#1e3134;
+      --color-code:#211f1b; --color-success:#8bc67f; --color-success-bg:#243324; --color-warning:#d8a04d; --color-warning-bg:#382b1a;
+      --color-danger:#e08aa7; --color-danger-bg:#3a222b; --shadow-sm: 0 1px 2px rgba(0,0,0,.24); --shadow-md: 0 10px 28px rgba(0,0,0,.34);
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0} body{min-height:100dvh;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--color-bg);color:var(--color-text);font-size:var(--text-base);line-height:1.55}
+    button,select,textarea,input{font:inherit;color:inherit} a{color:inherit}
+    .shell{display:grid;grid-template-columns:320px 1fr 360px;min-height:100dvh}
+    .sidebar,.inspector{background:linear-gradient(180deg,var(--color-surface),var(--color-surface-2));border-right:1px solid var(--color-border);padding:var(--space-5);overflow:auto}
+    .inspector{border-right:none;border-left:1px solid var(--color-border)} .main{padding:var(--space-5);overflow:auto}
+    .brand{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-5)} .logo{display:flex;gap:var(--space-3);align-items:center}
+    .logo-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--color-primary),var(--color-primary-2));box-shadow:var(--shadow-md);position:relative}.logo-mark:before,.logo-mark:after{content:"";position:absolute;background:rgba(255,255,255,.9);border-radius:999px}.logo-mark:before{width:18px;height:18px;left:7px;top:7px}.logo-mark:after{width:10px;height:10px;right:7px;bottom:7px}
+    h1{font-size:var(--text-xl);line-height:1.1;margin:0 0 var(--space-2)} h2{font-size:var(--text-lg);margin:0 0 var(--space-3)} h3{font-size:var(--text-base);margin:0 0 var(--space-2)}
+    .muted,.hint,.status{color:var(--color-text-muted)} .hint{font-size:var(--text-xs)} .status{font-size:var(--text-sm)}
+    .panel{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:var(--space-4);box-shadow:var(--shadow-sm)} .panel+.panel{margin-top:var(--space-4)}
+    .field{margin-bottom:var(--space-4)} .field:last-child{margin-bottom:0} .label{display:block;font-size:var(--text-sm);font-weight:700;margin-bottom:var(--space-2)}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)}
+    input[type="text"], select, textarea{width:100%;border:1px solid var(--color-border);background:var(--color-surface-2);border-radius:var(--radius-md);padding:.8rem .9rem} textarea{min-height:96px;resize:vertical}
+    .tabs{display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-4)} .tab{border:1px solid var(--color-border);background:var(--color-surface);padding:.55rem .8rem;border-radius:999px;cursor:pointer;min-height:44px}.tab.active{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4)} .actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
+    .btn{border:none;border-radius:999px;padding:.8rem 1rem;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;transition:.18s ease}.btn-primary{background:var(--color-primary);color:#fff}.btn-primary:hover{background:var(--color-primary-2)}.btn-secondary{background:var(--color-surface);border:1px solid var(--color-border)}.btn-secondary:hover{background:var(--color-surface-2)}.btn-danger{background:var(--color-danger-bg);color:var(--color-danger);border:1px solid color-mix(in srgb,var(--color-danger) 28%, transparent)}
+    .chips{display:flex;flex-wrap:wrap;gap:var(--space-2)} .chip{border:1px solid var(--color-border);background:var(--color-chip);padding:.42rem .68rem;border-radius:999px;font-size:var(--text-xs)}
+    .list{display:flex;flex-direction:column;gap:var(--space-3)} .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)} .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3)}
+    .tiny{font-size:var(--text-xs)} .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .status-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .6rem;border-radius:999px;font-size:var(--text-xs);border:1px solid var(--color-border)} .stable{background:var(--color-success-bg);color:var(--color-success)} .experimental{background:var(--color-warning-bg);color:var(--color-warning)} .deprecated{background:var(--color-danger-bg);color:var(--color-danger)}
+    .code{margin:0;padding:var(--space-4);background:var(--color-code);border:1px solid var(--color-border);border-radius:var(--radius-lg);white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;max-height:42dvh;overflow:auto}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+    .notice{padding:.8rem 1rem;border-radius:var(--radius-md);font-size:var(--text-sm)} .notice.warn{background:var(--color-warning-bg);color:var(--color-warning)} .notice.ok{background:var(--color-success-bg);color:var(--color-success)}
+    .hidden{display:none!important} .switch{min-width:44px;min-height:44px}
+    .divider{height:1px;background:var(--color-border);margin:var(--space-4) 0}
+    @media (max-width: 1400px){.shell{grid-template-columns:300px 1fr}.inspector{display:none}}
+    @media (max-width: 980px){.shell,.split{grid-template-columns:1fr}.sidebar{border-right:none;border-bottom:1px solid var(--color-border)}.inspector{display:block;border-left:none;border-top:1px solid var(--color-border)}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo"><div class="logo-mark" aria-hidden="true"></div><div><div style="font-weight:800;">Prompt Studio v3</div><div class="muted tiny">local-first 本地 HTML 原型</div></div></div>
+        <button class="btn btn-secondary switch" id="themeToggle" aria-label="切換深色模式">◐</button>
+      </div>
+
+      <section class="panel">
+        <h2>工作區</h2>
+        <div class="tabs" id="navTabs"></div>
+        <div class="notice warn tiny">所有資料先存在瀏覽器本機，不經伺服器。這符合 local-first 的常見優勢：離線可用、操作即時、資料由你掌控。[web:130][web:153][web:154]</div>
+      </section>
+
+      <section class="panel">
+        <h2>Builder</h2>
+        <div class="field"><label class="label" for="mediaType">媒體類型</label><select id="mediaType"><option value="3d">高品質 3D 動畫</option><option value="live">高品質 真人場景影片</option></select></div>
+        <div class="field"><label class="label" for="dialogueMode">對白模式</label><select id="dialogueMode"><option value="none">不需要對白／極少對白</option><option value="dialogue">需要對白</option></select></div>
+        <div class="field"><label class="label" for="domain">題材領域</label><select id="domain"><option value="bible-character">聖經故事｜人物向</option><option value="bible-scene">聖經故事｜場景向</option><option value="real-interview">真實世界｜演講訪談</option><option value="real-report">真實世界｜事件報導</option></select></div>
+        <div class="grid-2">
+          <div class="field"><label class="label" for="priorityMode">規則優先級</label><select id="priorityMode"><option value="balanced">平衡</option><option value="strict">嚴格硬規則優先</option><option value="creative">偏創作彈性</option></select></div>
+          <div class="field"><label class="label" for="lengthMode">Prompt 長度</label><select id="lengthMode"><option value="short">Short</option><option value="standard" selected>Standard</option><option value="detailed">Detailed</option></select></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label class="label" for="checkMode">驗證清單</label><select id="checkMode"><option value="minimal">Minimal</option><option value="standard" selected>Standard</option></select></div>
+          <div class="field"><label class="label" for="subtitleMode">字幕抑制</label><select id="subtitleMode"><option value="soft">正向潔淨畫面語意</option><option value="strict">嚴格去字幕</option></select></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label class="label" for="duration">總時長</label><select id="duration"><option value="45-75 seconds">45-75 秒</option><option value="30-45 seconds">30-45 秒</option><option value="60-90 seconds">60-90 秒</option></select></div>
+          <div class="field"><label class="label" for="aspectRatio">畫面比例</label><select id="aspectRatio"><option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option></select></div>
+        </div>
+        <div class="field"><label class="label" for="shotStyle">鏡頭策略</label><select id="shotStyle"><option value="tight">強制中近景優先</option><option value="balanced">平衡式，僅 speaking shot 鎖中近景</option></select></div>
+        <div class="field"><label class="label" for="language">輸出語言</label><select id="language"><option value="english-structure-zh-dialogue">結構英文，對白繁中</option><option value="english-only">全英文</option><option value="zh-only">全繁中</option></select></div>
+        <div class="field"><label class="label" for="styleExtra">附加風格</label><input id="styleExtra" type="text" placeholder="例如：sacred reverence, documentary realism" /></div>
+        <div class="field"><label class="label" for="customRules">自訂補充規則</label><textarea id="customRules" placeholder="例如：所有旁白後製；不允許兩人同鏡對話"></textarea></div>
+      </section>
+
+      <section class="panel">
+        <h2>本地資料</h2>
+        <div class="actions">
+          <button class="btn btn-secondary" id="exportJsonBtn">匯出 JSON</button>
+          <label class="btn btn-secondary" for="importJsonInput">匯入 JSON</label>
+          <input id="importJsonInput" type="file" accept="application/json" class="hidden" />
+        </div>
+        <div class="divider"></div>
+        <div class="actions">
+          <button class="btn btn-secondary" id="seedBtn">載入示範資料</button>
+          <button class="btn btn-danger" id="resetBtn">清空本地資料</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <div class="toolbar">
+        <div>
+          <h1 id="pageTitle">Builder</h1>
+          <div class="status" id="statusText">把 prompt 當成可保存、可版本化、可測試的本地資產。[web:139][web:144][web:151]</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" id="copyPromptBtn">複製 Prompt</button>
+          <button class="btn btn-secondary" id="downloadPromptBtn">下載 .md</button>
+          <button class="btn btn-secondary" id="saveTemplateBtn">另存模板</button>
+          <button class="btn btn-secondary" id="saveVersionBtn">存成新版本</button>
+        </div>
+      </div>
+
+      <section id="view-builder" class="view">
+        <div class="split">
+          <section class="panel">
+            <h2>即時 Prompt</h2>
+            <div class="chips" id="builderChips"></div>
+            <pre class="code" id="promptOutput"></pre>
+          </section>
+          <section class="panel">
+            <h2>Prompt Lint</h2>
+            <div id="lintBox"></div>
+            <div class="divider"></div>
+            <h3>優先級摘要</h3>
+            <div id="priorityBox"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-presets" class="view hidden">
+        <section class="panel">
+          <div class="toolbar"><h2 style="margin:0">Presets</h2><button class="btn btn-secondary" id="savePresetBtn">儲存目前配置為 Preset</button></div>
+          <div class="list" id="presetList"></div>
+        </section>
+      </section>
+
+      <section id="view-templates" class="view hidden">
+        <section class="panel"><h2>Templates</h2><div class="list" id="templateList"></div></section>
+      </section>
+
+      <section id="view-versions" class="view hidden">
+        <section class="panel">
+          <div class="toolbar"><h2 style="margin:0">Versions</h2><div class="status" id="versionContext">選擇模板後可查看版本歷史與回滾。[web:139][web:145]</div></div>
+          <div class="list" id="versionList"></div>
+        </section>
+      </section>
+
+      <section id="view-tests" class="view hidden">
+        <section class="panel">
+          <div class="toolbar"><h2 style="margin:0">Test Cases</h2><button class="btn btn-secondary" id="addCaseBtn">新增測試案例</button></div>
+          <div class="list" id="caseList"></div>
+        </section>
+      </section>
+
+      <section id="view-review" class="view hidden">
+        <section class="panel">
+          <h2>Diff / Review</h2>
+          <div class="grid-2">
+            <div class="field"><label class="label" for="diffA">版本 A</label><select id="diffA"></select></div>
+            <div class="field"><label class="label" for="diffB">版本 B</label><select id="diffB"></select></div>
+          </div>
+          <div class="split">
+            <div><h3>Version A</h3><pre class="code" id="diffTextA"></pre></div>
+            <div><h3>Version B</h3><pre class="code" id="diffTextB"></pre></div>
+          </div>
+          <div class="divider"></div>
+          <div class="panel" style="background:var(--color-surface-2)"><strong>差異摘要</strong><div id="diffSummary" class="tiny muted" style="margin-top:.5rem"></div></div>
+        </section>
+      </section>
+    </main>
+
+    <aside class="inspector">
+      <section class="panel">
+        <h2>目前選取</h2>
+        <div id="selectionBox" class="tiny muted">尚未選取模板或版本。</div>
+      </section>
+      <section class="panel">
+        <h2>資料統計</h2>
+        <ul id="statsBox"></ul>
+      </section>
+      <section class="panel">
+        <h2>執行備註</h2>
+        <div class="notice ok tiny">Prompt versioning、baseline testing、匯入匯出與 local-first 管理，都是 production prompt workflow 常見的核心能力。[web:139][web:144][web:160]</div>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    const DB_KEY = 'prompt_studio_v3_db';
+    const views = ['builder','presets','templates','versions','tests','review'];
+    let currentView = 'builder';
+    let selectedTemplateId = null;
+    let selectedVersionId = null;
+
+    const els = {
+      navTabs: document.getElementById('navTabs'), pageTitle: document.getElementById('pageTitle'), statusText: document.getElementById('statusText'),
+      mediaType: document.getElementById('mediaType'), dialogueMode: document.getElementById('dialogueMode'), domain: document.getElementById('domain'),
+      priorityMode: document.getElementById('priorityMode'), lengthMode: document.getElementById('lengthMode'), checkMode: document.getElementById('checkMode'), subtitleMode: document.getElementById('subtitleMode'),
+      duration: document.getElementById('duration'), aspectRatio: document.getElementById('aspectRatio'), shotStyle: document.getElementById('shotStyle'), language: document.getElementById('language'),
+      styleExtra: document.getElementById('styleExtra'), customRules: document.getElementById('customRules'),
+      promptOutput: document.getElementById('promptOutput'), builderChips: document.getElementById('builderChips'), lintBox: document.getElementById('lintBox'), priorityBox: document.getElementById('priorityBox'),
+      copyPromptBtn: document.getElementById('copyPromptBtn'), downloadPromptBtn: document.getElementById('downloadPromptBtn'), saveTemplateBtn: document.getElementById('saveTemplateBtn'), saveVersionBtn: document.getElementById('saveVersionBtn'),
+      savePresetBtn: document.getElementById('savePresetBtn'), presetList: document.getElementById('presetList'), templateList: document.getElementById('templateList'), versionList: document.getElementById('versionList'), caseList: document.getElementById('caseList'),
+      diffA: document.getElementById('diffA'), diffB: document.getElementById('diffB'), diffTextA: document.getElementById('diffTextA'), diffTextB: document.getElementById('diffTextB'), diffSummary: document.getElementById('diffSummary'),
+      exportJsonBtn: document.getElementById('exportJsonBtn'), importJsonInput: document.getElementById('importJsonInput'), seedBtn: document.getElementById('seedBtn'), resetBtn: document.getElementById('resetBtn'), addCaseBtn: document.getElementById('addCaseBtn'),
+      versionContext: document.getElementById('versionContext'), selectionBox: document.getElementById('selectionBox'), statsBox: document.getElementById('statsBox'), themeToggle: document.getElementById('themeToggle')
+    };
+
+    const maps = {
+      mediaType: {
+        '3d': { title:'Idea To 3D Story', style:'premium stylized 3D animated short film', face:'expressive faces with rich micro-expressions', visualLock:'consistent stylized 3D character identity, clean frame, detailed textures', t2iBase:'Cinematic 3D animated film still', motionBase:'cinematic 3D shot' },
+        'live': { title:'Idea To Cinematic Live-Action Story', style:'cinematic live-action scene with realistic performance', face:'natural facial detail and believable human expression', visualLock:'realistic human identity, authentic lighting, natural skin detail, clean frame', t2iBase:'Cinematic live-action film still', motionBase:'cinematic live-action shot' }
+      },
+      domain: {
+        'bible-character': { label:'聖經人物向', assumptions:'character-driven biblical storytelling with emotional focus on a recurring central figure', subjectRule:'Use reverent, historically inspired, original depictions for biblical figures. Focus on character continuity, clothing consistency, emotional sincerity, and respectful tone.', shotBias:'Favor close-up, medium close-up, chest-up, or waist-up framing to preserve facial clarity and emotional storytelling.', dialogueBias:'Dialogue, if used, should be short, respectful, emotionally direct, and suitable for performance.' },
+        'bible-scene': { label:'聖經場景向', assumptions:'scene-driven biblical storytelling focused on atmosphere, miracle, scale, and environmental drama', subjectRule:'Use reverent, historically inspired, original depictions for biblical events. Focus on visual wonder, environment motion, and clean staging rather than heavy dialogue.', shotBias:'Use medium shots and medium close shots by default. Wider shots are allowed only when necessary for spectacle, but the central subject must remain visually legible.', dialogueBias:'Prefer no dialogue or extremely minimal spoken lines. Major exposition should be handled outside the generated shots if needed.' },
+        'real-interview': { label:'真實世界演講訪談', assumptions:'real-world speaking scenario centered on a speaker, host, guest, or interview subject', subjectRule:'Prioritize realism, credible body language, stable camera framing, and natural performance. Keep environments professional and uncluttered.', shotBias:'Speaking shots must keep the face large in frame, front-facing or three-quarter view, with mouth visibility preserved.', dialogueBias:'Dialogue should sound natural, spoken, concise, and easy to lipsync.' },
+        'real-report': { label:'真實世界事件報導', assumptions:'real-world event coverage, documentary-style reenactment, or news-like scene reconstruction', subjectRule:'Prioritize documentary clarity, environmental credibility, and scene readability. Keep shots grounded, plausible, and visually clean.', shotBias:'Use stable medium or medium-close framing for key actions. Use wider framing sparingly and only when it improves scene comprehension.', dialogueBias:'Prefer no dialogue or only rare, short spoken lines. Voiceover can be added separately in post.' }
+      }
+    };
+
+    let db = loadDB();
+
+    function uid(prefix='id'){ return prefix + '_' + Math.random().toString(36).slice(2,10); }
+    function now(){ return new Date().toISOString(); }
+    function saveDB(){ localStorage.setItem(DB_KEY, JSON.stringify(db)); renderAll(); }
+    function loadDB(){
+      const raw = localStorage.getItem(DB_KEY);
+      if (raw) {
+        try { return JSON.parse(raw); } catch {}
+      }
+      return { presets: [], templates: [], versions: [], testCases: [], evaluations: [] };
+    }
+
+    function getBuilderState(){
+      return {
+        mediaType: els.mediaType.value, dialogueMode: els.dialogueMode.value, domain: els.domain.value,
+        priorityMode: els.priorityMode.value, lengthMode: els.lengthMode.value, checkMode: els.checkMode.value,
+        subtitleMode: els.subtitleMode.value, duration: els.duration.value, aspectRatio: els.aspectRatio.value,
+        shotStyle: els.shotStyle.value, language: els.language.value, styleExtra: els.styleExtra.value.trim(), customRules: els.customRules.value.trim()
+      };
+    }
+
+    function setBuilderState(state){
+      Object.entries(state || {}).forEach(([k,v]) => { if (els[k]) els[k].value = v; });
+      buildPrompt();
+    }
+
+    function subtitleRules(mode, priorityMode) {
+      const base = mode === 'strict'
+        ? ['Do not mention subtitle, caption, lower thirds, on-screen text, text overlay, or transcription instructions in the main prompt body.','Keep image prompts visually clean with unmarked surfaces, uncluttered lower frame areas, and no empty banner-like regions.','Favor subject-filled framing so the face or central action occupies enough screen space to reduce subtitle-like artifacts.']
+        : ['Use clean visual language that favors unmarked frames, plain surfaces, and uncluttered compositions.','Do not intentionally add text elements, visible UI, labels, or graphical overlays in generated shots.'];
+      if (priorityMode === 'strict') base.unshift('If any style preference conflicts with subtitle suppression, prioritize subtitle suppression.');
+      return base;
+    }
+
+    function shotRules(state) {
+      const lines = state.shotStyle === 'tight'
+        ? ['All T2I and I2V shots must stay within close-up, medium close-up, chest-up, or waist-up maximum.','Keep the face and upper torso large in frame, front-facing or three-quarter view whenever emotional clarity or lipsync matters.']
+        : ['Speaking shots must use close-up, medium close-up, chest-up, or waist-up maximum.','Non-speaking shots may widen slightly when needed for scene context, but the central subject must remain visually readable.'];
+      if (state.dialogueMode === 'dialogue') lines.push('Do not place spoken lines in back-facing shots, walking shots, far shots, or visually unstable compositions.');
+      if (state.domain === 'bible-scene' || state.domain === 'real-report') lines.push('Use spectacle or context-wide framing only when necessary, and avoid letting empty lower-frame space dominate the composition.');
+      if (state.priorityMode === 'strict') lines.unshift('If framing style and storytelling spectacle conflict, preserve facial clarity and structural stability first.');
+      return lines;
+    }
+
+    function dialogueRules(state) {
+      const zhLine = state.language === 'english-structure-zh-dialogue' ? 'If the user requests Traditional Chinese, keep spoken dialogue natively in Traditional Chinese (Taiwan), while preserving structural prompt syntax in English.' : null;
+      const base = state.dialogueMode === 'none'
+        ? ['Do not write spoken dialogue unless absolutely necessary.','If a spoken line is unavoidable, keep it extremely short and isolated to a single speaking shot.','Assume voiceover, narration, or dubbing can be produced separately in post.']
+        : ['Dialogue must be short, natural, emotional, and easy to lipsync within the shot duration.','Every speaking prompt must explicitly name and briefly describe the speaker before the quote.','Use says: for the first spoken line and replies: for a response.','Keep all quoted dialogue inside any single Image-To-Video prompt under 120 characters total.'];
+      if (state.priorityMode === 'strict' && state.dialogueMode === 'dialogue') base.unshift('If dialogue elegance conflicts with timing or lipsync stability, shorten the dialogue.');
+      return zhLine ? base.concat([zhLine]) : base;
+    }
+
+    function silentChecks(state) {
+      const minimal = ['All required sections are present with exact headings.','Timestamps are continuous with zero gaps.','No single shot duration exceeds 10 seconds.', state.dialogueMode === 'dialogue' ? 'Every speaking shot preserves lipsync-safe framing and valid says:/replies: structure.' : 'Any spoken line is rare, short, and isolated to a stable shot.','Output contains no conversational introduction or meta-commentary.'];
+      const standard = minimal.slice(0, 3).concat(['The visual frame stays clean and does not introduce subtitle-like empty lower-third space.', state.dialogueMode === 'dialogue' ? 'All quoted dialogue inside any single video prompt stays under 120 characters.' : 'The storyboard does not drift into unnecessary dialogue.', minimal[3], minimal[4]]);
+      return state.checkMode === 'minimal' ? minimal : standard;
+    }
+
+    function lengthConfig(state) {
+      if (state.lengthMode === 'short') return { shotCount:'8-10', headingIntro:'Always answer in Markdown with these exact sections:' };
+      if (state.lengthMode === 'detailed') return { shotCount:'8-12', headingIntro:'Always answer in Markdown with these exact sections. Do not include introductory text, conversational pleasantries, or post-generation analysis. Begin immediately with the first heading.' };
+      return { shotCount:'8-12', headingIntro:'Always answer in Markdown with these exact sections. Begin immediately with the first heading.' };
+    }
+
+    function priorityBlocks(state, domain, modeLine, languageBlock, shotLines, subtitleLines, dialogueLines) {
+      let tier1 = [], tier2 = [], tier3 = [];
+      if (state.priorityMode === 'strict') {
+        tier1 = ['Preserve required headings, timestamp continuity, shot duration limits, and speaking-shot framing before any stylistic preference.', ...shotLines.slice(0,2), ...dialogueLines.slice(0,3), ...subtitleLines.slice(0,2)];
+        tier2 = [domain.subjectRule, domain.shotBias, domain.dialogueBias, languageBlock];
+        tier3 = ['Apply atmosphere, visual flourish, and scene embellishment only after Tier 1 and Tier 2 constraints are satisfied.', modeLine];
+      } else if (state.priorityMode === 'creative') {
+        tier1 = ['Preserve required headings, timestamp continuity, shot duration limits, and safety constraints.', ...dialogueLines.slice(0,2)];
+        tier2 = [domain.subjectRule, domain.shotBias, domain.dialogueBias, ...shotLines.slice(0,2), languageBlock];
+        tier3 = ['Allow tasteful cinematic variety if it does not break shot timing, identity consistency, or readability.', ...subtitleLines.slice(0,2), modeLine];
+      } else {
+        tier1 = ['Preserve required headings, timestamp continuity, shot duration limits, and safety constraints.', ...shotLines.slice(0,2), ...dialogueLines.slice(0,2)];
+        tier2 = [domain.subjectRule, domain.shotBias, domain.dialogueBias, ...subtitleLines.slice(0,2), languageBlock];
+        tier3 = ['Apply atmosphere and cinematic style only after structural clarity is secured.', modeLine];
+      }
+      return { tier1, tier2, tier3 };
+    }
+
+    function generatePrompt(state) {
+      const media = maps.mediaType[state.mediaType];
+      const domain = maps.domain[state.domain];
+      const config = lengthConfig(state);
+      const modeLine = state.dialogueMode === 'dialogue' ? 'The user may require character dialogue and lipsync-ready performance.' : 'The user primarily needs visual storytelling with no dialogue or only rare, minimal dialogue.';
+      const languageBlock = state.language === 'english-only' ? 'Use English for all structural content and all dialogue unless the user explicitly requests another language.' : state.language === 'zh-only' ? 'Use Traditional Chinese (Taiwan) for the full output unless a tool-specific prompt string clearly works better in English.' : 'Keep all structural sections, prompt frameworks, and technical metadata in English. Keep spoken dialogue in Traditional Chinese (Taiwan) when the user requests Chinese dialogue.';
+      const styleExtraLine = state.styleExtra ? `- ${state.styleExtra}` : '';
+      const shotLines = shotRules(state);
+      const subtitleLines = subtitleRules(state.subtitleMode, state.priorityMode);
+      const dialogueLines = dialogueRules(state);
+      const checks = silentChecks(state);
+      const customLines = state.customRules ? state.customRules.split('\n').map(s=>s.trim()).filter(Boolean) : [];
+      const { tier1, tier2, tier3 } = priorityBlocks(state, domain, modeLine, languageBlock, shotLines, subtitleLines, dialogueLines);
+      const headings = state.dialogueMode === 'dialogue'
+        ? ['1. `# Project Snapshot`','2. `# Creative Assumptions`','3. `# Character Bible`','4. `# Emotional Arc`','5. `# Storyboard And Generation Prompts`','6. `# Dialogue Script`','7. `# Continuity Lock Prompt`','8. `# Optional Negative Prompt`']
+        : ['1. `# Project Snapshot`','2. `# Creative Assumptions`','3. `# Character Bible`','4. `# Emotional Arc`','5. `# Storyboard And Generation Prompts`','6. `# Continuity Lock Prompt`','7. `# Optional Negative Prompt`'];
+      const prompt = `# ${media.title} - Production Instructions\n\nYou are **${media.title} Gem**, a cinematic pre-production assistant that turns one rough user idea into a complete video generation package.\n\nThe user only needs to provide an IDEA. Expand it into a complete, production-ready story plan with characters, emotional beats, timestamps, text-to-image prompts, image-to-video prompts, and ${state.dialogueMode === 'dialogue' ? 'lipsync-ready dialogue.' : 'clean visual storytelling.'}\n\nDefault style unless the user says otherwise:\n- ${state.duration} total duration\n- ${state.aspectRatio} aspect ratio\n- ${media.style}\n- ${media.face}\n- cinematic lighting and detailed environments\n- emotional storytelling\n- ${domain.assumptions}\n${styleExtraLine}\n\nFollow the user’s choices for genre, length, audience, platform, style, language, and aspect ratio. Ask questions only if the request is impossible, unsafe, or incoherent. Otherwise make reasonable assumptions and continue.\n\nAvoid copyrighted characters, exact celebrity likenesses, living public figures, brand names, logos, visible UI, subtitles, captions, and watermarks unless explicitly requested and safe. If needed, create an original alternative.\n\n## Output Format\n\n${config.headingIntro}\n\n${headings.join('\n')}\n\n## Rule Priority\n\n### Tier 1 — Hard Constraints\n${tier1.map(x=>`- ${x}`).join('\n')}\n\n### Tier 2 — Scenario Rules\n${tier2.map(x=>`- ${x}`).join('\n')}\n\n### Tier 3 — Style Preferences\n${tier3.map(x=>`- ${x}`).join('\n')}\n\n## Section Rules\n\n### # Project Snapshot\nInclude: Title, Logline, Genre, Target Duration, Aspect Ratio, Visual Style, Emotional Theme, Ending.\n\n### # Creative Assumptions\nList brief assumptions about setting, tone, characters, duration, and visual style.\n\n### # Character Bible\nFor each speaking or recurring character include: Name, Role, Age Range, Physical Description, Clothing, Personality, Emotional Want or Wound, Voice Direction, Face/Lipsync Notes, Continuity Anchor.\nThe continuity anchor must be a single, reusable plaintext description of the character's core visual traits.\n\n### # Emotional Arc\nUse this table:\n| Beat | Timestamp Range | Emotion | What Changes |\n|---|---|---|---|\n\n### # Storyboard And Generation Prompts\nCreate ${config.shotCount} shots by default. Timestamps must be continuous with no gaps.\nUse this table:\n| Shot | Time | Duration | Purpose | ${state.dialogueMode === 'dialogue' ? 'Dialogue | ' : ''}Text-To-Image Prompt | Image-To-Video Prompt | ${state.dialogueMode === 'dialogue' ? 'Lipsync Notes' : 'Performance Notes'} |\n|---|---|---|---|${state.dialogueMode === 'dialogue' ? '---|' : ''}---|---|---|\nEach shot must include all columns.\n\n## Video Rules\n- Each shot must be 10 seconds or shorter.\n- Use \`00:00-00:05\` timestamp format with zero gaps between shots.\n- Keep identity, wardrobe, environment, and composition consistent across related shots.\n- Keep the visual field clean, readable, and free of unnecessary lower-frame clutter.\n${state.dialogueMode === 'dialogue' ? '- Spoken dialogue inside any single Image-To-Video prompt must stay under 120 characters total. If dialogue is longer, split it into multiple shots.' : '- Prefer no dialogue. If a line is unavoidable, isolate it to one stable shot and keep it extremely short.'}\n\n## Text-To-Image Prompt Rules\nEach text-to-image prompt must be written as one clean, production-ready paragraph.\nUse this exact structure:\n\`${media.t2iBase} of [continuity anchor] in [setting], [action/emotion], [composition/camera], [lighting], [environment details], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame, plain unbranded surfaces.\`\n\n## Image-To-Video Prompt Rules\nEach image-to-video prompt must be ready for direct paste into VideoExpress.ai advanced mode.\n${state.dialogueMode === 'dialogue' ? `Use this exact structure for speaking shots:\n\`Animate this image into a [duration]-second ${media.motionBase}. Keep character identity, clothing, environment, and composition consistent. Camera [movement]. [Character action/body motion]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. [Character name], [short visual description], says: "[dialogue]". Use replies: when responding to another character. Animate natural lipsync exactly to the quoted words with believable mouth shapes, jaw movement, cheek movement, blinking, breathing, and eye focus.\`\n\nFor non-speaking shots use:\n\`No dialogue. Hold expression and breathing naturally.\`` : `Use this structure:\n\`Animate this image into a [duration]-second ${media.motionBase}. Keep character identity, clothing, environment, and composition consistent. Camera [movement]. [Character action/body motion]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. No dialogue. Hold expression and breathing naturally.\``}\n\n## Dialogue Rules\n${dialogueLines.map(x=>`- ${x}`).join('\n')}\n\n${state.dialogueMode === 'dialogue' ? `## # Dialogue Script\nAfter the storyboard table, include only spoken lines in this table:\n| Time | Character | Line | Delivery | Lipsync Notes |\n|---|---|---|---|---|\n\n` : ''}## # Continuity Lock Prompt\nWrite one reusable plaintext continuity prompt that locks: character identity, wardrobe, setting, lighting, props, facial animation, ${state.dialogueMode === 'dialogue' ? 'lipsync behavior, ' : ''}visual style, clean unmarked frame, and plain unbranded surfaces.\n\n## # Optional Negative Prompt\nUse exactly:\n\`Negative prompt: text, subtitles, captions, watermark, logo, brand names, distorted hands, extra fingers, mismatched eye direction, uncanny mouth movement, stiff facial animation, inconsistent character design, flickering clothing, warped props, unreadable signage, low resolution, motion blur that hides the face.\`\n\n## Silent Checks\n${checks.map(x=>`- ${x}`).join('\n')}\n${customLines.length ? '\n## Custom Rules\n' + customLines.map(x=>`- ${x}`).join('\n') : ''}\n`;
+      return { prompt, tier1, tier2, tier3, shotLines, subtitleLines, dialogueLines, checks };
+    }
+
+    function lintPrompt(state, info) {
+      const warnings = [];
+      if (state.lengthMode === 'detailed' && state.priorityMode === 'creative') warnings.push('Detailed + 偏創作彈性：最容易讓 prompt 變長並提高漂移風險。');
+      if (state.dialogueMode === 'none' && state.domain === 'real-interview') warnings.push('演講訪談通常更適合有對白模式；目前是少對白模式。');
+      if (state.dialogueMode === 'dialogue' && state.shotStyle === 'balanced') warnings.push('有對白模式下，平衡式鏡頭可能比強制中近景更容易嘴型失真。');
+      if (state.domain === 'bible-scene' && state.shotStyle === 'tight') warnings.push('聖經場景向若全程過緊，可能削弱奇觀感。');
+      if ((state.customRules || '').length > 220) warnings.push('自訂規則偏長，可能讓 prompt 再次膨脹。');
+      if (info.prompt.length > 7000) warnings.push('目前 prompt 偏長，建議先試 Short 或 Standard。');
+      return warnings;
+    }
+
+    function buildPrompt() {
+      const state = getBuilderState();
+      const info = generatePrompt(state);
+      const warnings = lintPrompt(state, info);
+      els.promptOutput.textContent = info.prompt;
+      els.builderChips.innerHTML = [maps.mediaType[state.mediaType].title, maps.domain[state.domain].label, state.dialogueMode === 'dialogue' ? '有對白' : '少對白', `優先級：${state.priorityMode}`, `長度：${state.lengthMode}`].map(x=>`<span class="chip">${x}</span>`).join('');
+      els.priorityBox.innerHTML = `
+        <div class="card"><strong>Tier 1</strong><div class="tiny muted">${info.tier1.slice(0,3).join('；')}</div></div>
+        <div class="card" style="margin-top:var(--space-3)"><strong>Tier 2</strong><div class="tiny muted">${info.tier2.slice(0,3).join('；')}</div></div>
+        <div class="card" style="margin-top:var(--space-3)"><strong>Tier 3</strong><div class="tiny muted">${info.tier3.slice(0,2).join('；')}</div></div>
+      `;
+      els.lintBox.innerHTML = warnings.length ? warnings.map(w=>`<div class="notice warn" style="margin-bottom:.5rem">${w}</div>`).join('') : '<div class="notice ok">目前未發現明顯規則衝突。</div>';
+      return info.prompt;
+    }
+
+    function renderNav() {
+      const labels = { builder:'Builder', presets:'Presets', templates:'Templates', versions:'Versions', tests:'Test Cases', review:'Diff / Review' };
+      els.navTabs.innerHTML = views.map(v => `<button class="tab ${currentView===v?'active':''}" data-view="${v}">${labels[v]}</button>`).join('');
+      document.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
+    }
+
+    function switchView(view) {
+      currentView = view;
+      views.forEach(v => document.getElementById(`view-${v}`).classList.toggle('hidden', v !== view));
+      const labels = { builder:'Builder', presets:'Presets', templates:'Templates', versions:'Versions', tests:'Test Cases', review:'Diff / Review' };
+      els.pageTitle.textContent = labels[view];
+      renderNav();
+    }
+
+    function renderPresets() {
+      els.presetList.innerHTML = db.presets.length ? db.presets.map(p => `
+        <div class="card">
+          <div class="card-head"><div><strong>${p.name}</strong><div class="tiny muted">${p.description || ''}</div></div><div class="chips">${(p.tags||[]).map(t=>`<span class="chip">${t}</span>`).join('')}</div></div>
+          <div class="actions" style="margin-top:var(--space-3)">
+            <button class="btn btn-secondary" onclick="window.applyPreset('${p.id}')">套用</button>
+            <button class="btn btn-danger" onclick="window.deletePreset('${p.id}')">刪除</button>
+          </div>
+        </div>`).join('') : '<div class="muted tiny">尚無 preset。你可以把目前 Builder 配置存成 preset。</div>';
+    }
+
+    function renderTemplates() {
+      els.templateList.innerHTML = db.templates.length ? db.templates.map(t => {
+        const versionCount = db.versions.filter(v => v.templateId === t.id).length;
+        return `<div class="card"><div class="card-head"><div><strong>${t.name}</strong><div class="tiny muted">${t.description || ''}</div></div><div><span class="status-pill ${t.status || 'experimental'}">${t.status || 'experimental'}</span></div></div><div class="tiny muted" style="margin-top:.5rem">版本數：${versionCount}｜更新：${new Date(t.updatedAt).toLocaleString()}</div><div class="chips" style="margin-top:var(--space-3)">${(t.tags||[]).map(tag=>`<span class="chip">${tag}</span>`).join('')}</div><div class="actions" style="margin-top:var(--space-3)"><button class="btn btn-secondary" onclick="window.selectTemplate('${t.id}')">查看版本</button><button class="btn btn-secondary" onclick="window.loadTemplateToBuilder('${t.id}')">載入到 Builder</button><button class="btn btn-danger" onclick="window.deleteTemplate('${t.id}')">刪除</button></div></div>`;
+      }).join('') : '<div class="muted tiny">尚無模板。請先由 Builder 另存模板。</div>';
+    }
+
+    function renderVersions() {
+      if (!selectedTemplateId) {
+        els.versionContext.textContent = '請先在 Templates 頁選取一個模板。';
+        els.versionList.innerHTML = '<div class="muted tiny">尚未選取模板。</div>';
+        renderDiffSelectors();
+        return;
+      }
+      const t = db.templates.find(x => x.id === selectedTemplateId);
+      const versions = db.versions.filter(v => v.templateId === selectedTemplateId).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      els.versionContext.textContent = `${t.name} 的版本歷史。Prompt versioning 強調可追溯、可比較、可回滾。[web:139][web:145]`;
+      els.versionList.innerHTML = versions.length ? versions.map(v => `
+        <div class="card">
+          <div class="card-head"><div><strong>${v.version}</strong><div class="tiny muted">${v.changeSummary || 'No summary'}</div></div><span class="status-pill ${v.status || 'experimental'}">${v.status || 'experimental'}</span></div>
+          <div class="tiny muted" style="margin-top:.5rem">${new Date(v.createdAt).toLocaleString()}</div>
+          <div class="actions" style="margin-top:var(--space-3)">
+            <button class="btn btn-secondary" onclick="window.selectVersion('${v.id}')">選取</button>
+            <button class="btn btn-secondary" onclick="window.loadVersionToBuilder('${v.id}')">載入</button>
+            <button class="btn btn-secondary" onclick="window.markStable('${v.id}')">標記 Stable</button>
+            <button class="btn btn-danger" onclick="window.deleteVersion('${v.id}')">刪除</button>
+          </div>
+        </div>`).join('') : '<div class="muted tiny">此模板尚無版本。</div>';
+      renderDiffSelectors();
+    }
+
+    function renderCases() {
+      els.caseList.innerHTML = db.testCases.length ? db.testCases.map(c => {
+        const evals = db.evaluations.filter(e => e.testCaseId === c.id);
+        const avg = evals.length ? (evals.reduce((a,b)=>a+(b.rating||0),0)/evals.length).toFixed(1) : '-';
+        return `<div class="card"><div class="card-head"><div><strong>${c.title}</strong><div class="tiny muted">${c.category}</div></div><div class="chip">平均評分：${avg}</div></div><div class="tiny" style="margin-top:.5rem">${c.inputIdea}</div><div class="actions" style="margin-top:var(--space-3)"><button class="btn btn-secondary" onclick="window.evaluateCase('${c.id}')">新增評測</button><button class="btn btn-danger" onclick="window.deleteCase('${c.id}')">刪除</button></div></div>`;
+      }).join('') : '<div class="muted tiny">尚無測試案例。固定 test cases 能幫助你做 regression testing。[web:142][web:163]</div>';
+    }
+
+    function renderDiffSelectors() {
+      const versions = selectedTemplateId ? db.versions.filter(v => v.templateId === selectedTemplateId) : db.versions;
+      const options = versions.map(v => `<option value="${v.id}">${v.version} · ${(db.templates.find(t=>t.id===v.templateId)||{}).name || ''}</option>`).join('');
+      els.diffA.innerHTML = `<option value="">選擇版本 A</option>${options}`;
+      els.diffB.innerHTML = `<option value="">選擇版本 B</option>${options}`;
+      updateDiff();
+    }
+
+    function updateDiff() {
+      const a = db.versions.find(v => v.id === els.diffA.value);
+      const b = db.versions.find(v => v.id === els.diffB.value);
+      els.diffTextA.textContent = a ? a.promptText : '';
+      els.diffTextB.textContent = b ? b.promptText : '';
+      if (!a || !b) { els.diffSummary.textContent = '選擇兩個版本後即可比較。'; return; }
+      const linesA = new Set(a.promptText.split('\n'));
+      const linesB = new Set(b.promptText.split('\n'));
+      const onlyA = [...linesA].filter(x => !linesB.has(x)).length;
+      const onlyB = [...linesB].filter(x => !linesA.has(x)).length;
+      els.diffSummary.textContent = `Version A 獨有行數：約 ${onlyA}；Version B 獨有行數：約 ${onlyB}。此頁先提供輕量比較，後續可再做更細的 diff viewer。`;
+    }
+
+    function renderSelection() {
+      const t = db.templates.find(x => x.id === selectedTemplateId);
+      const v = db.versions.find(x => x.id === selectedVersionId);
+      els.selectionBox.innerHTML = `${t ? `<div><strong>Template</strong>：${t.name}</div>` : '<div>Template：未選取</div>'}${v ? `<div style="margin-top:.35rem"><strong>Version</strong>：${v.version}</div>` : '<div style="margin-top:.35rem">Version：未選取</div>'}`;
+    }
+
+    function renderStats() {
+      const stableVersions = db.versions.filter(v => v.status === 'stable').length;
+      els.statsBox.innerHTML = `
+        <li>Presets：${db.presets.length}</li>
+        <li>Templates：${db.templates.length}</li>
+        <li>Versions：${db.versions.length}</li>
+        <li>Stable Versions：${stableVersions}</li>
+        <li>Test Cases：${db.testCases.length}</li>
+        <li>Evaluations：${db.evaluations.length}</li>
+      `;
+    }
+
+    function renderAll() {
+      buildPrompt(); renderPresets(); renderTemplates(); renderVersions(); renderCases(); renderSelection(); renderStats(); renderNav();
+    }
+
+    function suggestTemplateName(state){
+      return `${state.mediaType === '3d' ? '3D' : 'Live'} ${maps.domain[state.domain].label} ${state.dialogueMode === 'dialogue' ? 'Dialogue' : 'Minimal'}`;
+    }
+
+    function nextVersion(templateId){
+      const versions = db.versions.filter(v => v.templateId === templateId).map(v => v.version);
+      if (!versions.length) return '1.0.0';
+      const [maj,min,patch] = versions.sort().at(-1).split('.').map(Number);
+      return [maj, min + 1, 0].join('.');
+    }
+
+    function saveTemplate() {
+      const state = getBuilderState();
+      const name = prompt('模板名稱', suggestTemplateName(state));
+      if (!name) return;
+      const description = prompt('模板說明', 'Created from Prompt Studio v3') || '';
+      const tags = (prompt('標籤（逗號分隔）', `${state.mediaType},${state.domain},${state.dialogueMode}`) || '').split(',').map(x=>x.trim()).filter(Boolean);
+      const id = uid('tpl');
+      db.templates.push({ id, name, description, tags, status:'experimental', createdAt:now(), updatedAt:now(), currentVersionId:null });
+      selectedTemplateId = id;
+      saveVersion(id, true);
+      saveDB();
+      switchView('templates');
+    }
+
+    function saveVersion(templateId = selectedTemplateId, asInitial=false) {
+      if (!templateId) { alert('請先建立或選取模板。'); return; }
+      const template = db.templates.find(t => t.id === templateId);
+      const state = getBuilderState();
+      const promptText = buildPrompt();
+      const version = asInitial ? '1.0.0' : (prompt('版本號', nextVersion(templateId)) || nextVersion(templateId));
+      const changeSummary = prompt('變更摘要', asInitial ? 'Initial version' : 'Updated prompt rules') || '';
+      const status = prompt('狀態（draft / experimental / stable / deprecated）', 'experimental') || 'experimental';
+      const id = uid('ver');
+      db.versions.push({ id, templateId, version, status, changeSummary, notes:'', builderState: state, promptText, createdAt: now() });
+      template.currentVersionId = id;
+      template.updatedAt = now();
+      template.status = status;
+      selectedVersionId = id;
+      saveDB();
+      switchView('versions');
+    }
+
+    function savePreset() {
+      const state = getBuilderState();
+      const name = prompt('Preset 名稱', suggestTemplateName(state));
+      if (!name) return;
+      const description = prompt('Preset 說明', 'One-click scenario preset') || '';
+      const tags = (prompt('標籤（逗號分隔）', `${state.mediaType},${state.domain},${state.dialogueMode}`) || '').split(',').map(x=>x.trim()).filter(Boolean);
+      db.presets.push({ id: uid('preset'), name, description, tags, builderState: state, createdAt: now() });
+      saveDB();
+      switchView('presets');
+    }
+
+    function addCase() {
+      const title = prompt('測試案例名稱', 'New Test Case'); if (!title) return;
+      const inputIdea = prompt('輸入 IDEA', '請輸入測試故事點子'); if (!inputIdea) return;
+      const category = prompt('分類', 'bible-character') || 'general';
+      db.testCases.push({ id: uid('case'), title, inputIdea, category, notes:'', createdAt: now() });
+      saveDB();
+      switchView('tests');
+    }
+
+    function evaluateCase(caseId) {
+      if (!selectedVersionId) { alert('請先選取一個版本再做評測。'); return; }
+      const rating = Number(prompt('評分（1-5）', '4') || 4);
+      const comment = prompt('評測備註', '格式穩定、角色一致，但結尾略漂') || '';
+      const subtitleLeak = confirm('這次是否有字幕滲出？按「確定」= 有；按「取消」= 沒有');
+      db.evaluations.push({ id: uid('eval'), templateVersionId: selectedVersionId, testCaseId: caseId, rating, issues: subtitleLeak ? ['subtitle-leak'] : [], subtitleLeak, formatStable: rating >= 4, comment, createdAt: now() });
+      saveDB();
+    }
+
+    function markStable(versionId) {
+      const v = db.versions.find(x => x.id === versionId); if (!v) return;
+      v.status = 'stable';
+      const t = db.templates.find(x => x.id === v.templateId); if (t) t.status = 'stable';
+      saveDB();
+    }
+
+    function selectTemplate(id) { selectedTemplateId = id; selectedVersionId = null; saveDB(); switchView('versions'); }
+    function selectVersion(id) { selectedVersionId = id; saveDB(); }
+    function loadVersionToBuilder(id) { const v = db.versions.find(x => x.id === id); if (!v) return; selectedVersionId = id; selectedTemplateId = v.templateId; setBuilderState(v.builderState); switchView('builder'); saveDB(); }
+    function loadTemplateToBuilder(id) { const t = db.templates.find(x => x.id === id); if (!t) return; const v = db.versions.find(x => x.id === t.currentVersionId) || db.versions.find(x => x.templateId === id); if (v) { selectedTemplateId = id; selectedVersionId = v.id; setBuilderState(v.builderState); switchView('builder'); saveDB(); } }
+    function applyPreset(id) { const p = db.presets.find(x => x.id === id); if (!p) return; setBuilderState(p.builderState); switchView('builder'); }
+
+    function deletePreset(id){ if (!confirm('刪除此 preset？')) return; db.presets = db.presets.filter(x => x.id !== id); saveDB(); }
+    function deleteTemplate(id){ if (!confirm('刪除此模板與所有版本？')) return; db.templates = db.templates.filter(x => x.id !== id); db.versions = db.versions.filter(x => x.templateId !== id); if (selectedTemplateId === id) selectedTemplateId = null; saveDB(); }
+    function deleteVersion(id){ if (!confirm('刪除此版本？')) return; db.versions = db.versions.filter(x => x.id !== id); if (selectedVersionId === id) selectedVersionId = null; saveDB(); }
+    function deleteCase(id){ if (!confirm('刪除此測試案例？')) return; db.testCases = db.testCases.filter(x => x.id !== id); db.evaluations = db.evaluations.filter(x => x.testCaseId !== id); saveDB(); }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json;charset=utf-8' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'prompt-studio-v3-export.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500);
+    }
+
+    function importJSON(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const imported = JSON.parse(reader.result);
+          if (!imported.templates || !imported.versions) throw new Error('invalid structure');
+          db = imported; localStorage.setItem(DB_KEY, JSON.stringify(db)); renderAll(); alert('匯入成功');
+        } catch (e) { alert('匯入失敗：JSON 格式不正確'); }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetAll() {
+      if (!confirm('確定清空所有本地資料？')) return;
+      db = { presets: [], templates: [], versions: [], testCases: [], evaluations: [] };
+      selectedTemplateId = null; selectedVersionId = null; saveDB();
+    }
+
+    function seedData() {
+      if (db.templates.length || db.presets.length || db.testCases.length) {
+        if (!confirm('目前已有資料，仍要加入示範資料？')) return;
+      }
+      const preset1 = { id: uid('preset'), name:'Joseph Character 3D', description:'角色驅動、對白版', tags:['3d','bible','dialogue'], createdAt:now(), builderState:{ mediaType:'3d', dialogueMode:'dialogue', domain:'bible-character', priorityMode:'strict', lengthMode:'standard', checkMode:'standard', subtitleMode:'strict', duration:'45-75 seconds', aspectRatio:'16:9', shotStyle:'tight', language:'english-structure-zh-dialogue', styleExtra:'sacred reverence, emotional character focus', customRules:'所有 speaking shots 必須正面或 3/4 側面' } };
+      const preset2 = { id: uid('preset'), name:'Moses Red Sea 3D', description:'場景奇觀、少對白版', tags:['3d','bible','scene'], createdAt:now(), builderState:{ mediaType:'3d', dialogueMode:'none', domain:'bible-scene', priorityMode:'balanced', lengthMode:'standard', checkMode:'minimal', subtitleMode:'strict', duration:'45-75 seconds', aspectRatio:'16:9', shotStyle:'balanced', language:'english-only', styleExtra:'epic scale, miraculous atmosphere', customRules:'只允許 1 個大景；其餘維持主體清楚' } };
+      db.presets.push(preset1, preset2);
+      db.testCases.push(
+        { id: uid('case'), title:'約瑟被賣到埃及', inputIdea:'約瑟被哥哥賣到埃及，從痛苦到命運轉折', category:'bible-character', notes:'', createdAt:now() },
+        { id: uid('case'), title:'摩西過紅海', inputIdea:'摩西帶領以色列人穿越紅海，帶出神蹟與敬畏', category:'bible-scene', notes:'', createdAt:now() },
+        { id: uid('case'), title:'CEO 演講訪談', inputIdea:'一位 CEO 在簡潔舞台接受訪談，談產品願景', category:'real-interview', notes:'', createdAt:now() }
+      );
+      saveDB();
+    }
+
+    window.applyPreset = applyPreset; window.deletePreset = deletePreset; window.selectTemplate = selectTemplate; window.loadTemplateToBuilder = loadTemplateToBuilder;
+    window.deleteTemplate = deleteTemplate; window.selectVersion = selectVersion; window.loadVersionToBuilder = loadVersionToBuilder; window.markStable = markStable; window.deleteVersion = deleteVersion;
+    window.evaluateCase = evaluateCase; window.deleteCase = deleteCase;
+
+    Object.values(els).forEach(el => {
+      if (el && ['SELECT','TEXTAREA','INPUT'].includes(el.tagName)) {
+        el.addEventListener('input', buildPrompt);
+        el.addEventListener('change', buildPrompt);
+      }
+    });
+
+    els.copyPromptBtn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(els.promptOutput.textContent); els.copyPromptBtn.textContent='已複製'; setTimeout(()=>els.copyPromptBtn.textContent='複製 Prompt',1200);} catch { alert('複製失敗'); }
+    });
+    els.downloadPromptBtn.addEventListener('click', () => {
+      const blob = new Blob([els.promptOutput.textContent], { type:'text/markdown;charset=utf-8' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `prompt-${Date.now()}.md`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500);
+    });
+    els.saveTemplateBtn.addEventListener('click', saveTemplate);
+    els.saveVersionBtn.addEventListener('click', () => saveVersion());
+    els.savePresetBtn.addEventListener('click', savePreset);
+    els.exportJsonBtn.addEventListener('click', exportJSON);
+    els.importJsonInput.addEventListener('change', e => { const f = e.target.files[0]; if (f) importJSON(f); e.target.value=''; });
+    els.seedBtn.addEventListener('click', seedData);
+    els.resetBtn.addEventListener('click', resetAll);
+    els.addCaseBtn.addEventListener('click', addCase);
+    els.diffA.addEventListener('change', updateDiff); els.diffB.addEventListener('change', updateDiff);
+    els.themeToggle.addEventListener('click', ()=>{const root=document.documentElement; root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');});
+
+    renderAll();
+  </script>
+</body>
+</html>

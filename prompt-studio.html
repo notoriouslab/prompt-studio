@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Prompt Studio v6</title>
+        <title>Prompt Studio</title>
         <style>
             /* ── v6: fixed type scale, no clamp(), unified control sizing ──
                v6.2 a11y bump: +1-3px across the scale for easier reading */
@@ -888,7 +888,7 @@
                 <div class="brand">
                     <div class="logo-mark" aria-hidden="true"></div>
                     <div class="brand-text">
-                        <strong>Prompt Studio v6</strong
+                        <strong>Prompt Studio</strong
                         ><span class="muted" data-i18n="header.subtitle"
                             >Mode × Platform · 本地優先</span
                         >
@@ -4734,7 +4734,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 const name = prompt("模板名稱", suggestTemplateName(state));
                 if (!name) return;
                 const description =
-                    prompt("模板說明", "Created from Prompt Studio v6") || "";
+                    prompt("模板說明", "Created from Prompt Studio") || "";
                 const tags = (
                     prompt(
                         "標籤（逗號分隔）",
@@ -4852,7 +4852,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     meta: {
                         exportedAt: now(),
                         version: "v6",
-                        tool: "Prompt Studio v6",
+                        tool: "Prompt Studio",
                     },
                     platforms: db.platforms,
                     templates: db.templates,

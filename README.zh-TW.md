@@ -167,13 +167,6 @@ node snapshot-test.js && node eval.js
 
 ---
 
-## 版本紀錄
-
-- `v3 → v6.2-refactor`（2026-05-17 → 18）— 內部迭代：VideoExpress 專用 generator → Platform Registry → Mode × Platform 雙軸 → PromptBuilder refactor
-- **`0.6.0`**（2026-05-19）— 首次公開 release。新增 Sora 2 / Veo 3.1；Runway / Kling / Seedance customPromptBlock 對齊 2026 syntax。Actor Alias 雙軌制、dialogue speech-act wrap pattern、outputMode（full / minimal）、DOMAINS / MEDIATYPES 集中化、L2 eval framework。
-
----
-
 ## License
 
 [MIT](./LICENSE) © 2026 notoriouslab

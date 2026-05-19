@@ -167,13 +167,6 @@ New platform / domain / mediaType: edit the corresponding const in `prompt-studi
 
 ---
 
-## Version log
-
-- `v3 → v6.2-refactor` (2026-05-17 → 18) — internal iterations: VideoExpress-specific generator → Platform Registry → Mode × Platform → PromptBuilder refactor
-- **`0.6.0`** (2026-05-19) — first public release. Sora 2 / Veo 3.1 added; Runway / Kling / Seedance updated to 2026 syntax. Actor Alias dual-track, dialogue speech-act wrap pattern, outputMode (full / minimal), DOMAINS / MEDIATYPES centralized, L2 eval framework.
-
----
-
 ## License
 
 [MIT](./LICENSE) © 2026 notoriouslab

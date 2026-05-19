@@ -3979,17 +3979,17 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 let html = items
                     .map(
                         (v, i) =>
-                            `<span class="chip">${v}<span class="chip-remove" data-idx="${i}" data-key="${key}">✕</span></span>`,
+                            `<span class="chip">${esc(v)}<span class="chip-remove" data-idx="${i}" data-key="${esc(key)}">✕</span></span>`,
                     )
                     .join("");
                 if (optionsList) {
                     // dropdown-add style for compatibleModes
                     const avail = optionsList.filter((o) => !items.includes(o));
                     if (avail.length) {
-                        html += `<select class="chip" style="background:transparent;border:1px dashed var(--color-border);font-size:var(--text-xs);padding:.3rem .55rem" data-add="${key}"><option value="">+ 加…</option>${avail.map((o) => `<option value="${o}">${o}</option>`).join("")}</select>`;
+                        html += `<select class="chip" style="background:transparent;border:1px dashed var(--color-border);font-size:var(--text-xs);padding:.3rem .55rem" data-add="${esc(key)}"><option value="">+ 加…</option>${avail.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}</select>`;
                     }
                 } else {
-                    html += `<span class="chip-input"><input type="text" placeholder="${placeholder}" data-add="${key}" /></span>`;
+                    html += `<span class="chip-input"><input type="text" placeholder="${esc(placeholder)}" data-add="${esc(key)}" /></span>`;
                 }
                 container.innerHTML = html;
                 container.querySelectorAll(".chip-remove").forEach((el) => {

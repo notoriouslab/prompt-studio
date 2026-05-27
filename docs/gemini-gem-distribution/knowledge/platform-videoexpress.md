@@ -268,6 +268,18 @@ Same problem as Pitfall 1 (anti-scaffold pollution) but in the audio dimension. 
 
 Rule: when a threat or character must remain off-screen, convey their presence **only through the visible actor's behavior** (scanning, flinching, panicked expression, taking cover). Do NOT use audio cues to suggest off-frame entities — VE will visualize them anyway. Audio stays restricted to the visible actor's foley (breathing, footsteps) + ambient environment (wind, insects, leaves).
 
+#### Pitfall 6 — Action timeline continuity across beats
+
+VE reads each beat literally. Beat N must not declare an action **completed** if beat N+1 still needs the in-progress state — VE invents a disconnected motion to bridge the contradiction.
+
+**Wrong (2026-05-27 #2 push-obstacle — beat 1 lands the beam, beat 2 still braces it):**
+
+`[0-1秒]：...木樑...重重撞擊地面... [1-2.5秒]：Actor 2 雙手向上猛力托住並擋下這些燃燒的樑木...` — the beam already hit the ground in beat 1, so "catching" it in beat 2 is incoherent and VE renders a garbled in-between.
+
+**Right:** keep the object's physical state consistent across the boundary — if beat N+1 needs the actor to catch/brace it, beat N must leave it mid-air / mid-impact, not landed.
+
+Rule: trace the physical state of every object and body across beat boundaries. A state declared "done" in one beat cannot be "in progress" in the next.
+
 ### Validated example prompts (2026-05-24 dogfood v4)
 
 Reference these for phrasing when generating extended-framing prompts:
@@ -298,6 +310,8 @@ T2I (essential anchor): `電影感寫實劇照，戶外中遠景低角度仰拍�
 
 I2V pattern: Two beats with a physics arc — `[0-3s]` explosive action (撞碎/躍出/墜落, glass shards + smoke ejecting outward, body airborne) → `[3-8s]` impact-absorb-recover landing (`雙腳穩穩重重降落...膝蓋深蹲微曲以吸收動能，地面炸開一圈灰塵。他迅速站直身體...大步走出塵土`). The landing beat needs the impact→absorb→recover physics layering, not a flat "lands and stands".
 
+Positive note (2026-05-27 景 C): for jump / leap-off shots, VE **auto-adds realistic push-off detail** — the actor steps on the parapet / ledge just before leaping, with a matching foot-scuff (蹬地) foley. You don't need to prompt this; lean on it for free realism on leap actions.
+
 #### In-vehicle POV — 載具內往外看（窗框/擋風玻璃當前景框）, validated 2026-05-27
 
 For cockpit / cabin / car interior looking outward or downward. Vehicle structure (window frame, dashboard, windshield) becomes the foreground framing element; the frame does the visual work, so keep camera motion minimal.
@@ -308,11 +322,16 @@ T2I (essential anchor), two variants:
 
 I2V pattern: stable mount + slow controlled move. Emotional beat (#5): `穩定中景側面 → 緩緩推近至臉部中景特寫 → 拉遠`, layering emotional residue per § Realism layer. Search beat (#8): `駕駛艙視角隨飛行軌跡略微橫移，樹冠缺口短暫揭露遙遠下方地面`.
 
-#### God's-eye vertical fall — 垂直墜落動態變體, speed-segment validated 2026-05-27 (前段 unsolved — see backlog)
+#### Vertical fall — 從天而降, solved via low-angle + environment-rush, validated 2026-05-27
 
-The static god's-eye above is supine/motionless. For a DYNAMIC vertical fall, the validated fall-speed trick (#3 後段): make the actor pass fast-moving vertical reference objects (`高速落下時，接連經過一排排的公寓窗戶`) plus severe downward motion blur — the passing rows give the parallax that reads as falling.
+⚠️ Do NOT use top-down god's-eye for a falling subject — top-down cannot distinguish "falling" from "flying flat horizontally" (the failed #3 approach: every attempt rendered as flying through skyscrapers, not falling). The solved recipe (2026-05-27, four parts):
 
-⚠️ Unsolved (backlog): pure top-down with no scale reference in the first 1-2s renders as horizontal "flying flat", not falling (#3 前段). The fall only reads once reference objects start passing. See § Open calibration backlog #1.
+1. **View — low-angle ground-up, NOT top-down.** `低角度地面仰視寬景鏡頭，攝影機置於地面向正上方仰拍`. Low-angle gives an unambiguous sky→ground direction; same family as the Low-angle hero shot above.
+2. **T2I pose — keep it SIMPLE.** `演員...以正常的直立墜落姿態（雙腳朝下指向地面）` works; stacking tokens (`頭上腳下`+`脊椎垂直`+`臉朝向下方`) backfires — VE flips to a head-down nosedive that looks like a suicide jump. One clear orientation cue beats a pile. (Or generate the still in an external T2I tool and feed VE the correct image.)
+3. **I2V motion — subject stays still, environment rushes up.** VE can't move a subject through a large fall displacement, but it CAN do `stable subject + environment motion` (same engine as reverse dolly). Lock the actor near frame-center,姿態不變, and make the background buildings/windows `以極高速向畫面上方飛速流動掠過` with severe upward motion blur — the rushing rows give the parallax that reads as falling.
+4. **Framing — lock full body every beat.** Low-angle landing drifts to a leg/lower-body close-up; write `全身從頭到腳完整入鏡` per beat and have the landing beat `站直抬頭、鏡頭保持距離`.
+
+⚠️ Accepted limit: even with all four, the fall still renders slow-mo ("天神緩緩而降"). VE's slow-mo on vertical falls is unbeatable at prompt level — fix it in post (see § Known limitations #4). The anti-slow-mo kit works on horizontal running but NOT on falling.
 
 ## Required prompt-level declarations (anti-default directives)
 
@@ -397,6 +416,17 @@ VE's training data is dominated by specific cinematography conventions per scene
 
 **Rule — name the move professionally**: VE parses **named professional camera-move vocabulary** (`over-the-shoulder tracking` / `reverse dolly` / `low-angle hero shot` / `descending push-in` / `side-tracking`) far more reliably than informal spatial descriptions like 「背對鏡頭」/「從後面拍」. Dogfood 2026-05-27 ground truth: the same intent named as a move lands; phrased loosely, VE falls back to its own convention. Pair the named move with a reference image for best adherence.
 
+### Direction control — making the actor run a specific screen-direction
+
+To make an actor change to / sprint in a specific screen-direction (e.g. "runs left at a set time"), align FOUR signals to the same direction — one alone won't hold (validated ~70% reliable, the workable ceiling, 2026-05-27 #12):
+
+1. **Write `screen-left` / 畫面左方**, not bare 「往左」 (VE may read that as the actor's own left hand).
+2. **Camera tracks the same way** — running screen-left → camera pans laterally left at matched speed.
+3. **Foreground elements stream the opposite way** (`蕨類向畫面右方掠過`) — relative motion reinforces "he's going left".
+4. **Anchor to an on-frame object** — `朝左邊那塊苔蘚巨石的方向跑` beats an abstract "left".
+
+For a timed turn (run forward, THEN cut left), give the turn its own short beat (`[2-2.5s] 猛然轉向畫面左方`) — don't cram the turn into the sprint beat (see Pitfall 6). ~70% is about VE's ceiling here; for exact direction, supply a reference image whose subject already faces the target way.
+
 ## T2I composition complexity guidance
 
 VE T2I struggles with **compound layered subjects in a single frame** — e.g. `predator snout in soft-focus foreground + 4 small actors in middle ground + jungle depth in background`. Validated 2026-05-25 Shot 2 v6.3-v6.5: all attempts to put recognizable creature parts in foreground with prey in background failed (rendered as chase scene from front, ignored POV setup).
@@ -408,6 +438,8 @@ Rules for T2I composition:
 3. **NO floating shadow / silhouette overlays** — VE renders them as 2D sticker pasted on the frame, not as cast shadow physics. If you need to imply an off-frame predator, use **audio + camera bobbing as if mounted on a creature** instead of visual shadow tricks.
 4. **NO foreground partial-body cues** — `snout entering frame bottom`, `claw tip visible in foreground` etc. VE renders the partial body as a complete creature in the wrong position. If predator POV is needed, use abstract spatial description only (`from the elevated perspective of a large predator at 4m height`) without rendering the predator's body parts.
 5. **When in doubt, simplify** — pick the one composition layer that matters most for the shot and drop the rest. Compound staging in a single T2I is the most common reason for failure.
+
+   Corollary — **simple pose descriptions beat stacked ones.** Validated 2026-05-27 (vertical fall): `正常的直立墜落姿態（雙腳朝下指向地面）` rendered correctly, but stacking `頭上腳下`+`脊椎垂直`+`臉朝向下方` flipped VE to a head-down nosedive. For a non-default body pose, give ONE clear orientation cue, not a pile of redundant anatomical tokens.
 6. **Use specific reference-tagged settings over generic ones** — generic descriptions (`tropical jungle`, `city street`, `office`) leave VE to fall back to base interpretation. Reference-tagged settings that invoke a recognizable film / cultural / aesthetic register give VE a much stronger prior (it has trained on the reference material).
 
    ❌ Generic (default tropical jungle, base interpretation):
@@ -651,15 +683,16 @@ These VE behaviors emerged across 2026-05-24 v1-v4 dogfood. The Gem should NOT t
 1. **Background detail under-renders in distance shots** — paving patterns, crowd faces, distant signage all soften. Mitigation: in T2I, write background materials as concrete tokens (`hexagonal granite paving stones, 30cm wide, alternating light and dark gray rings`) so the model at least knows the target — but final render will still be softer than the prompt suggests. If detail is critical, propose a closer-framing inserted shot instead.
 2. **Action pacing skews slow/elegant** — VE interprets adverbs (`slowly` / `smoothly` / `gently`) literally and compounds them, so actions render at 0.6-0.8x natural speed. Mitigation: drop adverbs entirely when default pace is wanted; use `swiftly` / `at brisk pace` / `quickly` when faster motion is needed. Avoid stacking `slowly`+`smoothly`+`gently` in the same beat.
 3. **Crowd/extras lack visual diversity** — background pedestrians render with repetitive faces; vehicles repeat make/model/color. Mitigation: explicit diversity tokens (`pedestrians of varied ages, genders, and clothing styles` / `a mix of office workers, students, and elderly people` / `different car models and colors`) help marginally but do not eliminate the bias. If diversity is critical, propose a tighter framing that excludes the crowd.
+4. **Vertical falls always render slow-motion** — the anti-slow-mo kit (Declaration 1) speeds up horizontal running but has NO effect on a falling subject; VE renders every fall as a slow "floating descent" (「天神緩緩而降」) regardless of velocity tokens. Mitigation: build the shot for correctness (low-angle + environment-rush + full-body lock, see § Validated examples › Vertical fall) and speed up the clip in post (editing software). Don't burn iterations trying to prompt the slow-mo away.
 
-## Open calibration backlog (待下一輪 dogfood 驗證 — 假設未驗證，先不寫進 generation rules)
+## Calibration backlog — 2026-05-27 round (all resolved)
 
-2026-05-27 dogfood shots that worked only partially. The hypotheses below are NOT yet validated — do not apply them as hard generation rules until a dogfood round confirms. Listed so the next session knows where to push.
+The four open items from the 2026-05-27 dogfood are now resolved; recorded so they aren't re-litigated:
 
-1. **Vertical fall front segment reads as "flying flat" (#3 前段)** — top-down with no early scale reference renders as horizontal flight; the fall only reads once passing reference objects appear. Hypothesis: seed a scale-expansion reference (ground elements rapidly enlarging) + severe downward motion blur from second 0, binding "falling" to on-frame scale change. See § Validated examples › God's-eye vertical fall.
-2. **Sustained horizontal running won't speed up (#4 前段, #12)** — VE auto-slows sustained running (an instance of Known limitation #2). #4 後段 (the fall) rendered fast because falling is VE-native. Hypothesis: apply the full Declaration 1 kit to the running beats too (`Fast dynamic` + velocity vocab ×3 + drop `slowly`/`gradually`) AND shorten the running beat so VE has no room for slow-mo.
-3. **Push-obstacle-away only ~75/100 (#2)** — beats overlapped (`[0.5-1.5]` vs `[1.4-3]`) and two power moves (catch → shove) were crammed into one beat. Hypothesis: non-overlapping beats + give the shove its own beat with adequate time.
-4. **Direction wrong in lateral sprint (#12)** — tracking worked but direction did not. Likely a reference-image / left-right phrasing issue; needs the actual reference frame to diagnose.
+1. **Vertical fall** — solved. Low-angle (NOT top-down) + subject-stable / environment-rush + simple pose + full-body lock; see § Validated examples › Vertical fall. Residual slow-mo accepted → § Known limitations #4 (fix in post).
+2. **Sustained running speed** — split outcome: the anti-slow-mo kit DOES speed up horizontal running (validated → Declaration 1) but does NOT work on vertical falls (→ Known limitations #4).
+3. **Push-obstacle beat timing** — non-overlapping beats + a dedicated shove beat helped, and exposed a separate logic bug (a beat declaring the object landed while the next still braces it) → generalized into § Director Gaze Pitfall 6.
+4. **Lateral-sprint direction** — solved to ~70% (workable) via the four-signal direction anchor → § Cinematography patterns › Direction control.
 
 ## Recommended defaults
 

@@ -290,6 +290,30 @@ T2I (essential anchor): `Cinematic live-action film still photographed from a hi
 
 I2V pattern: Two beats — both repeat `lying flat on his back throughout` / `body and arms unchanged from the supine position` to prevent pose drift.
 
+#### Low-angle hero/action shot — 低角度英雄動作仰拍, validated 2026-05-27
+
+For break-out / leap / rescue / roll action where the subject should read as powerful and dynamic. NOT the same as worm's-eye (extreme 30cm ground contact + static eye contact); this is mid-to-wide framing + full real-time action.
+
+T2I (essential anchor): `電影感寫實劇照，戶外中遠景低角度仰拍。<魁梧主體> 用 <寬闊厚實的後背/肩膀> 作為護盾 <主動作，e.g. 猛力撞碎二樓玻璃窗>，同時將 <被保護者> 緊緊護在胸前。無數玻璃碎片在火光中向外四濺。... 強烈戲劇性火光照明、高對比、強烈動態速度感。畫面乾淨無浮水印，16:9。` + Declaration 1 anti-slow-mo line + Declaration 2 ambient-sound line.
+
+I2V pattern: Two beats with a physics arc — `[0-3s]` explosive action (撞碎/躍出/墜落, glass shards + smoke ejecting outward, body airborne) → `[3-8s]` impact-absorb-recover landing (`雙腳穩穩重重降落...膝蓋深蹲微曲以吸收動能，地面炸開一圈灰塵。他迅速站直身體...大步走出塵土`). The landing beat needs the impact→absorb→recover physics layering, not a flat "lands and stands".
+
+#### In-vehicle POV — 載具內往外看（窗框/擋風玻璃當前景框）, validated 2026-05-27
+
+For cockpit / cabin / car interior looking outward or downward. Vehicle structure (window frame, dashboard, windshield) becomes the foreground framing element; the frame does the visual work, so keep camera motion minimal.
+
+T2I (essential anchor), two variants:
+- Side / character variant (#5): `穩定的中景側面鏡頭，攝影機置於 [載具] 外側略偏後方，與 Actor 1 平視，捕捉他的側臉與向外凝視的姿態以及窗外景物。`
+- Cockpit / search variant (#8): `從 [載具] 駕駛艙內部透過前方擋風玻璃向下俯瞰 [地景]。儀表板與駕駛艙框架在前景下方清晰可見，提供明確的駕駛艙視角框架。`
+
+I2V pattern: stable mount + slow controlled move. Emotional beat (#5): `穩定中景側面 → 緩緩推近至臉部中景特寫 → 拉遠`, layering emotional residue per § Realism layer. Search beat (#8): `駕駛艙視角隨飛行軌跡略微橫移，樹冠缺口短暫揭露遙遠下方地面`.
+
+#### God's-eye vertical fall — 垂直墜落動態變體, speed-segment validated 2026-05-27 (前段 unsolved — see backlog)
+
+The static god's-eye above is supine/motionless. For a DYNAMIC vertical fall, the validated fall-speed trick (#3 後段): make the actor pass fast-moving vertical reference objects (`高速落下時，接連經過一排排的公寓窗戶`) plus severe downward motion blur — the passing rows give the parallax that reads as falling.
+
+⚠️ Unsolved (backlog): pure top-down with no scale reference in the first 1-2s renders as horizontal "flying flat", not falling (#3 前段). The fall only reads once reference objects start passing. See § Open calibration backlog #1.
+
 ## Required prompt-level declarations (anti-default directives)
 
 VE has built-in defaults that fight against several common intents. These four declarations MUST be included in every action/chase prompt to override the defaults. Validated 2026-05-25 v6 dogfood.
@@ -364,8 +388,14 @@ VE's training data is dominated by specific cinematography conventions per scene
 | **Approach / entrance** | Forward dolly — actor moves into scene with back to camera | `camera positioned ahead, actor walks into frame moving away from camera` | Inverse of chase |
 | **Predator first-person POV** | Forward dolly with bobbing, snout in foreground — but VE handles this poorly (see Known limitations) | Avoid for now; substitute with **aerial god-view** or **high-angle no-creature** | Shot 2 v6.3 / v6.4-A / v6.5-A / v6.5-B all failed |
 | **Closing wide shot / receding danger** | Static wide long shot, actors recede into distance | `wide static shot at chest height ~6 meters, lens looking down the path toward the receding action` | Shot 6 v6 design |
+| **Hero action / break-out / leap** (破窗、躍出、救援、翻滾) | **Low-angle mid-to-wide upward shot** — camera low, tilted up, subject towers with dynamic force | `戶外中遠景低角度仰拍` or `low-angle ground-level lateral tracking` — camera at ground level looking up or tracking laterally, subject fills frame with motion | #1/#7/#11 (2026-05-27). Distinct from worm's-eye (extreme 30cm static eye-contact) — this is mid/wide framing + dynamic action |
+| **Entering danger / charging in** (衝入火場、進攻) | **Over-the-shoulder low-angle tracking** — camera tight directly behind subject's back, low angle, strong forward momentum | `動態低角度越肩跟拍鏡頭，鏡頭緊跟在 [Actor] 正後方` + `極具速度感與動態前進感` | #15 (2026-05-27). Naming `越肩跟拍` / `over-the-shoulder tracking` parses far better than vague 「背對鏡頭」 — see naming Rule below |
+| **In-vehicle POV** (座艙/駕駛艙往外看) | **Vehicle structure as foreground frame** — window frame / dashboard / windshield framing the outward view | side variant: `攝影機置於 [載具] 外側略偏後方，與 [Actor] 平視，捕捉側臉與向外凝視姿態`; cockpit variant: `透過前方擋風玻璃向下俯瞰，儀表板與駕駛艙框架在前景下方清晰可見` | #5/#8 (2026-05-27) |
+| **Descending push-in** (高空下降逼近) | **High-angle descend + push-in compound** — lower the height while moving closer, framing narrows group→single subject | `elevated high-angle tracking from ~4m at 35° downward, then descending push-in lowering to ~2m while moving closer to [Actor] from behind, framing narrowing from group-wide to focus on [Actor]'s back` | #13 運鏡可學 (2026-05-27). Caveat: #13 overall failed because the predator was wrongly staged in front — the camera move is sound, the staging must still obey § T2I composition rules |
 
 **Rule**: pick the cinematography from this table BEFORE writing the Director Gaze answers. The wrong pattern (e.g. forward tracking for chase) makes Director Gaze adjustments fight VE's prior — they will be overridden.
+
+**Rule — name the move professionally**: VE parses **named professional camera-move vocabulary** (`over-the-shoulder tracking` / `reverse dolly` / `low-angle hero shot` / `descending push-in` / `side-tracking`) far more reliably than informal spatial descriptions like 「背對鏡頭」/「從後面拍」. Dogfood 2026-05-27 ground truth: the same intent named as a move lands; phrased loosely, VE falls back to its own convention. Pair the named move with a reference image for best adherence.
 
 ## T2I composition complexity guidance
 
@@ -621,6 +651,15 @@ These VE behaviors emerged across 2026-05-24 v1-v4 dogfood. The Gem should NOT t
 1. **Background detail under-renders in distance shots** — paving patterns, crowd faces, distant signage all soften. Mitigation: in T2I, write background materials as concrete tokens (`hexagonal granite paving stones, 30cm wide, alternating light and dark gray rings`) so the model at least knows the target — but final render will still be softer than the prompt suggests. If detail is critical, propose a closer-framing inserted shot instead.
 2. **Action pacing skews slow/elegant** — VE interprets adverbs (`slowly` / `smoothly` / `gently`) literally and compounds them, so actions render at 0.6-0.8x natural speed. Mitigation: drop adverbs entirely when default pace is wanted; use `swiftly` / `at brisk pace` / `quickly` when faster motion is needed. Avoid stacking `slowly`+`smoothly`+`gently` in the same beat.
 3. **Crowd/extras lack visual diversity** — background pedestrians render with repetitive faces; vehicles repeat make/model/color. Mitigation: explicit diversity tokens (`pedestrians of varied ages, genders, and clothing styles` / `a mix of office workers, students, and elderly people` / `different car models and colors`) help marginally but do not eliminate the bias. If diversity is critical, propose a tighter framing that excludes the crowd.
+
+## Open calibration backlog (待下一輪 dogfood 驗證 — 假設未驗證，先不寫進 generation rules)
+
+2026-05-27 dogfood shots that worked only partially. The hypotheses below are NOT yet validated — do not apply them as hard generation rules until a dogfood round confirms. Listed so the next session knows where to push.
+
+1. **Vertical fall front segment reads as "flying flat" (#3 前段)** — top-down with no early scale reference renders as horizontal flight; the fall only reads once passing reference objects appear. Hypothesis: seed a scale-expansion reference (ground elements rapidly enlarging) + severe downward motion blur from second 0, binding "falling" to on-frame scale change. See § Validated examples › God's-eye vertical fall.
+2. **Sustained horizontal running won't speed up (#4 前段, #12)** — VE auto-slows sustained running (an instance of Known limitation #2). #4 後段 (the fall) rendered fast because falling is VE-native. Hypothesis: apply the full Declaration 1 kit to the running beats too (`Fast dynamic` + velocity vocab ×3 + drop `slowly`/`gradually`) AND shorten the running beat so VE has no room for slow-mo.
+3. **Push-obstacle-away only ~75/100 (#2)** — beats overlapped (`[0.5-1.5]` vs `[1.4-3]`) and two power moves (catch → shove) were crammed into one beat. Hypothesis: non-overlapping beats + give the shove its own beat with adequate time.
+4. **Direction wrong in lateral sprint (#12)** — tracking worked but direction did not. Likely a reference-image / left-right phrasing issue; needs the actual reference frame to diagnose.
 
 ## Recommended defaults
 

@@ -102,7 +102,7 @@ Mode: **Storyboard** (full / minimal) / **Single-Shot** / **Avatar** / **Short-F
 The "Real-time Prompt" pane updates as you change any field.
 
 ### Output modes
-Storyboard mode has two output styles — **Full** (8 sections including Character Bible, Emotional Arc, Continuity Lock) for production review, or **Minimal** (2 sections, paste-ready) aligned with VideoExpress's compact format.
+Storyboard mode has three output styles — **Full** (8 sections including Character Bible, Emotional Arc, Continuity Lock) for production review, **Minimal** (2 sections, paste-ready) aligned with VideoExpress's compact format, or **VE Run Sheet**: an execution run sheet (frozen character bible, per-scene 3-field prompts with the <100-char Actor Script limit, settings checklist calibrated on real runs) that a browser agent — Claude in Chrome, Claude Code, ChatGPT agent mode — can execute against app.videoexpress.ai via the [official VideoExpress agent workflow](https://github.com/strontiumplatform/VideoExpress.ai-Full-Length-Consistent-Character-Realistic-Talking-Avatar-Video-Workflow), replacing its auto-written script with your directed one. The same sheet doubles as a manual copy-paste checklist for users without an agent.
 
 ### Template + version management
 Save / load builder presets, track multiple versions per template.

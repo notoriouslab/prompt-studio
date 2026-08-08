@@ -1126,6 +1126,12 @@
                             >
                                 Minimal (paste-ready)
                             </option>
+                            <option
+                                value="runsheet"
+                                data-i18n="opt.output.runsheet"
+                            >
+                                VE Run Sheet (agent-executable)
+                            </option>
                         </select>
                     </div>
                     <div class="field-inline">
@@ -1780,6 +1786,7 @@
                     "opt.shot.balanced": "平衡",
                     "opt.output.full": "完整版（全部 sections）",
                     "opt.output.minimal": "精簡版（直接 paste）",
+                    "opt.output.runsheet": "VE 執行工單（agent 可執行）",
                     "opt.lang.engzh": "結構英／對白中",
                     "opt.lang.eng": "全英",
                     "opt.lang.zh": "全繁中",
@@ -2031,6 +2038,7 @@
                     "opt.shot.balanced": "Balanced",
                     "opt.output.full": "Full (all sections)",
                     "opt.output.minimal": "Minimal (paste-ready)",
+                    "opt.output.runsheet": "VE Run Sheet (agent-executable)",
                     "opt.lang.engzh": "Structure EN / Dialogue 中",
                     "opt.lang.eng": "English only",
                     "opt.lang.zh": "繁中 only",
@@ -3338,6 +3346,21 @@ Reliable modifiers that improve perceived production value:
             }
 
             const TIER1 = {
+                // runsheet：VE 三欄位路由（Image Prompt / Lipsync Video Prompt / Actor 1 Script），
+                // 規則來自 2026-08-08 真實跑片實測，與一般 storyboard 的 I2V 內嵌對白式規則互斥
+                "storyboard-runsheet": (state, { dialogue }) => [
+                    "Output must contain ALL required headings in the exact order listed in Output Format.",
+                    "The Character Bible paragraph is FROZEN: re-paste it byte-identical into every scene's Image Prompt. Never shorten, never paraphrase, never write references like 'same person as before' — the generator has no memory between scenes; one changed word produces a different face.",
+                    "Each scene is one independent clip (~8 seconds). No cross-scene timestamps, no scene-to-scene references — the bible carries all continuity.",
+                    dialogue
+                        ? "Each scene's spoken line lives ONLY in the Actor 1 Script field and must be UNDER 100 characters including spaces and punctuation — VideoExpress rejects longer scripts. Never put dialogue text in the Image Prompt or the Lipsync Video Prompt (speech outside Actor 1 Script renders a closed-mouth narration)."
+                        : "No dialogue anywhere. Scenes carry motion and ambience direction only.",
+                    "Framing: close-up to shoulders-up, camera at eye level, static camera. Hands stay out of frame. No props. One background object only. (Platform guidance: close-up shots give the best character consistency.)",
+                    state.subtitleMode === "strict"
+                        ? "Do NOT mention subtitle, caption, lower-thirds, on-screen text, text overlay, or transcription anywhere. Keep visual field clean."
+                        : "Favor clean visual language: unmarked frames, plain surfaces, uncluttered compositions.",
+                    "Avoid copyrighted characters, celebrity likenesses, brand names, logos, watermarks.",
+                ].filter(Boolean),
                 storyboard: (state, { dialogue }) => [
                     "Output must contain ALL required headings in the exact order listed in Output Format.",
                     "Timestamps in the storyboard must be continuous with zero gaps. Format: `00:00-00:05`.",
@@ -3418,6 +3441,22 @@ Reliable modifiers that improve perceived production value:
             }
 
             const SILENT_CHECKS = {
+                "storyboard-runsheet": (state, { dialogue }) => [
+                    "✓ All required sections present, in order, exact spelling — no other headings emitted",
+                    "✓ Character Bible paragraph appears byte-identical in every scene's Image Prompt",
+                    dialogue
+                        ? "✓ Every Actor 1 Script is under 100 characters including spaces and punctuation, with the count appended"
+                        : "✓ No dialogue or quoted speech anywhere in the output",
+                    dialogue
+                        ? "✓ No dialogue text inside any Image Prompt or Lipsync Video Prompt"
+                        : null,
+                    dialogue
+                        ? "✓ The Voice Direction line is identical wherever voice is referenced"
+                        : null,
+                    "✓ Emotion tags: exactly one per scene, no two consecutive scenes share one",
+                    "✓ Settings Checklist and How To Run blocks emitted verbatim",
+                    "✓ Output contains no conversational intro or meta-commentary",
+                ].filter(Boolean),
                 storyboard: (state, { dialogue }) => {
                     const minimal = state.outputMode === "minimal";
                     return [
@@ -3481,7 +3520,31 @@ Reliable modifiers that improve perceived production value:
                 const domain = maps.domain[state.domain];
                 const dialogue = state.dialogueMode === "dialogue";
                 const minimal = state.outputMode === "minimal";
+                const runsheet = state.outputMode === "runsheet";
                 const shotCount = shotCountFor(state);
+
+                if (runsheet) {
+                    const rsSections = [
+                        "`# Character Bible`",
+                        dialogue ? "`# Voice Direction`" : null,
+                        `\`# Scene Run Sheet\` (${shotCount} scenes)`,
+                        "`# VideoExpress Settings Checklist`",
+                        "`# How To Run`",
+                    ].filter(Boolean);
+                    return joinNonEmpty([
+                        `# ${media.title} — VideoExpress Execution Run Sheet`,
+                        `You are a video production director preparing an execution run sheet for VideoExpress.ai. The user provides one IDEA; you expand it into a machine-executable run sheet: a frozen character bible, ${dialogue ? "a frozen voice direction line, " : ""}per-scene generation prompts, and a fixed settings checklist. The run sheet is consumed two ways — pasted to a browser agent that drives app.videoexpress.ai, or followed manually field by field — so every value must be copy-paste final. Emit ONLY the ${rsSections.length} sections listed below.`,
+                        `Project defaults: ${state.duration} total, ${state.aspectRatio} aspect, ${shotCount} scenes of ~8s each.`,
+                        platformContextBlock(state),
+                        tierBlock(1, "Hard Constraints", TIER1["storyboard-runsheet"](state, { dialogue })),
+                        tierBlock(2, "Domain & Language", TIER2.storyboard(state, { domain })),
+                        tierBlock(3, "Style", TIER3.storyboard(state, { media, domain })),
+                        `## Output Format\nAnswer in Markdown with these exact sections, in order, no introductory text:\n${rsSections.map((s, i) => `${i + 1}. ${s}`).join("\n")}`,
+                        runsheetSectionSchemas(state, media, dialogue, shotCount),
+                        silentChecksBlock(SILENT_CHECKS["storyboard-runsheet"](state, { dialogue })),
+                        customRulesBlock(state),
+                    ]);
+                }
 
                 const sectionList = minimal
                     ? ["`# Actor Portrait Image Descriptions`", `\`# Scenes, Storyboard And Generation Prompts\` (${shotCount} shots)`]
@@ -3507,6 +3570,61 @@ Reliable modifiers that improve perceived production value:
                     silentChecksBlock(SILENT_CHECKS.storyboard(state, { dialogue })),
                     customRulesBlock(state),
                 ]);
+            }
+
+            // runsheet 專用 schema：三欄位路由 + 設定 checklist（內容源自 2026-08-08 VE 實測）
+            function runsheetSectionSchemas(state, media, dialogue, shotCount) {
+                const aspectLabel =
+                    state.aspectRatio === "9:16"
+                        ? "Vertical 9:16"
+                        : state.aspectRatio === "16:9"
+                          ? "Landscape 16:9"
+                          : state.aspectRatio;
+                return `## Section Schemas
+
+### \`# Character Bible\`
+For each recurring character (usually ONE), emit a single frozen paragraph of 40-70 words:
+\`Actor N: A [AGE]-year-old [gender], [build], [skin tone], [hair colour + length + style], [one facial detail], wearing [EXACT garment + plain colour word], [seated/standing] in [single location] with [ONE background object + position], [lighting direction + quality], shallow depth of field, shoulders-up framing, camera at eye level, static camera.\`
+- Age as a number (\"34-year-old\", not a range). Garment colours as plain words (\"charcoal-grey\", not \"slate ombré\"). One location noun. One background object with position.
+- Number actors as \`Actor 1\`, \`Actor 2\`, ... — VideoExpress's lipsync dialog natively addresses \"Actor 1\", so the alias doubles as the platform's own actor reference.
+${
+    dialogue
+        ? `
+### \`# Voice Direction\`
+One line, reused identically in every scene, e.g.:
+\`Neutral American English accent, warm confident tone, natural conversational pace.\`
+`
+        : ""
+}
+### \`# Scene Run Sheet\` (${shotCount} scenes)
+Tag every scene with ONE dominant emotion (Shocked / Angry / Sad / Surprised / Excited / Happy; Curious / Relieved as connectors). No two consecutive scenes share an emotion; flip polarity (negative <-> positive) at least 3 times when there are 5+ scenes. Scene 1 names the stakes; the final scene resolves the open loop on the highest-energy positive beat.
+
+Per scene, emit \`## Scene N — [Emotion]\` + exactly these fields, in order:
+- \`**Image Prompt:**\` [ENTIRE Character Bible paragraph verbatim] + one new action/expression clause showing this scene's emotion (face and upper body only — no standing up, no walking, hands stay out of frame).
+${
+    dialogue
+        ? `- \`**Lipsync Video Prompt:**\` one line naming the actor and directing the delivery like a film director — e.g. \`Actor 1 is the [brief visual tag]. He says his line in a [emotion] tone.\` NO dialogue text here.
+- \`**Actor 1 Script:**\` the spoken line — UNDER 100 characters including spaces and punctuation (the platform rejects longer). Append the count, e.g. \`(74 chars)\`.`
+        : `- \`**Video & Audio Prompt:**\` motion and ambience direction only — subtle head/eye movement, breathing, environment sound. No speech, no quoted text.`
+}
+
+### \`# VideoExpress Settings Checklist\`
+Emit this block verbatim (the executor re-verifies every item before EVERY generation):
+- Generator card: "Create Video From Prompt" (badges: Image to Video, Lipsync HD, Narrate, Consistent Character)
+- Aspect: ${aspectLabel} — the selector INSIDE the generator modal, not the preview-canvas one
+- Image Type: human
+- Use Consistent Character: ON — reference photo in slot 1, slot 2 EMPTY
+- Advanced Mode → Manual Video Length: 8s (set duration FIRST — ticking Lipsync hides the length controls; actual clip length follows the audio)
+${dialogue ? "- Lipsync HD Video: ON — speech goes ONLY in the Actor 1 Script field of the Create Lipsync Audio dialog that opens AFTER clicking Create Video; dialogue anywhere else renders a closed-mouth narration" : "- Lipsync HD Video: OFF (no dialogue in this project)"}
+- "Automatically enhance my image prompt": OFF after the hero image is saved — the enhancer rewrites the bible and breaks identity
+- "Share this in the public gallery": OFF — re-verify after every modal reopen
+- Max 5 generations in parallel; poll the "My AI Videos" folder for completion
+- Media tile captions equal the prompt text — use them to match clips to scenes when ordering the timeline
+
+### \`# How To Run\`
+Emit this block verbatim:
+- Agent execution: give this run sheet to a browser-capable agent (Claude in Chrome / Claude Code / ChatGPT agent mode) together with the official VideoExpress agent workflow: https://github.com/strontiumplatform/VideoExpress.ai-Full-Length-Consistent-Character-Realistic-Talking-Avatar-Video-Workflow — this run sheet REPLACES the workflow's own script-and-bible-writing step (its STEP 1); every other step of the workflow still applies.
+- Manual execution: apply the settings checklist once, then copy-paste each scene's fields into VideoExpress scene by scene, re-verifying the checklist before each generation.`;
             }
 
             function storyboardSectionSchemas(state, media, dialogue, shotCount) {
@@ -3716,6 +3834,20 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                         level: "info",
                         msg: "ℹ️ 未選平台，prompt 不會套用 Platform Context 與 customPromptBlock",
                     });
+                }
+
+                // runsheet 是 VE 專用輸出格式
+                if (state.outputMode === "runsheet") {
+                    if (state.mode !== "storyboard")
+                        warnings.push({
+                            level: "warn",
+                            msg: "⚠️ VE 執行工單只支援 storyboard mode，其他 mode 會忽略此輸出格式",
+                        });
+                    if (state.platformId !== "plat_videoexpress")
+                        warnings.push({
+                            level: "warn",
+                            msg: "⚠️ VE 執行工單是 VideoExpress 專用格式（設定 checklist 與欄位路由都對應 VE 介面），建議切換平台為 VideoExpress.ai",
+                        });
                 }
 
                 // mode-specific lints

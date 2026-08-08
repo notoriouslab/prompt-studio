@@ -102,7 +102,7 @@ Mode：**Storyboard**（full / minimal）/ **Single-Shot** / **Avatar** / **Shor
 「即時 Prompt」區會隨任何欄位變更即時更新。
 
 ### Output mode（輸出格式）
-Storyboard mode 有兩種輸出風格 — **Full**（8 個 sections，含 Character Bible / Emotional Arc / Continuity Lock 等，適合 production review），或 **Minimal**（2 個 sections，paste-ready，對齊 VideoExpress 精簡格式）。
+Storyboard mode 有三種輸出風格：**Full**（8 個 sections，含 Character Bible / Emotional Arc / Continuity Lock 等，適合 production review）、**Minimal**（2 個 sections，paste-ready，對齊 VideoExpress 精簡格式）、**VE 執行工單**（凍結 character bible、逐幕三欄位 prompt 含 Actor Script 100 字元上限、真實跑片校準的設定 checklist）。工單可交給瀏覽器 agent（Claude in Chrome / Claude Code / ChatGPT agent mode）搭配[官方 VideoExpress agent workflow](https://github.com/strontiumplatform/VideoExpress.ai-Full-Length-Consistent-Character-Realistic-Talking-Avatar-Video-Workflow) 自動操作 app.videoexpress.ai（用你導演過的劇本取代它自動代寫的那段）；沒有 agent 的使用者把同一份工單當人工逐幕貼上的 checklist 用。
 
 ### Template + 版本管理
 儲存 / 載入 builder presets，每個 template 可追蹤多版本。

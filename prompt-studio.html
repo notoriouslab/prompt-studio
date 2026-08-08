@@ -919,6 +919,19 @@
                                 — Select platform —
                             </option>
                         </select>
+                        <label
+                            class="tiny muted"
+                            style="display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap"
+                        >
+                            <input
+                                type="checkbox"
+                                id="showUntestedToggle"
+                                style="margin:0"
+                            />
+                            <span data-i18n="topbar.showUntested"
+                                >顯示未實測平台</span
+                            >
+                        </label>
                     </div>
                     <div class="field-inline">
                         <label data-i18n="topbar.duration">Duration</label>
@@ -1727,6 +1740,10 @@
                     "topbar.duration": "時長",
                     "topbar.aspect": "比例",
                     "topbar.platform.placeholder": "— 選擇平台 —",
+                    "topbar.showUntested": "顯示未實測平台",
+                    "registry.hiddenUntested":
+                        "⚠ {n} 個未實測平台已收起（本工具僅在 VideoExpress 上實測校準；勾選「顯示未實測平台」可展開）",
+                    "registry.untestedBadge": "未實測",
                     // advanced
                     "adv.toggleShow": "▸ 進階（其他 11 個欄位）",
                     "adv.toggleHide": "▾ 進階（其他 11 個欄位）",
@@ -1974,6 +1991,10 @@
                     "topbar.duration": "Duration",
                     "topbar.aspect": "Aspect",
                     "topbar.platform.placeholder": "— Select platform —",
+                    "topbar.showUntested": "Show untested platforms",
+                    "registry.hiddenUntested":
+                        "⚠ {n} untested platform(s) hidden (this tool is calibrated on VideoExpress only; tick \"Show untested platforms\" to expand)",
+                    "registry.untestedBadge": "untested",
                     // advanced
                     "adv.toggleShow": "▸ Advanced (11 more fields)",
                     "adv.toggleHide": "▾ Advanced (11 more fields)",
@@ -2256,6 +2277,16 @@
             let selectedVersionId = null;
             let selectedFamily = "all";
             let platformFilter = "all";
+            let showUntested =
+                localStorage.getItem("ps_showUntested") === "1";
+            let restorePlatformId = ""; // 還原存檔時暫掛的平台 id，讓被收起的平台仍能進下拉
+            // 未實測 = 內建 registry 平台且無 tested 旗標；使用者自建平台永遠顯示
+            function isUntestedPlatform(p) {
+                return (
+                    !p.tested &&
+                    DEFAULT_PLATFORMS.some((d) => d.id === p.id)
+                );
+            }
             let editingPlatformId = null;
             let advancedOpen = false;
 
@@ -2264,6 +2295,7 @@
                 {
                     id: "plat_videoexpress",
                     name: "VideoExpress.ai",
+                    tested: true, // 唯一經實際 dogfood 驗證的平台（其餘 registry 為文件對齊、未實測）
                     family: "video",
                     primaryMode: "storyboard",
                     compatibleModes: ["single-shot", "short-form"],
@@ -2651,6 +2683,7 @@ Reliable modifiers that improve perceived production value:
                 "modeChips",
                 "familyChips",
                 "activePlatform",
+                "showUntestedToggle",
                 "duration",
                 "aspectRatio",
                 "advancedToggle",
@@ -3043,6 +3076,13 @@ Reliable modifiers that improve perceived production value:
                         );
                         p.customPromptBlock = def?.customPromptBlock || "";
                     }
+                    // tested 旗標一律以 DEFAULT_PLATFORMS 為準（VE-first 收斂）
+                    {
+                        const def = DEFAULT_PLATFORMS.find(
+                            (x) => x.id === p.id,
+                        );
+                        if (def) p.tested = !!def.tested;
+                    }
                 });
                 // 2. 補上 Talkingphotos（從 v5 預設沒有）
                 if (!out.platforms.find((p) => p.id === "plat_talkingphoto")) {
@@ -3122,16 +3162,18 @@ Reliable modifiers that improve perceived production value:
                         if (els[k] && k !== "mode" && k !== "platformId")
                             els[k].value = v;
                     });
-                    if (state?.platformId !== undefined)
-                        els.activePlatform.value = state.platformId;
                     const plat = db.platforms.find(
                         (p) => p.id === state?.platformId,
                     );
                     if (plat) {
                         selectedFamily = plat.family;
                     }
-                    renderModeChips();
+                    restorePlatformId = state?.platformId || "";
                     renderFamilyBar();
+                    if (state?.platformId !== undefined)
+                        els.activePlatform.value = state.platformId;
+                    restorePlatformId = "";
+                    renderModeChips();
                     if (els.activePlatform.value) {
                         els.activePlatform.dispatchEvent(new Event("change"));
                     }
@@ -3185,15 +3227,17 @@ Reliable modifiers that improve perceived production value:
                         if (k === "mode" || k === "platformId") return;
                         if (els[k]) els[k].value = v;
                     });
-                    if (obj.platformId !== undefined) {
-                        els.activePlatform.value = obj.platformId;
-                    }
                     const plat = db.platforms.find(
                         (p) => p.id === obj.platformId,
                     );
                     if (plat) selectedFamily = plat.family;
-                    renderModeChips();
+                    restorePlatformId = obj.platformId || "";
                     renderFamilyBar();
+                    if (obj.platformId !== undefined) {
+                        els.activePlatform.value = obj.platformId;
+                    }
+                    restorePlatformId = "";
+                    renderModeChips();
                     if (els.activePlatform.value) {
                         els.activePlatform.dispatchEvent(new Event("change"));
                     }
@@ -3862,13 +3906,21 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                             `<button class="family-chip ${f.id !== "all" ? f.id : ""} ${selectedFamily === f.id ? "active" : ""}" onclick="window.setFamily('${f.id}')">${f.label}</button>`,
                     )
                     .join("");
-                const platforms =
+                const prev = els.activePlatform.value;
+                const platforms = (
                     selectedFamily === "all"
                         ? db.platforms
                         : db.platforms.filter(
                               (p) => p.family === selectedFamily,
-                          );
-                const prev = els.activePlatform.value;
+                          )
+                ).filter(
+                    // VE-first：未實測平台預設收起；目前選中/待還原的平台永遠保留（存檔還原不斷鏈）
+                    (p) =>
+                        showUntested ||
+                        !isUntestedPlatform(p) ||
+                        p.id === prev ||
+                        p.id === restorePlatformId,
+                );
                 els.activePlatform.innerHTML =
                     '<option value="">— 選平台 —</option>' +
                     platforms
@@ -3901,6 +3953,18 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 }
                 renderModeChips();
                 buildPrompt();
+            });
+
+            // ── SHOW-UNTESTED TOGGLE（VE-first 收斂）───────────────────────
+            els.showUntestedToggle.checked = showUntested;
+            els.showUntestedToggle.addEventListener("change", () => {
+                showUntested = els.showUntestedToggle.checked;
+                localStorage.setItem(
+                    "ps_showUntested",
+                    showUntested ? "1" : "0",
+                );
+                renderFamilyBar();
+                renderPlatformRegistry();
             });
 
             // ── ADVANCED TOGGLE ────────────────────────────────────────────
@@ -3937,13 +4001,20 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
 
             function renderPlatformRegistry() {
                 renderPlatformFilterBar();
-                const platforms =
+                const byFamily =
                     platformFilter === "all"
                         ? db.platforms
                         : db.platforms.filter(
                               (p) => p.family === platformFilter,
                           );
-                els.platformRegistry.innerHTML = platforms.length
+                const platforms = byFamily.filter(
+                    (p) => showUntested || !isUntestedPlatform(p),
+                );
+                const hiddenCount = byFamily.length - platforms.length;
+                const hiddenHint = hiddenCount
+                    ? `<div class="muted tiny" style="padding:var(--space-2) 0">${t("registry.hiddenUntested").replace("{n}", hiddenCount)}</div>`
+                    : "";
+                els.platformRegistry.innerHTML = hiddenHint + (platforms.length
                     ? platforms
                           .map(
                               (p) => `
@@ -3954,10 +4025,11 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
       <div style="margin-top:8px" class="tiny muted">${esc(p.durationRange)} · ${p.aspectRatio.map(esc).join("/")}</div>
       ${p.notes ? `<div style="margin-top:6px" class="tiny muted">${esc(p.notes)}</div>` : ""}
       ${p.customPromptBlock ? '<div style="margin-top:6px"><span class="chip stable">✓ custom block</span></div>' : ""}
+      ${isUntestedPlatform(p) ? `<div style="margin-top:6px"><span class="chip">⚠ ${t("registry.untestedBadge")}</span></div>` : ""}
     </div>`,
                           )
                           .join("")
-                    : `<div class="muted tiny" style="padding:var(--space-4)">${t("editForm.noPlatforms")}</div>`;
+                    : `<div class="muted tiny" style="padding:var(--space-4)">${t("editForm.noPlatforms")}</div>`);
             }
 
             // ── PLATFORM EDIT FORM ─────────────────────────────────────────

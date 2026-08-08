@@ -8,9 +8,11 @@
 [![Local-first](https://img.shields.io/badge/Local--first-localStorage-blue?style=flat-square)]()
 [![Last Commit](https://img.shields.io/github/last-commit/notoriouslab/prompt-studio?style=flat-square)](https://github.com/notoriouslab/prompt-studio)
 
-**Turn one idea into production-ready prompts for AI video tools.**
+**Turn one idea into production-ready prompts for VideoExpress.ai.**
 
-Sora 2 · Veo 3.1 · Runway · Kling · Seedance · VideoExpress · Talkingphotos · HeyGen · TikTok · single-file HTML · local-first · no build · no account
+Built for and tested on **VideoExpress.ai** · single-file HTML · local-first · no build · no account
+
+<sub>8 more platforms (Sora 2 / Veo 3.1 / Runway / Kling / Seedance / Talkingphotos / HeyGen / TikTok) ship as an untested reference registry, hidden by default.</sub>
 
 [繁體中文](./README.zh-TW.md)
 
@@ -22,15 +24,17 @@ Sora 2 · Veo 3.1 · Runway · Kling · Seedance · VideoExpress · Talkingphoto
 
 ## Why PromptStudio?
 
-Writing prompts for AI video tools is messy. Each platform has its own syntax (Sora 2 wants structured sections; Veo 3.1 wants `Subject + Context + Action + Mood`; Kling wants `Anchor + Environment + Action + Camera`). Characters drift between shots. Chinese dialogue gets rendered as floating subtitles. Switching platforms means rewriting from scratch.
+Writing prompts for AI video tools is messy. Characters drift between shots. Chinese dialogue gets rendered as floating subtitles. The official one-size-fits-all workflows leave no room for directing.
 
-PromptStudio bakes platform-specific best practices into an orthogonal **Mode × Platform × Domain × MediaType** matrix. Pick the combination, fill in the idea, get a system prompt — feed it to your LLM (Claude / GPT / Gemini) and the LLM expands it into a production-ready storyboard or single-shot script you can paste straight into the video-gen tool.
+PromptStudio bakes real-run-calibrated VideoExpress best practices into an orthogonal **Mode × Platform × Domain × MediaType** matrix. Pick the combination, fill in the idea, get a system prompt — feed it to your LLM (Claude / GPT / Gemini) and the LLM expands it into a production-ready storyboard or single-shot script you can paste straight into VideoExpress.
+
+> **Honesty note**: every pattern in this tool is dogfooded on VideoExpress.ai with real video-gen credits. The other 8 platforms in the registry were aligned against their 2026 official prompt guides but never actually run — they are hidden by default and labeled *untested*.
 
 ### Three differentiators
 
 | Feature | How it works |
 |---|---|
-| **Platform-aware syntax** | Each of 9 platforms carries its own `customPromptBlock` reflecting 2026 official prompt guides. What you generate matches what the model actually wants — no more rewriting between Sora and Runway. |
+| **Real-run-calibrated syntax** | The VideoExpress `customPromptBlock` reflects actual generation runs (timing syntax, lipsync dialogue routing, per-shot actor re-description), not just docs. An untested 8-platform reference registry is available behind a toggle. |
 | **Cross-shot identity safety** | Built-in **Actor Alias dual-track** convention (`Actor 1, the 50-year-old host in a dark blue suit`) anchors character identity to visual traits, not names. Dialogue gets wrapped as a speech act (`says in a confident, clear Mandarin accent: "..."`) so Chinese lines route to TTS rather than appearing as on-screen subtitles. |
 | **Two-layer regression-tested** | L1 snapshot tests (14 cases) guarantee spec byte-stability. L2 LLM eval (5 cases, regex assertions, free Gemini tier) verifies the rules actually land with a real LLM. Reproducible baselines ship in [`samples/eval/`](./samples/eval/). |
 
@@ -52,17 +56,26 @@ open prompt-studio/prompt-studio.html
 
 ## Supported Platforms
 
+### Tested (default)
+
 | Platform | Family | Primary mode | Highlight |
 |---|---|---|---|
-| **Sora 2** | cinematic | single-shot / storyboard | OpenAI; native audio sync, character refs, up to 20s |
-| **Veo 3.1** | cinematic | single-shot | Google; `Subject + Context + Action + Mood`, native SFX |
-| **Runway Gen-4.5** | cinematic | single-shot | strong camera vocabulary, positive-only prompting |
-| **Kling 3.0** | cinematic | single-shot | character action; 2-3 trait cap for identity stability |
-| **Seedance 2.0** | cinematic | single-shot | ByteDance; Semantic Weighting `((keyword))` |
-| **VideoExpress.ai** | video | storyboard | full pipeline (6-9 shots) |
-| **Talkingphotos** | avatar | avatar | image + TTS lipsync |
-| **HeyGen** | avatar | avatar | 175+ languages, voice tuning |
-| **TikTok / Douyin** | short-form | short-form | 9:16 vertical hook |
+| **VideoExpress.ai** | video | storyboard | full pipeline (6-9 shots), lipsync, consistent character — every rule dogfooded on real runs |
+
+### Untested reference registry (hidden by default)
+
+Toggle **"Show untested platforms"** next to the platform selector to reveal these. Their `customPromptBlock`s were aligned against 2026 official prompt guides but have never been validated on real generations — treat as a starting point, not a promise.
+
+| Platform | Family | Primary mode |
+|---|---|---|
+| Sora 2 | cinematic | single-shot / storyboard |
+| Veo 3.1 | cinematic | single-shot |
+| Runway Gen-4.5 | cinematic | single-shot |
+| Kling 3.0 | cinematic | single-shot |
+| Seedance 2.0 | cinematic | single-shot |
+| Talkingphotos | avatar | avatar |
+| HeyGen | avatar | avatar |
+| TikTok / Douyin | short-form | short-form |
 
 ## Supported Content Types
 

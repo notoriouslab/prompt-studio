@@ -79,7 +79,7 @@ Toggle **"Show untested platforms"** next to the platform selector to reveal the
 
 ## Supported Content Types
 
-**4 modes × 8 domains × 4 mediaTypes**:
+**5 modes × 9 domains × 4 mediaTypes**:
 
 | Domain | Use case |
 |---|---|
@@ -87,12 +87,13 @@ Toggle **"Show untested platforms"** next to the platform selector to reveal the
 | `real-interview` / `real-report` | KOL interview, documentary |
 | `product-demo` | e-commerce, unboxing |
 | `educational` | tutorials, knowledge content |
+| `motion-explainer` | motion-graphics explainer (shapes, icons, kinetic type) |
 | `lifestyle-vlog` | travel, food, pet |
 | `editorial-cinemagraph` | living poster, subtle-motion poster |
 
 MediaType: **3D Animation** / **Live Action** / **2D Animation** / **Illustration**
 
-Mode: **Storyboard** (full / minimal) / **Single-Shot** / **Avatar** / **Short-Form**
+Mode: **Storyboard** (full / minimal / VE run sheet) / **Single-Shot** / **First-Last** (frame-pair transition, maps to VE's First Frame Last Frame Beta) / **Avatar** / **Short-Form**
 
 ---
 

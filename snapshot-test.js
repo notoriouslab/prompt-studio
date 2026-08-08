@@ -64,6 +64,14 @@ const CASES = [
         state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "30-45 seconds", aspectRatio: "9:16", outputMode: "runsheet", dialogueMode: "none" },
     },
     {
+        name: "firstlast_videoexpress_nodialogue",
+        state: { mode: "first-last", platformId: "plat_videoexpress", duration: "5-10 seconds", aspectRatio: "9:16", dialogueMode: "none" },
+    },
+    {
+        name: "storyboard_videoexpress_motionexplainer_runsheetless",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "30-45 seconds", aspectRatio: "9:16", domain: "motion-explainer", dialogueMode: "none" },
+    },
+    {
         name: "storyboard_videoexpress_minimal_dialogue",
         state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "45-75 seconds", aspectRatio: "16:9", outputMode: "minimal" },
     },

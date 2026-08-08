@@ -79,7 +79,7 @@ open prompt-studio/prompt-studio.html
 
 ## 支援的內容類型
 
-**4 個 modes × 8 個 domains × 4 個 mediaTypes**：
+**5 個 modes × 9 個 domains × 4 個 mediaTypes**：
 
 | Domain | 適用場景 |
 |---|---|
@@ -87,12 +87,13 @@ open prompt-studio/prompt-studio.html
 | `real-interview` / `real-report` | KOL 訪談、新聞紀錄 |
 | `product-demo` | 電商產品演示、unboxing |
 | `educational` | 教學、知識內容 |
+| `motion-explainer` | 動態圖形解說（形狀、圖標、動態字體） |
 | `lifestyle-vlog` | 旅遊、美食、寵物 |
 | `editorial-cinemagraph` | 動態海報、living poster |
 
 MediaType：**3D 動畫** / **真人影片** / **2D 動畫** / **插畫｜海報**
 
-Mode：**Storyboard**（full / minimal）/ **Single-Shot** / **Avatar** / **Short-Form**
+Mode：**Storyboard**（full / minimal / VE 執行工單）/ **Single-Shot** / **First-Last**（首尾幀轉場，對應 VE First Frame Last Frame Beta）/ **Avatar** / **Short-Form**
 
 ---
 

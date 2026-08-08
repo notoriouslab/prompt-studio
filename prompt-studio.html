@@ -1723,12 +1723,15 @@
                     // mode chips & descriptions
                     "mode.storyboard": "🎬 Storyboard",
                     "mode.single-shot": "📷 Single-Shot",
+                    "mode.first-last": "🖼 First/Last",
                     "mode.avatar": "🧑 Avatar",
                     "mode.short-form": "📱 Short-Form",
                     "mode.desc.storyboard":
                         "完整影片企劃。8-12 shots + Character Bible + Storyboard + T2I/I2V + Continuity Lock。適合 VideoExpress 等做整支影片的工具。",
                     "mode.desc.single-shot":
                         "單鏡頭 T2I + I2V prompt。1 個 shot 一段 paragraph。適合 Seedance / Runway / Kling。",
+                    "mode.desc.first-last":
+                        "首尾幀控制。兩張 T2I（First / Last Frame，共用凍結錨點，只寫變化元素）+ 一段轉場 I2V。對應 VideoExpress「First Frame, Last Frame」(Beta) 卡。文法對齊官方 workflow，尚未實測。",
                     "mode.desc.avatar":
                         "Talking head / 替身。Character Sheet + Voice + Script，無鏡頭表、無 shot 切換。適合 Talkingphotos / HeyGen。",
                     "mode.desc.short-form":
@@ -1975,12 +1978,15 @@
                     // mode chips & descriptions
                     "mode.storyboard": "🎬 Storyboard",
                     "mode.single-shot": "📷 Single-Shot",
+                    "mode.first-last": "🖼 First/Last",
                     "mode.avatar": "🧑 Avatar",
                     "mode.short-form": "📱 Short-Form",
                     "mode.desc.storyboard":
                         "Full video plan. 8-12 shots + Character Bible + Storyboard + T2I/I2V + Continuity Lock. For VideoExpress and other full-video tools.",
                     "mode.desc.single-shot":
                         "Single-shot T2I + I2V prompt. One shot as one paragraph. For Seedance / Runway / Kling.",
+                    "mode.desc.first-last":
+                        "First/last frame control. Two T2I prompts sharing a frozen anchor (only the changing elements differ) + one transition I2V. Maps to VideoExpress's \"First Frame, Last Frame\" (Beta) card. Grammar aligned to the official workflow; not yet dogfooded.",
                     "mode.desc.avatar":
                         "Talking head. Character Sheet + Voice + Script, no shot list. For Talkingphotos / HeyGen.",
                     "mode.desc.short-form":
@@ -2271,7 +2277,7 @@
                 });
             }
             window.setLang = setLang;
-            const MODES = ["storyboard", "single-shot", "avatar", "short-form"];
+            const MODES = ["storyboard", "single-shot", "first-last", "avatar", "short-form"];
             // Mode labels & descriptions now come from i18n dictionary via t('mode.xxx') / t('mode.desc.xxx')
             function modeLabel(m) {
                 return t("mode." + m);
@@ -2306,7 +2312,7 @@
                     tested: true, // 唯一經實際 dogfood 驗證的平台（其餘 registry 為文件對齊、未實測）
                     family: "video",
                     primaryMode: "storyboard",
-                    compatibleModes: ["single-shot", "short-form"],
+                    compatibleModes: ["single-shot", "short-form", "first-last"],
                     outputGoal: "storyboard",
                     aspectRatio: ["16:9", "9:16"],
                     durationRange: "30-180s",
@@ -2847,6 +2853,20 @@ Reliable modifiers that improve perceived production value:
                     dialogueBias:
                         "Structured narration with clear pacing; conversational but pedagogical tone. Short sentences aid retention and lipsync alike.",
                 },
+                // 動態圖形解說（對照官方 Motion Graphics Explainer workflow 立案；尚未 dogfood）
+                "motion-explainer": {
+                    label_zh: "動態圖形｜解說",
+                    label_en: "Motion Graphics | Explainer",
+                    defaultDialogueMode: "none",
+                    assumptions:
+                        "motion-graphics explainer built from animated shapes, icons, diagrams, and kinetic typography, where every movement exists to explain one idea",
+                    subjectRule:
+                        "One idea per scene. Build meaning from flat/vector shapes, icons, charts, and visual metaphors instead of live actors. Movement must explain, never decorate: elements enter, transform, and connect in the exact order the idea unfolds. Keep one consistent palette (2-4 colors) and one type system across all scenes — palette and type ARE the continuity anchor (there is no character bible).",
+                    shotBias:
+                        "Composition-driven framing: centered or grid-aligned layouts, generous negative space, clear visual hierarchy. Transitions carry meaning (morph, wipe, build-on); the canvas moves, not the camera — no dramatic camera moves.",
+                    dialogueBias:
+                        "Prefer narration-free visual sequences or short voiceover-style lines. Kinetic typography counts as intentional design text: allowed only when subtitle suppression is soft; under strict subtitle mode, explain with pure shapes and icons.",
+                },
                 "lifestyle-vlog": {
                     label_zh: "生活｜記錄",
                     label_en: "Lifestyle | Vlog",
@@ -3092,6 +3112,14 @@ Reliable modifiers that improve perceived production value:
                         if (def) p.tested = !!def.tested;
                     }
                 });
+                // 1a. VE 平台補 first-last compatibleMode（2026-08 新 mode，舊 DB 沒有）
+                {
+                    const ve = out.platforms.find(
+                        (p) => p.id === "plat_videoexpress",
+                    );
+                    if (ve && !ve.compatibleModes.includes("first-last"))
+                        ve.compatibleModes.push("first-last");
+                }
                 // 2. 補上 Talkingphotos（從 v5 預設沒有）
                 if (!out.platforms.find((p) => p.id === "plat_talkingphoto")) {
                     out.platforms.push(
@@ -3399,6 +3427,20 @@ Reliable modifiers that improve perceived production value:
                         ? "Vary the <tone> adverb — palette: confident, warm, measured, engaging, encouraging — to avoid monotone delivery."
                         : null,
                 ].filter(Boolean),
+                "first-last": (state, { dialogue }) => [
+                    "Output exactly ONE frame pair (First Frame + Last Frame) plus ONE transition prompt. No storyboard, no extra shots.",
+                    "Freeze everything that must NOT change between the two frames — subject identity, wardrobe, environment, palette, camera position, lighting — and write those shared elements with IDENTICAL wording in both frame prompts. Only the elements that change state may differ.",
+                    "The transition prompt describes one continuous motion arc that starts exactly at the First Frame state and ends exactly at the Last Frame state. Introduce nothing that appears in neither frame.",
+                    "One state change per generation. If the brief implies multiple transformations, pick the strongest single before/after and note the rest as follow-up pairs.",
+                    "Transition duration must fit the platform durationRange (~10s ceiling on VideoExpress).",
+                    dialogue
+                        ? "If dialogue: ONE short line ≤ 100 characters, wrapped as a speech act: `<speaker reference>, says in a <tone>, clear <language> accent: \"<line>\"` — never bare quoted text."
+                        : "Prefer no dialogue — first/last frame generations read cleanest as pure visual transformations.",
+                    state.subtitleMode === "strict"
+                        ? "Do NOT mention subtitle, caption, lower-thirds, on-screen text, overlay. Keep visual field clean."
+                        : "Favor unmarked frames; no intentional text/UI/labels.",
+                    "Avoid copyrighted characters, celebrity likenesses, brand names, logos, watermarks.",
+                ].filter(Boolean),
                 avatar: (state) => [
                     "Output a SINGLE-character talking-head segment. No multi-character scenes, no scene cuts.",
                     "Lipsync-safe framing: chest-up or 3/4 view, mouth fully visible, front-facing or slight 3-quarter.",
@@ -3424,6 +3466,7 @@ Reliable modifiers that improve perceived production value:
             const TIER2 = {
                 storyboard: (state, { domain }) => [domain.subjectRule, domain.shotBias, domain.dialogueBias, languageBlock(state)],
                 "single-shot": (state, { domain }) => [domain.subjectRule, domain.shotBias, languageBlock(state)],
+                "first-last": (state, { domain }) => [domain.subjectRule, domain.shotBias, languageBlock(state)],
                 avatar: (state, { domain }) => [domain.subjectRule, domain.dialogueBias, languageBlock(state)],
                 "short-form": (state, { domain }) => [domain.subjectRule, languageBlock(state)],
             };
@@ -3480,6 +3523,13 @@ Reliable modifiers that improve perceived production value:
                     "✓ Tier 1 framing satisfied",
                     "✓ Output contains no meta-commentary",
                 ],
+                "first-last": () => [
+                    "✓ Exactly two frame prompts + one transition prompt, nothing else",
+                    "✓ Shared (non-changing) elements worded identically in both frame prompts",
+                    "✓ Transition starts at the First Frame state and ends at the Last Frame state; no new elements introduced",
+                    "✓ Transition duration within platform durationRange",
+                    "✓ Output contains no meta-commentary",
+                ],
                 avatar: () => [
                     "✓ Single character only — no second speaker",
                     "✓ Tier 1 lipsync-safe framing satisfied",
@@ -3504,6 +3554,7 @@ Reliable modifiers that improve perceived production value:
             const MODE_BUILDERS = {
                 "storyboard":  buildStoryboard,
                 "single-shot": buildSingleShot,
+                "first-last":  buildFirstLast,
                 "avatar":      buildAvatar,
                 "short-form":  buildShortForm,
             };
@@ -3715,6 +3766,37 @@ Answer in Markdown. Emit EXACTLY these two blocks. No "Shot Brief", no sub-field
                 ]);
             }
 
+            // ── MODE B2: first-last（首尾幀控制；文法對齊官方 FFLF workflow，尚未 dogfood）──
+            function buildFirstLast(state) {
+                const media = maps.mediaType[state.mediaType];
+                const domain = maps.domain[state.domain];
+                const dialogue = state.dialogueMode === "dialogue";
+
+                return joinNonEmpty([
+                    `# First Frame / Last Frame Prompt Generator`,
+                    `You produce ONE before/after frame pair plus a transition for first-and-last-frame video generation (e.g. VideoExpress's "First Frame, Last Frame" mode). The user provides a transformation brief — a starting state and an ending state; you emit two T2I prompts sharing a frozen anchor and one I2V transition prompt.`,
+                    `Defaults: ${state.duration}, ${state.aspectRatio}, ${media.style}.`,
+                    platformContextBlock(state),
+                    platformCustomBlock(state),
+                    tierBlock(1, "Hard Constraints", TIER1["first-last"](state, { dialogue })),
+                    tierBlock(2, "Domain & Language", TIER2["first-last"](state, { domain })),
+                    tier3InlineHint(state),
+                    `## Output Format
+Answer in Markdown. Emit EXACTLY these three blocks, no intro text.
+
+### First Frame Prompt
+\`${media.t2iBase} of [subject + setting] in the STARTING state: [state-specific details], [camera + framing], [lighting], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame.\`
+
+### Last Frame Prompt
+\`${media.t2iBase} of [IDENTICAL subject + setting wording] in the ENDING state: [only the changed details], [IDENTICAL camera + framing], [IDENTICAL lighting], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame.\`
+
+### Transition Prompt
+\`Animate from the first frame to the last frame: [motion arc in 2-3 time-segmented beats, e.g. [0-2 seconds]: ..., [2-5 seconds]: ...]. Camera stays [locked / one slow move]. Keep subject identity, environment, palette, and lighting consistent throughout.${dialogue ? ' [speaker reference], says in a [tone], clear [language] accent: "[line ≤ 100 chars]". Animate natural lipsync.' : " No dialogue."}\``,
+                    silentChecksBlock(SILENT_CHECKS["first-last"](), "## Silent Quality Checks"),
+                    customRulesBlock(state),
+                ]);
+            }
+
             // ── MODE C: avatar ─────────────────────────────────────────────
             function buildAvatar(state) {
                 const media = maps.mediaType[state.mediaType];
@@ -3851,6 +3933,14 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 }
 
                 // mode-specific lints
+                if (
+                    state.mode === "first-last" &&
+                    !["5-10 seconds", "10-15 seconds"].includes(state.duration)
+                )
+                    warnings.push({
+                        level: "warn",
+                        msg: "⚠️ first-last mode 是單一轉場，建議時長 5-15 秒",
+                    });
                 if (state.mode === "short-form" && state.aspectRatio !== "9:16")
                     warnings.push({
                         level: "warn",
@@ -4025,34 +4115,46 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
 
             // ── FAMILY CHIPS (top-bar) ─────────────────────────────────────
             function renderFamilyBar() {
-                const families = [
-                    { id: "all" },
-                    { id: "video" },
-                    { id: "cinematic" },
-                    { id: "avatar" },
-                    { id: "short-form" },
-                ].map((f) => ({ ...f, label: t("family." + f.id) }));
-                els.familyChips.innerHTML = families
-                    .map(
-                        (f) =>
-                            `<button class="family-chip ${f.id !== "all" ? f.id : ""} ${selectedFamily === f.id ? "active" : ""}" onclick="window.setFamily('${f.id}')">${f.label}</button>`,
-                    )
-                    .join("");
                 const prev = els.activePlatform.value;
-                const platforms = (
-                    selectedFamily === "all"
-                        ? db.platforms
-                        : db.platforms.filter(
-                              (p) => p.family === selectedFamily,
-                          )
-                ).filter(
-                    // VE-first：未實測平台預設收起；目前選中/待還原的平台永遠保留（存檔還原不斷鏈）
+                // VE-first：未實測平台預設收起；目前選中/待還原的平台永遠保留（存檔還原不斷鏈）
+                const visible = db.platforms.filter(
                     (p) =>
                         showUntested ||
                         !isUntestedPlatform(p) ||
                         p.id === prev ||
                         p.id === restorePlatformId,
                 );
+                const availFams = new Set(visible.map((p) => p.family));
+                if (selectedFamily !== "all" && !availFams.has(selectedFamily))
+                    selectedFamily = "all";
+                const families = [
+                    { id: "all" },
+                    { id: "video" },
+                    { id: "cinematic" },
+                    { id: "avatar" },
+                    { id: "short-form" },
+                ]
+                    .filter((f) => f.id === "all" || availFams.has(f.id))
+                    .map((f) => ({ ...f, label: t("family." + f.id) }));
+                els.familyChips.innerHTML = families
+                    .map(
+                        (f) =>
+                            `<button class="family-chip ${f.id !== "all" ? f.id : ""} ${selectedFamily === f.id ? "active" : ""}" onclick="window.setFamily('${f.id}')">${f.label}</button>`,
+                    )
+                    .join("");
+                // 只剩單一 family 時整個 ② Family 欄位沒有篩選意義，直接收起
+                const familyField = els.familyChips.closest
+                    ? els.familyChips.closest(".field-inline")
+                    : null;
+                if (familyField)
+                    familyField.style.display =
+                        availFams.size < 2 ? "none" : "";
+                const platforms =
+                    selectedFamily === "all"
+                        ? visible
+                        : visible.filter(
+                              (p) => p.family === selectedFamily,
+                          );
                 els.activePlatform.innerHTML =
                     '<option value="">— 選平台 —</option>' +
                     platforms
@@ -4112,13 +4214,24 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
             // PLATFORM REGISTRY (grid) — same UX as v5
             // ════════════════════════════════════════════════════════════════
             function renderPlatformFilterBar() {
+                const visible = db.platforms.filter(
+                    (p) => showUntested || !isUntestedPlatform(p),
+                );
+                const availFams = new Set(visible.map((p) => p.family));
+                if (platformFilter !== "all" && !availFams.has(platformFilter))
+                    platformFilter = "all";
                 const families = [
                     { id: "all" },
                     { id: "video" },
                     { id: "cinematic" },
                     { id: "avatar" },
                     { id: "short-form" },
-                ].map((f) => ({ ...f, label: t("family." + f.id) }));
+                ]
+                    .filter((f) => f.id === "all" || availFams.has(f.id))
+                    .map((f) => ({ ...f, label: t("family." + f.id) }));
+                // 只剩單一 family 時 filter bar 沒有意義，收起
+                els.platformFilterBar.style.display =
+                    availFams.size < 2 ? "none" : "";
                 els.platformFilterBar.innerHTML = families
                     .map(
                         (f) =>

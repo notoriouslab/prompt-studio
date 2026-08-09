@@ -12,8 +12,6 @@
 
 專為 **VideoExpress.ai** 打造並實測校準 · 單檔 HTML · 本地優先 · 無安裝 · 無帳號
 
-<sub>另附 8 個平台（Sora 2 / Veo 3.1 / Runway / Kling / Seedance / Talkingphotos / HeyGen / TikTok）的未實測參考 registry，預設收起。</sub>
-
 [English](./README.md)
 
 ![PromptStudio](./docs/intro.jpg)
@@ -28,13 +26,13 @@
 
 PromptStudio 把實際跑片校準過的 VideoExpress best practice 內化成 **Mode × Platform × Domain × MediaType** 的正交組合。選定組合、填 idea，產出對應的 system prompt，餵給你慣用的 LLM（Claude / GPT / Gemini）展開成完整的 storyboard 或 single-shot 腳本，直接 paste 進 VideoExpress。
 
-> **誠實聲明**：本工具的每條 pattern 都在 VideoExpress.ai 上用真實生成 credits dogfood 過。registry 裡另外 8 個平台只做過 2026 官方文件對齊、從未實際跑片，預設收起並標示「未實測」。
+> **誠實聲明**：本工具的每條 pattern 都在 VideoExpress.ai 上用真實生成 credits dogfood 過。其他平台的支援已移除而非帶病上架；需要的話可以在 Platform registry 自行新增平台（含自訂 `customPromptBlock`）。
 
 ### 三個差異化
 
 | 特性 | 怎麼運作 |
 |---|---|
-| **實測校準 syntax** | VideoExpress 的 `customPromptBlock` 來自真實生成紀錄（timing 語法、lipsync 台詞路由、每 shot 重述 actor 描述），不只是文件抄寫。另有 8 平台未實測參考 registry，藏在 toggle 後面。 |
+| **實測校準 syntax** | VideoExpress 的 `customPromptBlock` 來自真實生成紀錄（timing 語法、lipsync 台詞路由、每 shot 重述 actor 描述），不只是文件抄寫。 |
 | **跨 shot 角色身份穩定** | 內建 **Actor Alias 雙軌制**（`Actor 1, the 50-year-old host in a dark blue suit`），把角色 anchor 在視覺特徵而非名字，大幅降低跨 shot 漂移。Dialogue 統一包成 speech act（`says in a confident, clear Mandarin accent: "..."`），中文台詞 route 到 TTS 而非變成畫面字幕。 |
 | **兩層自動回歸測試** | L1 snapshot test（14 cases）保 spec 文字 byte-stability。L2 LLM eval（5 cases、regex assertions、免費 Gemini tier）驗證規則真的被 LLM follow。可重現的 baseline 在 [`samples/eval/`](./samples/eval/)。 |
 
@@ -56,26 +54,11 @@ open prompt-studio/prompt-studio.html
 
 ## 支援的平台
 
-### 已實測（預設顯示）
-
-| 平台 | Family | 主要 Mode | 重點 |
-|---|---|---|---|
-| **VideoExpress.ai** | video | storyboard | 完整影片企劃（6-9 shots）、lipsync、consistent character，每條規則都經真實跑片驗證 |
-
-### 未實測參考 registry（預設收起）
-
-在平台選單旁勾選「顯示未實測平台」即可展開。這些平台的 `customPromptBlock` 只做過 2026 官方 prompt guide 對齊、從未在真實生成上驗證過，當起點用、不當承諾用。
-
-| 平台 | Family | 主要 Mode |
+| 平台 | Modes | 重點 |
 |---|---|---|
-| Sora 2 | cinematic | single-shot / storyboard |
-| Veo 3.1 | cinematic | single-shot |
-| Runway Gen-4.5 | cinematic | single-shot |
-| Kling 3.0 | cinematic | single-shot |
-| Seedance 2.0 | cinematic | single-shot |
-| Talkingphotos | avatar | avatar |
-| HeyGen | avatar | avatar |
-| TikTok / Douyin | short-form | short-form |
+| **VideoExpress.ai** | storyboard / single-shot / first-last / avatar / short-form | 完整影片企劃（6-9 shots）、lipsync、consistent character、首尾幀轉場，每條規則都經真實跑片驗證 |
+
+需要別的平台？在 Platform registry 自行新增（名稱、family、modes、自訂 prompt block），會與 VideoExpress 一起出現在選單。先前其他平台（Sora 2 / Veo 3.1 / Runway / Kling / Seedance / Talkingphotos / HeyGen / TikTok）的 registry 條目已移除（只上架真正實測過的東西），內容可從 git 歷史找回。
 
 ## 支援的內容類型
 

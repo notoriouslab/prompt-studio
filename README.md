@@ -12,8 +12,6 @@
 
 Built for and tested on **VideoExpress.ai** · single-file HTML · local-first · no build · no account
 
-<sub>8 more platforms (Sora 2 / Veo 3.1 / Runway / Kling / Seedance / Talkingphotos / HeyGen / TikTok) ship as an untested reference registry, hidden by default.</sub>
-
 [繁體中文](./README.zh-TW.md)
 
 ![PromptStudio](./docs/intro.jpg)
@@ -28,13 +26,13 @@ Writing prompts for AI video tools is messy. Characters drift between shots. Chi
 
 PromptStudio bakes real-run-calibrated VideoExpress best practices into an orthogonal **Mode × Platform × Domain × MediaType** matrix. Pick the combination, fill in the idea, get a system prompt — feed it to your LLM (Claude / GPT / Gemini) and the LLM expands it into a production-ready storyboard or single-shot script you can paste straight into VideoExpress.
 
-> **Honesty note**: every pattern in this tool is dogfooded on VideoExpress.ai with real video-gen credits. The other 8 platforms in the registry were aligned against their 2026 official prompt guides but never actually run — they are hidden by default and labeled *untested*.
+> **Honesty note**: every pattern in this tool is dogfooded on VideoExpress.ai with real video-gen credits. Support for other platforms was removed rather than shipped untested — you can still add your own platform (with its own `customPromptBlock`) in the Platform registry.
 
 ### Three differentiators
 
 | Feature | How it works |
 |---|---|
-| **Real-run-calibrated syntax** | The VideoExpress `customPromptBlock` reflects actual generation runs (timing syntax, lipsync dialogue routing, per-shot actor re-description), not just docs. An untested 8-platform reference registry is available behind a toggle. |
+| **Real-run-calibrated syntax** | The VideoExpress `customPromptBlock` reflects actual generation runs (timing syntax, lipsync dialogue routing, per-shot actor re-description), not just docs. |
 | **Cross-shot identity safety** | Built-in **Actor Alias dual-track** convention (`Actor 1, the 50-year-old host in a dark blue suit`) anchors character identity to visual traits, not names. Dialogue gets wrapped as a speech act (`says in a confident, clear Mandarin accent: "..."`) so Chinese lines route to TTS rather than appearing as on-screen subtitles. |
 | **Two-layer regression-tested** | L1 snapshot tests (14 cases) guarantee spec byte-stability. L2 LLM eval (5 cases, regex assertions, free Gemini tier) verifies the rules actually land with a real LLM. Reproducible baselines ship in [`samples/eval/`](./samples/eval/). |
 
@@ -54,28 +52,13 @@ open prompt-studio/prompt-studio.html
 
 ---
 
-## Supported Platforms
+## Supported Platform
 
-### Tested (default)
-
-| Platform | Family | Primary mode | Highlight |
-|---|---|---|---|
-| **VideoExpress.ai** | video | storyboard | full pipeline (6-9 shots), lipsync, consistent character — every rule dogfooded on real runs |
-
-### Untested reference registry (hidden by default)
-
-Toggle **"Show untested platforms"** next to the platform selector to reveal these. Their `customPromptBlock`s were aligned against 2026 official prompt guides but have never been validated on real generations — treat as a starting point, not a promise.
-
-| Platform | Family | Primary mode |
+| Platform | Modes | Highlight |
 |---|---|---|
-| Sora 2 | cinematic | single-shot / storyboard |
-| Veo 3.1 | cinematic | single-shot |
-| Runway Gen-4.5 | cinematic | single-shot |
-| Kling 3.0 | cinematic | single-shot |
-| Seedance 2.0 | cinematic | single-shot |
-| Talkingphotos | avatar | avatar |
-| HeyGen | avatar | avatar |
-| TikTok / Douyin | short-form | short-form |
+| **VideoExpress.ai** | storyboard / single-shot / first-last / avatar / short-form | full pipeline (6-9 shots), lipsync, consistent character, first/last frame — every rule dogfooded on real runs |
+
+Need another platform? Add it yourself in the Platform registry (name, families, modes, and a custom prompt block) — it will show up in the selector alongside VideoExpress. Earlier registry entries for other platforms (Sora 2 / Veo 3.1 / Runway / Kling / Seedance / Talkingphotos / HeyGen / TikTok) were removed in favor of shipping only what is actually tested; they remain recoverable from git history.
 
 ## Supported Content Types
 

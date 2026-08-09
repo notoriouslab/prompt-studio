@@ -81,12 +81,12 @@ const CASES = [
     },
     // single-shot variations
     {
-        name: "singleshot_seedance_balanced_16_9",
-        state: { mode: "single-shot", platformId: "plat_seedance", duration: "5-10 seconds", aspectRatio: "16:9" },
+        name: "singleshot_videoexpress_balanced_16_9",
+        state: { mode: "single-shot", platformId: "plat_videoexpress", duration: "5-10 seconds", aspectRatio: "16:9" },
     },
     {
-        name: "singleshot_runway_tight_9_16_nodialogue",
-        state: { mode: "single-shot", platformId: "plat_runway", duration: "10-15 seconds", aspectRatio: "9:16", dialogueMode: "none", shotStyle: "tight" },
+        name: "singleshot_videoexpress_tight_9_16_nodialogue",
+        state: { mode: "single-shot", platformId: "plat_videoexpress", duration: "10-15 seconds", aspectRatio: "9:16", dialogueMode: "none", shotStyle: "tight" },
     },
     {
         name: "singleshot_noplatform_strict_1to1",
@@ -94,12 +94,12 @@ const CASES = [
     },
     // avatar variations
     {
-        name: "avatar_talkingphotos_long",
-        state: { mode: "avatar", platformId: "plat_talkingphoto", duration: "60-180 seconds", aspectRatio: "9:16" },
+        name: "avatar_videoexpress_long",
+        state: { mode: "avatar", platformId: "plat_videoexpress", duration: "60-180 seconds", aspectRatio: "9:16" },
     },
     {
-        name: "avatar_heygen_dialogue_strict",
-        state: { mode: "avatar", platformId: "plat_heygen", duration: "60-90 seconds", aspectRatio: "16:9", dialogueMode: "dialogue", subtitleMode: "strict" },
+        name: "avatar_videoexpress_dialogue_strict",
+        state: { mode: "avatar", platformId: "plat_videoexpress", duration: "60-90 seconds", aspectRatio: "16:9", dialogueMode: "dialogue", subtitleMode: "strict" },
     },
     {
         name: "avatar_noplatform_mid",
@@ -107,12 +107,12 @@ const CASES = [
     },
     // short-form variations
     {
-        name: "shortform_tiktok_basic",
-        state: { mode: "short-form", platformId: "plat_tiktok", duration: "15-30 seconds", aspectRatio: "9:16" },
+        name: "shortform_videoexpress_basic",
+        state: { mode: "short-form", platformId: "plat_videoexpress", duration: "15-30 seconds", aspectRatio: "9:16" },
     },
     {
-        name: "shortform_tiktok_dialogue_strict_styled",
-        state: { mode: "short-form", platformId: "plat_tiktok", duration: "15-30 seconds", aspectRatio: "9:16", dialogueMode: "dialogue", subtitleMode: "strict", styleExtra: "epic divine" },
+        name: "shortform_videoexpress_dialogue_strict_styled",
+        state: { mode: "short-form", platformId: "plat_videoexpress", duration: "15-30 seconds", aspectRatio: "9:16", dialogueMode: "dialogue", subtitleMode: "strict", styleExtra: "epic divine" },
     },
     {
         name: "shortform_noplatform",

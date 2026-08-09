@@ -919,19 +919,6 @@
                                 — Select platform —
                             </option>
                         </select>
-                        <label
-                            class="tiny muted"
-                            style="display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap"
-                        >
-                            <input
-                                type="checkbox"
-                                id="showUntestedToggle"
-                                style="margin:0"
-                            />
-                            <span data-i18n="topbar.showUntested"
-                                >顯示未實測平台</span
-                            >
-                        </label>
                     </div>
                     <div class="field-inline">
                         <label data-i18n="topbar.duration">Duration</label>
@@ -1341,7 +1328,7 @@
                                     id="pf_name"
                                     type="text"
                                     data-i18n-ph="ph.pf_name"
-                                    placeholder="e.g. Seedance"
+                                    placeholder="e.g. MyPlatform"
                                 />
                             </div>
                             <div class="field">
@@ -1727,15 +1714,15 @@
                     "mode.avatar": "🧑 Avatar",
                     "mode.short-form": "📱 Short-Form",
                     "mode.desc.storyboard":
-                        "完整影片企劃。8-12 shots + Character Bible + Storyboard + T2I/I2V + Continuity Lock。適合 VideoExpress 等做整支影片的工具。",
+                        "完整影片企劃。8-12 shots + Character Bible + Storyboard + T2I/I2V + Continuity Lock。",
                     "mode.desc.single-shot":
-                        "單鏡頭 T2I + I2V prompt。1 個 shot 一段 paragraph。適合 Seedance / Runway / Kling。",
+                        "單鏡頭 T2I + I2V prompt。1 個 shot 一段 paragraph。",
                     "mode.desc.first-last":
                         "首尾幀控制。First Frame 完整 T2I + Last Frame Smart Edit（只寫變化、釘住其餘）+ 一段轉場 I2V。對應 VideoExpress「First Frame, Last Frame」(Beta) 卡，2026-08-09 實測跑通。",
                     "mode.desc.avatar":
-                        "Talking head / 替身。Character Sheet + Voice + Script，無鏡頭表、無 shot 切換。適合 Talkingphotos / HeyGen。",
+                        "Talking head / 替身。Character Sheet + Voice + Script，無鏡頭表、無 shot 切換。",
                     "mode.desc.short-form":
-                        "短影音。Hook + 3-5 shots + CTA。無 Character Bible、無 Continuity Lock，鎖 9:16 / hook 強制。適合抖音 / TikTok。",
+                        "短影音。Hook + 3-5 shots + CTA。無 Character Bible、無 Continuity Lock，鎖 9:16 / hook 強制。",
                     // family
                     "family.all": "全部",
                     "family.video": "Video",
@@ -1749,10 +1736,6 @@
                     "topbar.duration": "時長",
                     "topbar.aspect": "比例",
                     "topbar.platform.placeholder": "— 選擇平台 —",
-                    "topbar.showUntested": "顯示未實測平台",
-                    "registry.hiddenUntested":
-                        "⚠ {n} 個未實測平台已收起（本工具僅在 VideoExpress 上實測校準；勾選「顯示未實測平台」可展開）",
-                    "registry.untestedBadge": "未實測",
                     // advanced
                     "adv.toggleShow": "▸ 進階（其他 11 個欄位）",
                     "adv.toggleHide": "▾ 進階（其他 11 個欄位）",
@@ -1804,7 +1787,7 @@
                     "ph.styleExtra":
                         "例：sacred reverence, documentary realism",
                     "ph.customRules": "例：所有旁白後製；不允許兩人同鏡對話",
-                    "ph.pf_name": "例：Seedance",
+                    "ph.pf_name": "例：自訂平台",
                     "ph.pf_outputGoal": "storyboard / motion / lipsync / hook",
                     "ph.pf_durationRange": "例：5-15s",
                     "ph.pf_notes": "一行內描述",
@@ -1982,15 +1965,15 @@
                     "mode.avatar": "🧑 Avatar",
                     "mode.short-form": "📱 Short-Form",
                     "mode.desc.storyboard":
-                        "Full video plan. 8-12 shots + Character Bible + Storyboard + T2I/I2V + Continuity Lock. For VideoExpress and other full-video tools.",
+                        "Full video plan. 8-12 shots + Character Bible + Storyboard + T2I/I2V + Continuity Lock.",
                     "mode.desc.single-shot":
-                        "Single-shot T2I + I2V prompt. One shot as one paragraph. For Seedance / Runway / Kling.",
+                        "Single-shot T2I + I2V prompt. One shot as one paragraph.",
                     "mode.desc.first-last":
                         "First/last frame control. One full First Frame T2I + a Last Frame Smart Edit (describe only the change, pin the rest) + one transition I2V. Maps to VideoExpress's \"First Frame, Last Frame\" (Beta) card; validated on a real run (2026-08-09).",
                     "mode.desc.avatar":
-                        "Talking head. Character Sheet + Voice + Script, no shot list. For Talkingphotos / HeyGen.",
+                        "Talking head. Character Sheet + Voice + Script, no shot list.",
                     "mode.desc.short-form":
-                        "Short video. Hook + 3-5 shots + CTA. No Character Bible, no Continuity Lock, locked to 9:16. For Douyin / TikTok.",
+                        "Short video. Hook + 3-5 shots + CTA. No Character Bible, no Continuity Lock, locked to 9:16.",
                     // family
                     "family.all": "All",
                     "family.video": "Video",
@@ -2004,10 +1987,6 @@
                     "topbar.duration": "Duration",
                     "topbar.aspect": "Aspect",
                     "topbar.platform.placeholder": "— Select platform —",
-                    "topbar.showUntested": "Show untested platforms",
-                    "registry.hiddenUntested":
-                        "⚠ {n} untested platform(s) hidden (this tool is calibrated on VideoExpress only; tick \"Show untested platforms\" to expand)",
-                    "registry.untestedBadge": "untested",
                     // advanced
                     "adv.toggleShow": "▸ Advanced (11 more fields)",
                     "adv.toggleHide": "▾ Advanced (11 more fields)",
@@ -2060,7 +2039,7 @@
                         "e.g. sacred reverence, documentary realism",
                     "ph.customRules":
                         "e.g. all VO in post; no two-speaker shots",
-                    "ph.pf_name": "e.g. Seedance",
+                    "ph.pf_name": "e.g. MyPlatform",
                     "ph.pf_outputGoal": "storyboard / motion / lipsync / hook",
                     "ph.pf_durationRange": "e.g. 5-15s",
                     "ph.pf_notes": "short one-line note",
@@ -2291,16 +2270,6 @@
             let selectedVersionId = null;
             let selectedFamily = "all";
             let platformFilter = "all";
-            let showUntested =
-                localStorage.getItem("ps_showUntested") === "1";
-            let restorePlatformId = ""; // 還原存檔時暫掛的平台 id，讓被收起的平台仍能進下拉
-            // 未實測 = 內建 registry 平台且無 tested 旗標；使用者自建平台永遠顯示
-            function isUntestedPlatform(p) {
-                return (
-                    !p.tested &&
-                    DEFAULT_PLATFORMS.some((d) => d.id === p.id)
-                );
-            }
             let editingPlatformId = null;
             let advancedOpen = false;
 
@@ -2309,10 +2278,9 @@
                 {
                     id: "plat_videoexpress",
                     name: "VideoExpress.ai",
-                    tested: true, // 唯一經實際 dogfood 驗證的平台（其餘 registry 為文件對齊、未實測）
                     family: "video",
                     primaryMode: "storyboard",
-                    compatibleModes: ["single-shot", "short-form", "first-last"],
+                    compatibleModes: ["single-shot", "short-form", "first-last", "avatar"],
                     outputGoal: "storyboard",
                     aspectRatio: ["16:9", "9:16"],
                     durationRange: "30-180s",
@@ -2332,319 +2300,6 @@
 - For speaking shots, repeat the speaker's brief visual description (age, attire, role) every time before the quoted line — visual anchors stabilize character identity across shots better than names alone.
 - Keep quoted dialogue under 120 characters per video prompt — split longer lines across shots.
 - Animate natural lipsync exactly to the quoted words: mouth shapes, jaw, cheek, blinking, breathing, eye focus.`,
-                },
-                {
-                    id: "plat_seedance",
-                    name: "Seedance",
-                    family: "cinematic",
-                    primaryMode: "single-shot",
-                    compatibleModes: ["storyboard"],
-                    outputGoal: "motion",
-                    aspectRatio: ["16:9", "9:16"],
-                    durationRange: "5-15s",
-                    promptBias: [
-                        "cinematic subject",
-                        "natural motion",
-                        "camera continuity",
-                        "soft physical light",
-                    ],
-                    exportRules: [
-                        "no watermark",
-                        "no subtitles unless requested",
-                    ],
-                    notes: "ByteDance Seedance 2.0（2026 釋出）。新增 Semantic Weighting `((keyword))` / Timeline Prompting / Motion Control parameters。電影感單鏡頭強，photorealistic 偏好。",
-                    customPromptBlock: `## Seedance 2.0-Specific Rules
-
-Seedance 2.0（2026）核心變化：Semantic Weighting + Timeline Prompting + Motion Control parameters。
-
-### Prompt structure (2026 recommended workflow)
-Define in this order: **shot → subject → motion → scene → lighting**. Lighting, color, and texture descriptors land particularly well with Seedance 2.0.
-
-### Semantic Weighting
-Bracket-wrap keywords with double parens to allocate extra denoising weight to specific visual elements:
-- \`((cinematic lighting))\` — emphasize as a top visual priority.
-- \`((rim light))\` / \`((golden hour))\` — apply where lighting/texture/mood matters most.
-- Use sparingly — over-weighting dilutes the effect.
-
-### Motion Control
-Specify camera move explicitly using Motion Control vocabulary: dolly / pan / tilt / tracking / orbit. Keep continuous single-shot motion ≤ 10s.
-
-### Lighting language (physically grounded)
-Prefer physical light references (golden hour, softbox, soft diffusion, rim light, overcast, backlit) over abstract style terms (anime, cel-shaded). Seedance leans photorealistic.
-
-### Product-video pattern (when domain = product-demo)
-Open with: \`studio product shot of [product name], [one motion such as slow orbit], ((softbox lighting)), premium commercial look\`.`,
-                },
-                {
-                    id: "plat_runway",
-                    name: "Runway",
-                    family: "cinematic",
-                    primaryMode: "single-shot",
-                    compatibleModes: ["storyboard"],
-                    outputGoal: "motion",
-                    aspectRatio: ["16:9", "9:16"],
-                    durationRange: "4-16s",
-                    promptBias: [
-                        "camera control",
-                        "atmosphere",
-                        "scene continuity",
-                    ],
-                    exportRules: ["no watermark"],
-                    notes: "Runway Gen-4.5 / Gen-4 Turbo（2026）。clarity > structure，positive-only prompting，camera vocabulary 標準。高品質 input image > 長 text。",
-                    customPromptBlock: `## Runway Gen-4.5-Specific Rules
-
-Runway Gen-4.5（2026）核心變化：clarity beats structure（不需嚴格 formatting）+ positive-only prompting + camera literacy 進步。
-
-### Recommended template
-\`The scene comes to life with [primary motion]. The camera [camera move]. Over time, [secondary motion] happens in the background.\`
-
-### Three essential elements
-1. **Subject motion** — primary character / object movement, gestures, expressions.
-2. **Camera motion** — perspective or movement of the camera.
-3. **Style descriptor** — visual mood / aesthetic.
-
-### Camera vocabulary
-- Lead with shot type (always start with close-up / wide / aerial — grounds the composition).
-- Standard cinematography: pan / tilt / dolly / tracking shot / push in / locked tripod / handheld follow.
-
-### Positive prompting only
-- NEVER write negative prompts ("no", "without", "no extra people") — Gen-4.5 negatives have minimal impact.
-- Instead state positively: "a single person walking alone" (not "no extra people").
-- Keep prompt under ~80 words; long input gets truncated.
-
-### Workflow
-Start simple, iterate by adding details. High-quality input image carries more weight than long text in Gen-4 video mode.`,
-                },
-                {
-                    id: "plat_kling",
-                    name: "Kling",
-                    family: "cinematic",
-                    primaryMode: "single-shot",
-                    compatibleModes: ["storyboard"],
-                    outputGoal: "motion",
-                    aspectRatio: ["16:9", "9:16", "1:1"],
-                    durationRange: "5-10s",
-                    promptBias: [
-                        "subject motion",
-                        "scene action",
-                        "character continuity",
-                    ],
-                    exportRules: ["no watermark", "no text overlay"],
-                    notes: "Kling 3.0 / 2.5 Turbo（2026）。Anchor + Environment + Action + Camera formula；character details cap 2-3（78% consistency rate）。",
-                    customPromptBlock: `## Kling 3.0-Specific Rules
-
-Kling 3.0 / 2.5 Turbo（2026）核心 formula：**Anchor + Environment + Action + Camera**。此結構在 Kling 2.0 / 2.1 / 2.5 / 3.0 都一致 work。
-
-### Universal formula
-\`[Subject anchor] + [environment with 3-5 elements] + [precise action] + [camera + lighting + mood]\`
-
-### Subject anchor (critical constraint)
-- Cap at **2-3 character details** (gender / age / one signature feature). Going beyond 3 drops consistency from ~78% to ~22%.
-- Examples: "30-year-old man with shaved head" / "young woman in a red dress and braided hair".
-
-### Action (one realistic move per shot)
-- If the real-life version of the action would take more than 20 seconds, it's too complex — split across multiple shots.
-- Be explicit about body parts and direction: "lifts the cup with her right hand", "turns head slowly to the left".
-
-### Subject density
-- Limit to ≤ 2 subjects per shot. Crowded frames drop identity stability sharply.
-
-### Lipsync
-- Do NOT use Kling for lipsync — Kling animates body/face motion but isn't optimized for word-accurate mouth shapes. Route speaking shots to Talkingphotos / HeyGen avatar tools.`,
-                },
-                {
-                    id: "plat_talkingphoto",
-                    name: "Talkingphotos",
-                    family: "avatar",
-                    primaryMode: "avatar",
-                    compatibleModes: [],
-                    outputGoal: "lipsync",
-                    aspectRatio: ["16:9", "9:16", "1:1"],
-                    durationRange: "10-180s",
-                    promptBias: [
-                        "lipsync",
-                        "single character",
-                        "script clarity",
-                        "two-mode (singing / speaking)",
-                    ],
-                    exportRules: ["no watermark"],
-                    notes: "VideoExpress 同公司產品。流程：先用 prompt 畫主角 → 切歌唱模式（用戶自己丟音樂）或講話模式（輸入文字 → 對嘴聲音，支援多國語言）。",
-                    customPromptBlock: `## Talkingphotos-Specific Rules
-
-Talkingphotos has TWO modes; both start with the same first step: **generate a still image of the main subject**. Your prompt should produce the subject image prompt PLUS the relevant Mode A or Mode B block based on context.
-
-### Step 1 (always): Main Subject Image Prompt
-- Single character only, no multi-character scenes.
-- Framing: chest-up or 3/4 view; mouth and breathing area clearly visible.
-- Background: plain or static — no scene motion, no scene cuts.
-- The image must be ready as a Talkingphotos source frame.
-
-### Mode A — Singing
-- After the user generates the subject image, they supply a music track separately (outside this tool's scope).
-- Keep facial expression neutral-open in the source image (mouth not exaggerated).
-- Do NOT write a script for Mode A; the music is the audio source.
-
-### Mode B — Speaking (lipsync)
-- After the subject image, output a **Speaking Script** block: the spoken text Talkingphotos will read aloud with lipsync.
-- Specify the language code (e.g. zh-TW, en-US, ja-JP, ko-KR) for voice selection.
-- Keep dialogue natural, conversational, paced for spoken delivery; avoid abbreviations and complex punctuation that confuse TTS.
-- Length target: fit the chosen duration; ~150 chars per 30s of speech in Chinese, ~80 words per 30s in English.`,
-                },
-                {
-                    id: "plat_heygen",
-                    name: "HeyGen",
-                    family: "avatar",
-                    primaryMode: "avatar",
-                    compatibleModes: [],
-                    outputGoal: "lipsync",
-                    aspectRatio: ["16:9", "9:16"],
-                    durationRange: "10-300s",
-                    promptBias: [
-                        "script-first",
-                        "175+ languages",
-                        "voice tuning (pitch/speed/emotion)",
-                        "presenter framing",
-                    ],
-                    exportRules: ["no watermark"],
-                    notes: "2026 HeyGen Studio：Script + Language + Voice → AI avatar talking video。Avatar IV 支援全身動作，Video Agent 可自動加 b-roll。",
-                    customPromptBlock: `## HeyGen-Specific Rules
-
-HeyGen's 2026 workflow centers on the **Script Panel** in AI Studio. The user pastes a script, picks a language (175+ supported) and voice, optionally tunes pitch/speed/emotion, and HeyGen produces an avatar talking video.
-
-### Script Block (your main output)
-- Write a clean, paste-ready script. No timestamps inside the script — HeyGen handles timing.
-- Use natural sentence breaks; HeyGen reads punctuation as pauses.
-- For pronunciation-sensitive terms (names, brands, foreign words), note them in a separate "Pronunciation Hints" sub-list so the user can configure HeyGen's glossary.
-- Avoid markdown formatting, bullet points, or stage directions inside the script body.
-
-### Voice & Performance Direction (separate block)
-- Recommend a voice profile: gender / age / tone (warm, authoritative, energetic, ...).
-- Recommend pitch (low/neutral/high), speed (0.8-1.2×), emotion (neutral, serious, excited, ...).
-- Specify language code (e.g. zh-TW, en-US, es-ES, ja-JP).
-
-### Visuals
-- Default: presenter framing (front-facing or 3/4 view, chest-up, stable background).
-- If user has Avatar IV access, full-body motion is allowed — note it explicitly.
-- Background plain or gently branded; no dynamic scene motion inside one segment.
-- If the script benefits from b-roll, suggest a brief "B-roll Cue" list (HeyGen Video Agent can auto-generate b-roll from cues).`,
-                },
-                {
-                    id: "plat_tiktok",
-                    name: "TikTok",
-                    family: "short-form",
-                    primaryMode: "short-form",
-                    compatibleModes: [],
-                    outputGoal: "hook",
-                    aspectRatio: ["9:16"],
-                    durationRange: "15-60s",
-                    promptBias: [
-                        "first-3s hook",
-                        "fast-cut",
-                        "mobile framing",
-                        "vertical safe-zone",
-                    ],
-                    exportRules: ["no watermark", "subtitle optional"],
-                    notes: "短影音平台。TikTok（全球）與 Douyin（中國）共用此 platform — 兩者 9:16 短影音文法基本一致；中國市場補充規則寫在 customPromptBlock 末段。",
-                    customPromptBlock: `## TikTok / Douyin-Specific Rules
-
-This platform covers both TikTok (global) and Douyin 抖音 (China) — the short-vertical grammar is identical; the China-market addendum is noted at the bottom.
-
-### Core rules (both markets)
-- Opening 3 seconds MUST contain a strong visual hook (striking face close-up, surprising action, sudden state change) — strong enough to survive thumb-scroll.
-- 9:16 vertical only. Subject must stay inside central 60-70% vertical band (top 15% and bottom 25% are routinely covered by platform UI: caption, like button, follow CTA).
-- Pace: 8-12 cuts in 30-45s total. Max 5 seconds per shot.
-- Trending formats (talking-to-camera, POV walk-in, fast-cut narrative) work well — match shot framing to the chosen format.
-- Avoid burned-in text overlays in any single language unless explicitly requested.
-
-### China-market addendum (when target = Douyin)
-- Avoid foreign brand logos, Western-flavored advertising visuals, English-only text overlays.
-- Dialogue should be short, punchy, emotionally direct, and 中文-friendly (Traditional or Simplified per user request).
-- Cultural references should be locally legible.`,
-                },
-                {
-                    id: "plat_sora2",
-                    name: "Sora 2",
-                    family: "cinematic",
-                    primaryMode: "single-shot",
-                    compatibleModes: ["storyboard", "short-form"],
-                    outputGoal: "motion",
-                    aspectRatio: ["16:9", "9:16", "1:1"],
-                    durationRange: "4-20s",
-                    promptBias: [
-                        "structured sections",
-                        "cinematography literacy",
-                        "native audio sync",
-                        "character references",
-                    ],
-                    exportRules: ["1920x1080 horizontal", "1080x1920 vertical"],
-                    notes: "OpenAI Sora 2（2026-03 update）。原生 audio sync、character ID 跨 shot 重用、最長 20s。短 clip 命中率高 — 建議 4s+4s 拼接優於 single 8s。",
-                    customPromptBlock: `## Sora 2-Specific Rules
-
-Structure prompts in clear sections — Sora 2 responds best to organized input, not stream-of-consciousness paragraphs.
-
-### Section 1: What happens
-- Subject + setting in one clear line.
-- 2-3 sequential beats describing action progression.
-- Use specific filmmaking terminology (close-up, dolly, push-in, rack focus, slow pan left).
-
-### Section 2: How it looks
-- Lighting / palette / aesthetic note.
-- Camera motion explicit (e.g. "static locked tripod" vs "handheld follow"); avoid leaving camera unspecified.
-
-### Section 3: What we hear (audio is native)
-- SFX request: ambient room tone, footsteps, prop sounds, environmental layer.
-- Dialogue: place in a separate block below the prose; label each speaker; alternating turns for multi-character so the model maps lines to gestures.
-
-### Identity & duration
-- Character references: upload a still once, reuse across clips for consistent appearance.
-- Aim for 4-second shots and stitch in post; single 8-second clips lose adherence.
-- Max duration 20s; output resolutions 1920×1080 horizontal or 1080×1920 vertical.
-
-### Physics guidance
-- Be explicit about weight and material: "heavy object slides" vs "light feather floats"; "fabric stretches", "glass shatters", "liquid flows".
-- Timing words help: "quick reaction" vs "slow-motion effect".`,
-                },
-                {
-                    id: "plat_veo3",
-                    name: "Veo 3.1",
-                    family: "cinematic",
-                    primaryMode: "single-shot",
-                    compatibleModes: ["storyboard"],
-                    outputGoal: "motion",
-                    aspectRatio: ["16:9", "9:16"],
-                    durationRange: "5-8s",
-                    promptBias: [
-                        "Subject + Context + Action + Mood",
-                        "lighting precision",
-                        "audio integration",
-                        "cinematography vocabulary",
-                    ],
-                    exportRules: ["no watermark"],
-                    notes: "Google Veo 3.1（2026）。3-6 sentences / 100-150 words 最穩。Dialogue 用 quotation marks、SFX prefix 內建音效，modifiers \"cinematic quality\" 顯著拉升 perceived film grade。",
-                    customPromptBlock: `## Veo 3.1-Specific Rules
-
-Every Veo 3.1 prompt covers four core elements: **Subject + Context + Action + Mood**. Target length: 3-6 sentences, 100-150 words.
-
-### Structure
-1. **Subject** — who or what is the main focus.
-2. **Context** — where, when, conditions.
-3. **Action** — what is happening or moving.
-4. **Mood** — emotional tone, lighting quality, atmosphere.
-
-### Camera & shot type
-- Always specify shot: establishing wide / close-up / medium / over-the-shoulder / Dutch angle.
-- Camera move explicit: slow dolly forward / gentle pan left / crane descending / handheld tracking.
-- Lighting language is high-leverage: golden hour / overcast diffused / harsh noon sun / blue hour / neon reflections on wet pavement.
-
-### Audio (native)
-- Dialogue uses quotation marks: \`A woman says, "We have to leave now."\`
-- Sound effects use SFX prefix: \`SFX: thunder cracks in the distance.\`
-
-### Quality modifiers
-Reliable modifiers that improve perceived production value:
-- \`cinematic quality\` — shifts toward film-grade rendering.
-- \`photorealistic\` — increases visual accuracy.
-- \`moody and atmospheric\` — increases depth and drama.`,
                 },
             ];
 
@@ -2675,7 +2330,7 @@ Reliable modifiers that improve perceived production value:
                 },
                 {
                     id: "tpl_social_hook",
-                    name: "Bible Scene – TikTok Hook",
+                    name: "Bible Scene – Short-Form Hook",
                     domain: "narrative-scene",
                     defaultFamily: "short-form",
                     defaultMode: "short-form",
@@ -2697,7 +2352,6 @@ Reliable modifiers that improve perceived production value:
                 "modeChips",
                 "familyChips",
                 "activePlatform",
-                "showUntestedToggle",
                 "duration",
                 "aspectRatio",
                 "advancedToggle",
@@ -2995,7 +2649,11 @@ Reliable modifiers that improve perceived production value:
             // §3  DATA LAYER (DB / migration)
             // ═══════════════════════════════════════════════════════════════
             // ── DB ──────────────────────────────────────────────────────────
-            let db = loadDB();
+            // 注意：db 的實際初始化在本節底部（PLATFORM_V6_UPGRADE / migrateDB 宣告之後）。
+            // 歷史 bug：原本 `let db = loadDB()` 放在這裡，migrateDB 執行時 const
+            // PLATFORM_V6_UPGRADE 還在 TDZ → ReferenceError 被 loadDB 的空 catch 吞掉，
+            // 導致「有存檔的使用者每次重載都被靜默重置成預設 DB」。勿移回。
+            let db;
 
             function uid(p = "id") {
                 return p + "_" + Math.random().toString(36).slice(2, 10);
@@ -3013,7 +2671,13 @@ Reliable modifiers that improve perceived production value:
                 if (raw) {
                     try {
                         return migrateDB(JSON.parse(raw));
-                    } catch {}
+                    } catch (e) {
+                        // 存檔壞掉才會走到這裡；留 console 證據並保底不覆寫原始存檔
+                        console.error(
+                            "loadDB: stored DB failed to migrate, falling back to defaults (stored data left untouched in localStorage)",
+                            e,
+                        );
+                    }
                 }
                 return {
                     platforms: [...DEFAULT_PLATFORMS],
@@ -3032,42 +2696,7 @@ Reliable modifiers that improve perceived production value:
                 plat_videoexpress: {
                     family: "video",
                     primaryMode: "storyboard",
-                    compatibleModes: ["single-shot", "short-form"],
-                },
-                plat_seedance: {
-                    family: "cinematic",
-                    primaryMode: "single-shot",
-                    compatibleModes: ["storyboard"],
-                },
-                plat_runway: {
-                    family: "cinematic",
-                    primaryMode: "single-shot",
-                    compatibleModes: ["storyboard"],
-                },
-                plat_kling: {
-                    family: "cinematic",
-                    primaryMode: "single-shot",
-                    compatibleModes: ["storyboard"],
-                },
-                plat_heygen: {
-                    family: "avatar",
-                    primaryMode: "avatar",
-                    compatibleModes: [],
-                },
-                plat_talkingphoto: {
-                    family: "avatar",
-                    primaryMode: "avatar",
-                    compatibleModes: [],
-                },
-                plat_douyin: {
-                    family: "short-form",
-                    primaryMode: "short-form",
-                    compatibleModes: [],
-                }, // legacy: TikTok now covers both markets; this is kept only so old DBs don't break
-                plat_tiktok: {
-                    family: "short-form",
-                    primaryMode: "short-form",
-                    compatibleModes: [],
+                    compatibleModes: ["single-shot", "short-form", "first-last", "avatar"],
                 },
             };
 
@@ -3104,50 +2733,25 @@ Reliable modifiers that improve perceived production value:
                         );
                         p.customPromptBlock = def?.customPromptBlock || "";
                     }
-                    // tested 旗標一律以 DEFAULT_PLATFORMS 為準（VE-first 收斂）
-                    {
-                        const def = DEFAULT_PLATFORMS.find(
-                            (x) => x.id === p.id,
-                        );
-                        if (def) p.tested = !!def.tested;
-                    }
                 });
-                // 1a. VE 平台補 first-last compatibleMode（2026-08 新 mode，舊 DB 沒有）
+                // 2. VE-only（2026-08）：移除已除役的內建平台（未實測 registry 整批下架；
+                //    內容可從 git 歷史找回）。使用者自建平台不受影響。
+                //    舊 versions/testCases 若引用除役平台，platformId 保留原值，
+                //    還原時自動落回「未選平台」。
                 {
-                    const ve = out.platforms.find(
-                        (p) => p.id === "plat_videoexpress",
-                    );
-                    if (ve && !ve.compatibleModes.includes("first-last"))
-                        ve.compatibleModes.push("first-last");
-                }
-                // 2. 補上 Talkingphotos（從 v5 預設沒有）
-                if (!out.platforms.find((p) => p.id === "plat_talkingphoto")) {
-                    out.platforms.push(
-                        DEFAULT_PLATFORMS.find(
-                            (p) => p.id === "plat_talkingphoto",
-                        ),
-                    );
-                }
-                // 2a. 舊 DB 的 name === 'TalkingPhoto' 自動 rename 成 'Talkingphotos'
-                out.platforms.forEach((p) => {
-                    if (p.id === "plat_talkingphoto" && p.name === "TalkingPhoto") {
-                        p.name = "Talkingphotos";
-                    }
-                });
-                // 2b. 合併 plat_douyin → plat_tiktok：版本連結重新指向 TikTok，移除 Douyin platform
-                if (out.platforms.find((p) => p.id === "plat_douyin")) {
-                    out.versions.forEach((v) => {
-                        if (v.platformId === "plat_douyin")
-                            v.platformId = "plat_tiktok";
-                        if (v.builderState?.platformId === "plat_douyin")
-                            v.builderState.platformId = "plat_tiktok";
-                    });
-                    out.testCases.forEach((c) => {
-                        if (c.expectedPlatform === "Douyin 抖音")
-                            c.expectedPlatform = "TikTok";
-                    });
+                    const RETIRED = [
+                        "plat_seedance",
+                        "plat_runway",
+                        "plat_kling",
+                        "plat_talkingphoto",
+                        "plat_heygen",
+                        "plat_tiktok",
+                        "plat_douyin",
+                        "plat_sora2",
+                        "plat_veo3",
+                    ];
                     out.platforms = out.platforms.filter(
-                        (p) => p.id !== "plat_douyin",
+                        (p) => p && !RETIRED.includes(p.id),
                     );
                 }
                 // 3. 把所有 versions.builderState.mode 補上
@@ -3161,6 +2765,9 @@ Reliable modifiers that improve perceived production value:
                 });
                 return out;
             }
+
+            // db 初始化必須在 PLATFORM_V6_UPGRADE / migrateDB 之後（見上方 TDZ 註記）
+            db = loadDB();
 
             // ═══════════════════════════════════════════════════════════════
             // §4  PROMPT ENGINE (Builder state + PromptBuilder + Lint)
@@ -3204,11 +2811,9 @@ Reliable modifiers that improve perceived production value:
                     if (plat) {
                         selectedFamily = plat.family;
                     }
-                    restorePlatformId = state?.platformId || "";
                     renderFamilyBar();
                     if (state?.platformId !== undefined)
                         els.activePlatform.value = state.platformId;
-                    restorePlatformId = "";
                     renderModeChips();
                     if (els.activePlatform.value) {
                         els.activePlatform.dispatchEvent(new Event("change"));
@@ -3267,12 +2872,10 @@ Reliable modifiers that improve perceived production value:
                         (p) => p.id === obj.platformId,
                     );
                     if (plat) selectedFamily = plat.family;
-                    restorePlatformId = obj.platformId || "";
                     renderFamilyBar();
                     if (obj.platformId !== undefined) {
                         els.activePlatform.value = obj.platformId;
                     }
-                    restorePlatformId = "";
                     renderModeChips();
                     if (els.activePlatform.value) {
                         els.activePlatform.dispatchEvent(new Event("change"));
@@ -4118,14 +3721,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
             // ── FAMILY CHIPS (top-bar) ─────────────────────────────────────
             function renderFamilyBar() {
                 const prev = els.activePlatform.value;
-                // VE-first：未實測平台預設收起；目前選中/待還原的平台永遠保留（存檔還原不斷鏈）
-                const visible = db.platforms.filter(
-                    (p) =>
-                        showUntested ||
-                        !isUntestedPlatform(p) ||
-                        p.id === prev ||
-                        p.id === restorePlatformId,
-                );
+                const visible = db.platforms;
                 const availFams = new Set(visible.map((p) => p.family));
                 if (selectedFamily !== "all" && !availFams.has(selectedFamily))
                     selectedFamily = "all";
@@ -4191,18 +3787,6 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 buildPrompt();
             });
 
-            // ── SHOW-UNTESTED TOGGLE（VE-first 收斂）───────────────────────
-            els.showUntestedToggle.checked = showUntested;
-            els.showUntestedToggle.addEventListener("change", () => {
-                showUntested = els.showUntestedToggle.checked;
-                localStorage.setItem(
-                    "ps_showUntested",
-                    showUntested ? "1" : "0",
-                );
-                renderFamilyBar();
-                renderPlatformRegistry();
-            });
-
             // ── ADVANCED TOGGLE ────────────────────────────────────────────
             els.advancedToggle.addEventListener("click", () => {
                 advancedOpen = !advancedOpen;
@@ -4216,9 +3800,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
             // PLATFORM REGISTRY (grid) — same UX as v5
             // ════════════════════════════════════════════════════════════════
             function renderPlatformFilterBar() {
-                const visible = db.platforms.filter(
-                    (p) => showUntested || !isUntestedPlatform(p),
-                );
+                const visible = db.platforms;
                 const availFams = new Set(visible.map((p) => p.family));
                 if (platformFilter !== "all" && !availFams.has(platformFilter))
                     platformFilter = "all";
@@ -4248,20 +3830,13 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
 
             function renderPlatformRegistry() {
                 renderPlatformFilterBar();
-                const byFamily =
+                const platforms =
                     platformFilter === "all"
                         ? db.platforms
                         : db.platforms.filter(
                               (p) => p.family === platformFilter,
                           );
-                const platforms = byFamily.filter(
-                    (p) => showUntested || !isUntestedPlatform(p),
-                );
-                const hiddenCount = byFamily.length - platforms.length;
-                const hiddenHint = hiddenCount
-                    ? `<div class="muted tiny" style="padding:var(--space-2) 0">${t("registry.hiddenUntested").replace("{n}", hiddenCount)}</div>`
-                    : "";
-                els.platformRegistry.innerHTML = hiddenHint + (platforms.length
+                els.platformRegistry.innerHTML = (platforms.length
                     ? platforms
                           .map(
                               (p) => `
@@ -4272,7 +3847,6 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
       <div style="margin-top:8px" class="tiny muted">${esc(p.durationRange)} · ${p.aspectRatio.map(esc).join("/")}</div>
       ${p.notes ? `<div style="margin-top:6px" class="tiny muted">${esc(p.notes)}</div>` : ""}
       ${p.customPromptBlock ? '<div style="margin-top:6px"><span class="chip stable">✓ custom block</span></div>' : ""}
-      ${isUntestedPlatform(p) ? `<div style="margin-top:6px"><span class="chip">⚠ ${t("registry.untestedBadge")}</span></div>` : ""}
     </div>`,
                           )
                           .join("")
@@ -5271,9 +4845,9 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     if (!db.versions.find((v) => v.templateId === t.id)) {
                         const platByMode = {
                             storyboard: "plat_videoexpress",
-                            avatar: "plat_talkingphoto",
-                            "short-form": "plat_tiktok",
-                            "single-shot": "plat_seedance",
+                            avatar: "plat_videoexpress",
+                            "short-form": "plat_videoexpress",
+                            "single-shot": "plat_videoexpress",
                         };
                         const plat = db.platforms.find(
                             (p) => p.id === platByMode[t.defaultMode],
@@ -5333,7 +4907,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                         title: "約瑟被賣到埃及",
                         inputIdea: "約瑟被哥哥賣到埃及，來到波提乏家中服事",
                         expectedMode: "avatar",
-                        expectedPlatform: "Talkingphotos",
+                        expectedPlatform: "VideoExpress.ai",
                         category: "avatar",
                         notes: "short dialogue, face stability",
                     },
@@ -5352,16 +4926,16 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                         inputIdea:
                             "第一秒從海水浪頭特寫切入，再展開摩西過紅海全景",
                         expectedMode: "short-form",
-                        expectedPlatform: "TikTok",
+                        expectedPlatform: "VideoExpress.ai",
                         category: "short-form",
                         notes: "first-3s hook required",
                     },
                     {
-                        id: "case_seedance_shot",
-                        title: "Seedance 單鏡：日落孤舟",
+                        id: "case_single_shot",
+                        title: "單鏡：日落孤舟",
                         inputIdea: "金色海面上一艘小漁船緩緩漂入鏡頭，鏡頭側拉",
                         expectedMode: "single-shot",
-                        expectedPlatform: "Seedance",
+                        expectedPlatform: "VideoExpress.ai",
                         category: "single-shot",
                         notes: "5-second single shot",
                     },

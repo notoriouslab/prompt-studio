@@ -154,19 +154,19 @@ const CASES = [
     },
     {
         name: "sora2_single_shot_dialogue",
-        state: { mode: "single-shot", platformId: "plat_sora2", domain: "narrative-character", duration: "10-20 seconds", aspectRatio: "16:9", mediaType: "live" },
+        state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "narrative-character", duration: "10-20 seconds", aspectRatio: "16:9", mediaType: "live" },
         idea: "深夜便利店場景：一個 30 歲女性顧客買咖啡，店員微笑說『歡迎光臨』，10 秒 cinematic 真人風格。",
         assertions: ["dialogue_wrap"],
     },
     {
         name: "veo3_single_shot_narrative",
-        state: { mode: "single-shot", platformId: "plat_veo3", domain: "narrative-scene", dialogueMode: "none", duration: "5-8 seconds", aspectRatio: "16:9", mediaType: "live" },
+        state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "narrative-scene", dialogueMode: "none", duration: "5-8 seconds", aspectRatio: "16:9", mediaType: "live" },
         idea: "夕陽下的台灣稻田，金黃色光線，鏡頭緩慢推進，遠方中央山脈剪影，6 秒史詩氛圍。",
         assertions: [],
     },
     {
         name: "cinemagraph_illustration_kyoto",
-        state: { mode: "single-shot", platformId: "plat_sora2", domain: "editorial-cinemagraph", mediaType: "illustration", dialogueMode: "none", duration: "5-10 seconds", aspectRatio: "16:9", styleExtra: "Swiss Modernist line art, monochrome silkscreen" },
+        state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "editorial-cinemagraph", mediaType: "illustration", dialogueMode: "none", duration: "5-10 seconds", aspectRatio: "16:9", styleExtra: "Swiss Modernist line art, monochrome silkscreen" },
         idea: "京都鴨川河畔，文青風單色線條插畫海報，行人緩步走過，河流微波，鏡頭微移 parallax，8 秒 living poster。",
         assertions: [],
     },

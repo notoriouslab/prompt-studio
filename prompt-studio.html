@@ -3010,11 +3010,12 @@
                     "Timestamps in the storyboard must be continuous with zero gaps. Format: `00:00-00:05`.",
                     "No single shot duration exceeds 10 seconds.",
                     `Total runtime must land inside the user-selected duration (${state.duration}) — choose the shot count and per-shot seconds so they sum to that range.`,
+                    "ONE primary action beat per shot. If describing what happens needs more than one sentence, split it into two shots — a generated clip can only sell one clear beat.",
                     state.shotStyle === "tight"
                         ? "All shots stay within close-up, medium close-up, chest-up, or waist-up. Face + upper torso large in frame."
                         : "Speaking shots use close-up to waist-up. Non-speaking shots may widen slightly but central subject stays readable.",
                     dialogue
-                        ? "Quoted dialogue in any single Image-To-Video prompt ≤ 120 characters. Split longer lines into multiple shots."
+                        ? "Size each spoken line to its shot's seconds: ~2 spoken words per second (a 6-second shot carries ~12 words). Hard cap ≤ 120 characters per shot; longer lines split across shots. A shot that speaks does little else — no simultaneous complex action."
                         : "Prefer no dialogue. Any unavoidable line is short and isolated to one stable shot.",
                     dialogue
                         ? "Wrap each spoken line as a speech act: `<Actor Alias>, <continuity anchor>, says in a <tone>, clear <language> accent: \"<line>\"`. Embed inside the [time-segment] bracket of the Image-To-Video prompt that contains the speech beat. Bare quoted text risks being rendered as on-screen subtitles. NEVER use character Name in T2I / I2V prompt bodies — Actor Alias only."
@@ -3126,6 +3127,7 @@
                         "✓ Tier 1 framing rule satisfied across all shots",
                         "✓ Tier 1 timestamp continuity verified",
                         "✓ Tier 1 shot duration limit (≤ 10s) satisfied",
+                        "✓ One primary action beat per shot; spoken lines fit their shot's seconds (~2 words/second)",
                         dialogue ? "✓ Tier 1 dialogue character limit (≤ 120) satisfied" : "✓ Tier 1 no-unnecessary-dialogue rule satisfied",
                         "✓ Tier 1 subtitle suppression rule satisfied",
                         minimal
@@ -3313,7 +3315,8 @@ Per shot, use \`## Shot N\` H2 heading + bulleted fields (NOT a markdown table).
 - \`**Text-To-Image Prompt:** ${media.t2iBase} of [Actor Alias], [continuity anchor] in [setting], [action / emotion], [composition / camera], [lighting], [environment details], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame.\`
 - \`**Image-To-Video Prompt:** Animate this image into a [duration]-second ${media.motionBase}. Keep character identity, clothing, environment, and composition consistent. Camera [movement]. [0-2 seconds]: [action description]. [2-4 seconds]: [action description].${dialogue ? ' [4-6 seconds]: [Actor Alias], [continuity anchor], says in a [tone], clear [language] accent: "[dialogue line]". Animate natural lipsync exactly to the quoted words.' : " [4-6 seconds]: [action description]. No dialogue. Hold expression and breathing naturally."}\`
 
-Timestamps must be continuous with zero gaps across consecutive shots.`;
+Timestamps must be continuous with zero gaps across consecutive shots.
+Keep each [time-segment] to ONE simple motion — crowded segments produce mushy, rushed clips.`;
                 }
                 return `## Section Schemas
 

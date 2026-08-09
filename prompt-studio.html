@@ -2283,7 +2283,7 @@
                     compatibleModes: ["single-shot", "short-form", "first-last", "avatar"],
                     outputGoal: "storyboard",
                     aspectRatio: ["16:9", "9:16"],
-                    durationRange: "30-180s",
+                    durationRange: "3-10s per clip · 30-180s assembled total",
                     promptBias: [
                         "storyboard structure",
                         "T2I + I2V pipeline",
@@ -2953,9 +2953,22 @@
             }
 
             function shotCountFor(state) {
-                if (state.lengthMode === "short") return "5-7";
-                if (state.lengthMode === "detailed") return "9-12";
-                return "6-9";
+                // shot 數由使用者選的總長主導（VE 實測單 clip 約 4.5-8s，以 ~7s 換算），
+                // lengthMode 只在該區間內收窄：short 靠下界、detailed 靠上界。
+                // 舊版只看 lengthMode，會產生「60-180s 卻只給 6-9 shots」的時長矛盾。
+                const table = {
+                    "5-10 seconds": ["1-2", "1-2", "2"],
+                    "10-15 seconds": ["2", "2-3", "3"],
+                    "15-30 seconds": ["3-4", "3-5", "4-5"],
+                    "30-45 seconds": ["4-5", "5-7", "6-8"],
+                    "45-75 seconds": ["6-7", "6-9", "8-10"],
+                    "60-90 seconds": ["8-9", "8-12", "10-13"],
+                    "60-180 seconds": ["8-10", "9-14", "12-18"],
+                };
+                const row = table[state.duration] || ["5-7", "6-9", "9-12"];
+                if (state.lengthMode === "short") return row[0];
+                if (state.lengthMode === "detailed") return row[2];
+                return row[1];
             }
 
             function joinNonEmpty(parts) {
@@ -2996,6 +3009,7 @@
                     "Output must contain ALL required headings in the exact order listed in Output Format.",
                     "Timestamps in the storyboard must be continuous with zero gaps. Format: `00:00-00:05`.",
                     "No single shot duration exceeds 10 seconds.",
+                    `Total runtime must land inside the user-selected duration (${state.duration}) — choose the shot count and per-shot seconds so they sum to that range.`,
                     state.shotStyle === "tight"
                         ? "All shots stay within close-up, medium close-up, chest-up, or waist-up. Face + upper torso large in frame."
                         : "Speaking shots use close-up to waist-up. Non-speaking shots may widen slightly but central subject stays readable.",
@@ -3015,7 +3029,7 @@
                 ].filter(Boolean),
                 "single-shot": (state, { dialogue }) => [
                     "Output exactly ONE shot. Do not write multi-shot structures or storyboards.",
-                    "Shot duration must fit the selected platform durationRange. Do not exceed.",
+                    `Shot duration must fit the user-selected duration (${state.duration}); a single generated clip stays ≤ 10 seconds regardless.`,
                     state.shotStyle === "tight"
                         ? "Framing: close-up to waist-up. Face + upper torso large in frame."
                         : "Speaking shots: close-up to waist-up. Otherwise medium framing allowed if subject stays readable.",
@@ -3035,7 +3049,7 @@
                     "The First Frame Prompt carries the COMPLETE scene description: subject, environment, lighting, camera. The Last Frame is a SMART EDIT of the first frame: describe ONLY what changes, then explicitly pin everything else (e.g. 'The pot, desk, window light, and background stay exactly the same.'). Never rewrite the full scene in the last-frame field — the platform edits the first image, and restating unchanged elements invites drift.",
                     "The transition prompt describes one continuous motion arc that starts exactly at the First Frame state and ends exactly at the Last Frame state. Introduce nothing that appears in neither frame.",
                     "One state change per generation. If the brief implies multiple transformations, pick the strongest single before/after and note the rest as follow-up pairs.",
-                    "Transition duration must fit the platform durationRange (~10s ceiling on VideoExpress).",
+                    `Transition duration must fit the user-selected duration (${state.duration}); a single first-to-last generation caps at ~10 seconds.`,
                     dialogue
                         ? "If dialogue: ONE short line ≤ 100 characters, wrapped as a speech act: `<speaker reference>, says in a <tone>, clear <language> accent: \"<line>\"` — never bare quoted text."
                         : "Prefer no dialogue — first/last frame generations read cleanest as pure visual transformations.",
@@ -3051,13 +3065,13 @@
                     state.subtitleMode === "strict"
                         ? "Do NOT mention burned-in subtitle, caption, lower-thirds, on-screen text."
                         : "No intentional text overlays inside the frame.",
-                    "Script must be naturally spoken, paced for the chosen platform durationRange.",
+                    `Script must be naturally spoken, paced to fit the user-selected duration (${state.duration}).`,
                     "No copyrighted characters, celebrity likenesses, brand names, logos.",
                 ],
                 "short-form": (state) => [
                     "Aspect ratio MUST be 9:16 vertical.",
                     "First 3 seconds MUST contain a strong visual hook (face close-up, surprising action, sudden state change).",
-                    "Total length 15-45 seconds. 3-5 scene beats. Each beat 3-5 seconds.",
+                    `Total length must land inside the user-selected duration (${state.duration}). Use 3-6 scene beats and size each beat (typically 3-6 seconds) so the beats sum to that total.`,
                     "Central 60-70% vertical zone is safe. Top 15% and bottom 25% may be covered by platform UI.",
                     state.subtitleMode === "strict"
                         ? "Do NOT burn in any text overlays unless the platform exportRules explicitly allows."
@@ -3122,7 +3136,7 @@
                 },
                 "single-shot": () => [
                     "✓ Exactly one shot (no multi-shot list)",
-                    "✓ Shot duration within platform durationRange",
+                    "✓ Shot duration within the user-selected duration (and ≤ 10s per clip)",
                     "✓ Tier 1 framing satisfied",
                     "✓ Output contains no meta-commentary",
                 ],
@@ -3130,7 +3144,7 @@
                     "✓ Exactly one First Frame Prompt + one Last Frame Smart Edit + one transition prompt, nothing else",
                     "✓ Last Frame Smart Edit describes only the changed elements and explicitly pins the unchanged ones",
                     "✓ Transition starts at the First Frame state and ends at the Last Frame state; no new elements introduced",
-                    "✓ Transition duration within platform durationRange",
+                    "✓ Transition duration within the user-selected duration (and ≤ ~10s per generation)",
                     "✓ Output contains no meta-commentary",
                 ],
                 avatar: () => [
@@ -3143,7 +3157,7 @@
                 "short-form": () => [
                     "✓ 9:16 aspect locked",
                     "✓ Opening 3s hook present",
-                    "✓ 3-5 beats; each ≤ 5s; total ≤ 60s",
+                    "✓ 3-6 beats; per-beat seconds sum to the user-selected total length",
                     "✓ Subject in central safe zone",
                     "✓ Only the three sections above are emitted (intentionally no character-table, no continuity-lock)",
                     "✓ Output contains no meta-commentary",
@@ -3380,7 +3394,8 @@ Answer in Markdown. Emit EXACTLY these two blocks. No "Shot Brief", no sub-field
                     `You produce ONE before/after frame pair plus a transition for first-and-last-frame video generation (e.g. VideoExpress's "First Frame, Last Frame" mode). The user provides a transformation brief — a starting state and an ending state; you emit two T2I prompts sharing a frozen anchor and one I2V transition prompt.`,
                     `Defaults: ${state.duration}, ${state.aspectRatio}, ${media.style}.`,
                     platformContextBlock(state),
-                    platformCustomBlock(state),
+                    // 不注入 platformCustomBlock：其 shot-based 規則（I2V 直貼、120 字元對白）
+                    // 與 FFLF 三欄位流程（Smart Edit、≤100 字元）矛盾；VE FFLF 情報已內建於 schema
                     tierBlock(1, "Hard Constraints", TIER1["first-last"](state, { dialogue })),
                     tierBlock(2, "Domain & Language", TIER2["first-last"](state, { domain })),
                     tier3InlineHint(state),
@@ -3412,7 +3427,8 @@ One short paragraph describing ONLY the change, then pinning the rest:
                     `You produce a single-character talking-head segment. The user provides a speaker brief + intent; you emit a Character Sheet + Voice direction + Script + composition note.`,
                     `Defaults: ${state.duration}, ${state.aspectRatio}.`,
                     platformContextBlock(state),
-                    platformCustomBlock(state),
+                    // 不注入 platformCustomBlock：VE 的 shot-based 規則（I2V 直貼、120 字元對白）
+                    // 與 avatar 的整段 Script 輸出矛盾（VE avatar 多 clip 化是待辦的獨立設計題）
                     tierBlock(1, "Hard Constraints", TIER1.avatar(state)),
                     `## Tier 2 — Domain & Language\n${bulletList(TIER2.avatar(state, { domain }))}`,
                     tier3InlineHint(state),
@@ -3467,11 +3483,11 @@ Answer in Markdown. Emit ONLY the three sections below, in order. Do not output 
 - Opening 3-second visual: [single sentence — what the viewer sees]
 - Why it stops the scroll: [1 sentence]
 
-### \`## Scene Beats\` (3-5 beats)
+### \`## Scene Beats\` (3-6 beats)
 | # | Beat | Time | Visual | Action${dialogue ? " / Line" : ""} |
 |---|---|---|---|---|
 
-- Each beat 3-5 seconds
+- Each beat typically 3-6 seconds; beats must sum to the total length (${state.duration})
 - Each Visual cell ≤ 30 words
 ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 60 chars per beat" : "- Prefer no dialogue; if needed, voiceover added in post"}
 
@@ -3545,6 +3561,22 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     warnings.push({
                         level: "warn",
                         msg: "⚠️ first-last mode 是單一轉場，建議時長 5-15 秒",
+                    });
+                if (
+                    state.mode === "storyboard" &&
+                    ["5-10 seconds", "10-15 seconds"].includes(state.duration)
+                )
+                    warnings.push({
+                        level: "warn",
+                        msg: "⚠️ 15 秒內的內容用 single-shot 或 first-last 更合適；storyboard 是多 shot 結構",
+                    });
+                if (
+                    state.mode === "short-form" &&
+                    ["45-75 seconds", "60-90 seconds", "60-180 seconds"].includes(state.duration)
+                )
+                    warnings.push({
+                        level: "warn",
+                        msg: "⚠️ short-form 建議 45 秒內；更長的內容建議改用 storyboard",
                     });
                 if (state.mode === "short-form" && state.aspectRatio !== "9:16")
                     warnings.push({

@@ -1731,7 +1731,7 @@
                     "mode.desc.single-shot":
                         "單鏡頭 T2I + I2V prompt。1 個 shot 一段 paragraph。適合 Seedance / Runway / Kling。",
                     "mode.desc.first-last":
-                        "首尾幀控制。兩張 T2I（First / Last Frame，共用凍結錨點，只寫變化元素）+ 一段轉場 I2V。對應 VideoExpress「First Frame, Last Frame」(Beta) 卡。文法對齊官方 workflow，尚未實測。",
+                        "首尾幀控制。First Frame 完整 T2I + Last Frame Smart Edit（只寫變化、釘住其餘）+ 一段轉場 I2V。對應 VideoExpress「First Frame, Last Frame」(Beta) 卡，2026-08-09 實測跑通。",
                     "mode.desc.avatar":
                         "Talking head / 替身。Character Sheet + Voice + Script，無鏡頭表、無 shot 切換。適合 Talkingphotos / HeyGen。",
                     "mode.desc.short-form":
@@ -1986,7 +1986,7 @@
                     "mode.desc.single-shot":
                         "Single-shot T2I + I2V prompt. One shot as one paragraph. For Seedance / Runway / Kling.",
                     "mode.desc.first-last":
-                        "First/last frame control. Two T2I prompts sharing a frozen anchor (only the changing elements differ) + one transition I2V. Maps to VideoExpress's \"First Frame, Last Frame\" (Beta) card. Grammar aligned to the official workflow; not yet dogfooded.",
+                        "First/last frame control. One full First Frame T2I + a Last Frame Smart Edit (describe only the change, pin the rest) + one transition I2V. Maps to VideoExpress's \"First Frame, Last Frame\" (Beta) card; validated on a real run (2026-08-09).",
                     "mode.desc.avatar":
                         "Talking head. Character Sheet + Voice + Script, no shot list. For Talkingphotos / HeyGen.",
                     "mode.desc.short-form":
@@ -3428,8 +3428,8 @@ Reliable modifiers that improve perceived production value:
                         : null,
                 ].filter(Boolean),
                 "first-last": (state, { dialogue }) => [
-                    "Output exactly ONE frame pair (First Frame + Last Frame) plus ONE transition prompt. No storyboard, no extra shots.",
-                    "Freeze everything that must NOT change between the two frames — subject identity, wardrobe, environment, palette, camera position, lighting — and write those shared elements with IDENTICAL wording in both frame prompts. Only the elements that change state may differ.",
+                    "Output exactly ONE frame pair (First Frame + Last Frame Smart Edit) plus ONE transition prompt. No storyboard, no extra shots.",
+                    "The First Frame Prompt carries the COMPLETE scene description: subject, environment, lighting, camera. The Last Frame is a SMART EDIT of the first frame: describe ONLY what changes, then explicitly pin everything else (e.g. 'The pot, desk, window light, and background stay exactly the same.'). Never rewrite the full scene in the last-frame field — the platform edits the first image, and restating unchanged elements invites drift.",
                     "The transition prompt describes one continuous motion arc that starts exactly at the First Frame state and ends exactly at the Last Frame state. Introduce nothing that appears in neither frame.",
                     "One state change per generation. If the brief implies multiple transformations, pick the strongest single before/after and note the rest as follow-up pairs.",
                     "Transition duration must fit the platform durationRange (~10s ceiling on VideoExpress).",
@@ -3524,8 +3524,8 @@ Reliable modifiers that improve perceived production value:
                     "✓ Output contains no meta-commentary",
                 ],
                 "first-last": () => [
-                    "✓ Exactly two frame prompts + one transition prompt, nothing else",
-                    "✓ Shared (non-changing) elements worded identically in both frame prompts",
+                    "✓ Exactly one First Frame Prompt + one Last Frame Smart Edit + one transition prompt, nothing else",
+                    "✓ Last Frame Smart Edit describes only the changed elements and explicitly pins the unchanged ones",
                     "✓ Transition starts at the First Frame state and ends at the Last Frame state; no new elements introduced",
                     "✓ Transition duration within platform durationRange",
                     "✓ Output contains no meta-commentary",
@@ -3766,7 +3766,7 @@ Answer in Markdown. Emit EXACTLY these two blocks. No "Shot Brief", no sub-field
                 ]);
             }
 
-            // ── MODE B2: first-last（首尾幀控制；文法對齊官方 FFLF workflow，尚未 dogfood）──
+            // ── MODE B2: first-last（首尾幀控制；2026-08-09 VE 實測校準：Last Frame 是 Smart Edit 語意）──
             function buildFirstLast(state) {
                 const media = maps.mediaType[state.mediaType];
                 const domain = maps.domain[state.domain];
@@ -3787,8 +3787,10 @@ Answer in Markdown. Emit EXACTLY these three blocks, no intro text.
 ### First Frame Prompt
 \`${media.t2iBase} of [subject + setting] in the STARTING state: [state-specific details], [camera + framing], [lighting], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame.\`
 
-### Last Frame Prompt
-\`${media.t2iBase} of [IDENTICAL subject + setting wording] in the ENDING state: [only the changed details], [IDENTICAL camera + framing], [IDENTICAL lighting], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame.\`
+### Last Frame Smart Edit
+One short paragraph describing ONLY the change, then pinning the rest:
+\`The [subject] has [ending-state change]. The [list every unchanged element: subject identity / environment / lighting / background] stay exactly the same.\`
+(On VideoExpress this maps to the "Last Frame Smart Edit" field, which edits the generated first-frame image — do not restate the full scene.)
 
 ### Transition Prompt
 \`Animate from the first frame to the last frame: [motion arc in 2-3 time-segmented beats, e.g. [0-2 seconds]: ..., [2-5 seconds]: ...]. Camera stays [locked / one slow move]. Keep subject identity, environment, palette, and lighting consistent throughout.${dialogue ? ' [speaker reference], says in a [tone], clear [language] accent: "[line ≤ 100 chars]". Animate natural lipsync.' : " No dialogue."}\``,

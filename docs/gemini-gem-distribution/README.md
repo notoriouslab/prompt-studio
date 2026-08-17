@@ -1,5 +1,7 @@
 # PromptStudio Gemini Gem — Setup
 
+> **⚠️ Deprecated (2026-08-16).** Google is retiring Gemini Gems on 2026-10-20 and moving the capability into paid Skills. The chat-first channel has moved to **[`../notebooklm-distribution/`](../notebooklm-distribution/)**, which is also the only version kept in sync with `prompt-studio.html`. This directory is frozen at its 2026-05-27 rule set (no first-last mode, no run sheet output, 8 domains, pre-duration-authority shot counts) and is kept for reference only.
+
 A chat-first distribution of PromptStudio for **VideoExpress** workflows.
 
 The HTML app (`prompt-studio.html`) covers 9 platforms with a visual UI; this Gem covers VideoExpress — the platform the author uses daily — with conversational input.

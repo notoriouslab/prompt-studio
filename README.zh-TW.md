@@ -130,13 +130,27 @@ node eval.js                       # L2（需 GEMINI_API_KEY）
 
 ---
 
+## Local Expand（本地 LLM 銜接，選用）
+
+若你機器上跑著 [ollama](https://ollama.com)，頁面會自動偵測並顯示「🖥️ 本地展開」區塊：填 IDEA、按一鍵，產出的 prompt 直接由本地模型（如 `qwen3.8:27b`）串流展開，不必再貼到別的 AI agent。
+
+- 需以 localhost 開頁（ollama 預設 CORS 只放行 localhost origin）。macOS 直接**雙擊 `PromptStudio.command`**（自動起 server + 開瀏覽器），或手動：
+  ```bash
+  cd prompt-studio && python3 -m http.server 8765
+  open http://localhost:8765/prompt-studio.html
+  ```
+- 以 `file://` 直接開檔或部署到遠端網域時，需在 ollama 端設 `OLLAMA_ORIGINS`（例如 `launchctl setenv OLLAMA_ORIGINS "*"` 後重啟 ollama）
+- 偵測不到 ollama 時區塊自動隱藏，原本的「產 template 手動貼」流程完全不受影響
+
+---
+
 ## Privacy（隱私）
 
 | 項目 | 存哪裡 |
 |---|---|
 | Builder state、templates、versions | 瀏覽器 `localStorage` only |
 | 產出的 prompt | 僅在記憶體中 |
-| LLM expansion | 你選用的 LLM；PromptStudio 自己不呼叫任何 LLM |
+| LLM expansion | 你選用的 LLM；PromptStudio 預設不呼叫任何 LLM（Local Expand 為選用功能，只連你自己的 `localhost` ollama） |
 | Validation eval | 選用功能，跑在你自己機器上，用你自己的 `GEMINI_API_KEY` |
 
 無 analytics、無 telemetry、無雲端同步、無帳號。

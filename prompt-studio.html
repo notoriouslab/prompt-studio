@@ -1136,7 +1136,11 @@
                             >
                                 English only
                             </option>
-                            <option value="zh-only" data-i18n="opt.lang.zh">
+                            <option
+                                value="zh-only"
+                                data-i18n="opt.lang.zh"
+                                selected
+                            >
                                 繁中 only
                             </option>
                         </select>
@@ -1237,6 +1241,30 @@
                                 </div>
                             </div>
                             <pre class="code tall" id="promptOutput"></pre>
+                            <!-- Local LLM bridge: hidden unless an ollama endpoint is detected on localhost -->
+                            <div id="localLlmSection" class="hidden">
+                                <div class="divider"></div>
+                                <div class="panel-head">
+                                    <h2 style="margin: 0">
+                                        <span data-i18n="local.title">Local Expand</span>
+                                        <span class="word-count" id="localLlmStatus"></span>
+                                    </h2>
+                                    <div class="actions">
+                                        <select id="localModel" style="max-width: 220px"></select>
+                                        <button class="btn btn-primary btn-sm" id="localExpandBtn" data-i18n="local.expand">Expand Locally</button>
+                                        <button class="btn btn-warn btn-sm hidden" id="localStopBtn" data-i18n="local.stop">Stop</button>
+                                        <button class="btn btn-secondary btn-sm" id="localCopyBtn" data-i18n="local.copy">Copy Markdown</button>
+                                    </div>
+                                </div>
+                                <textarea
+                                    id="localIdea"
+                                    rows="2"
+                                    data-i18n-ph="ph.localIdea"
+                                    placeholder="IDEA: describe the video you want, in one short paragraph"
+                                    style="width: 100%; margin: 8px 0"
+                                ></textarea>
+                                <pre class="code tall" id="localOutput"></pre>
+                            </div>
                         </section>
                         <section class="panel">
                             <h2 data-i18n="title.lintInfo">Lint / Mode Info</h2>
@@ -1796,6 +1824,16 @@
                     // builder action buttons
                     "btn.copy": "複製 Prompt",
                     "btn.copied": "✓ 已複製",
+                    "local.title": "🖥️ 本地展開",
+                    "local.expand": "本地展開",
+                    "local.stop": "停止",
+                    "local.copy": "複製 Markdown",
+                    "ph.localIdea": "IDEA：一小段話描述你要的影片（會連同上方 Prompt 一起送給本地模型）",
+                    "local.status.idle": "就緒",
+                    "local.status.noIdea": "請先輸入 IDEA",
+                    "local.status.running": "生成中…",
+                    "local.status.stopped": "已停止",
+                    "local.status.error": "連線失敗",
                     "btn.download": "下載 .md",
                     "btn.saveTemplate": "另存模板",
                     "btn.saveVersion": "存版本",
@@ -2047,6 +2085,16 @@
                         "Leave empty to use only Prompt Bias; non-empty content inserts as ## Platform-Specific Rules",
                     // builder buttons
                     "btn.copy": "Copy Prompt",
+                    "local.title": "🖥️ Local Expand",
+                    "local.expand": "Expand Locally",
+                    "local.stop": "Stop",
+                    "local.copy": "Copy Markdown",
+                    "ph.localIdea": "IDEA: one short paragraph describing the video (sent to the local model together with the prompt above)",
+                    "local.status.idle": "ready",
+                    "local.status.noIdea": "enter an IDEA first",
+                    "local.status.running": "generating…",
+                    "local.status.stopped": "stopped",
+                    "local.status.error": "connection failed",
                     "btn.copied": "✓ Copied",
                     "btn.download": "Download .md",
                     "btn.saveTemplate": "Save as Template",
@@ -2421,6 +2469,14 @@
                 "addCaseBtn",
                 "footerStats",
                 "themeToggle",
+                "localLlmSection",
+                "localLlmStatus",
+                "localModel",
+                "localExpandBtn",
+                "localStopBtn",
+                "localCopyBtn",
+                "localIdea",
+                "localOutput",
             ].forEach((id) => (els[id] = document.getElementById(id)));
 
             // ── DOMAINS: source of truth for all domain-related derived structures ──
@@ -3756,7 +3812,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     opt.textContent = v.label_en;
                     sel.appendChild(opt);
                 });
-                if (currentValue && MEDIATYPES[currentValue]) sel.value = currentValue;
+                sel.value = currentValue && MEDIATYPES[currentValue] ? currentValue : "live";
             }
 
             // ════════════════════════════════════════════════════════════════
@@ -5048,6 +5104,110 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
             });
             els.saveTemplateBtn.addEventListener("click", saveTemplate);
             els.saveVersionBtn.addEventListener("click", () => saveVersion());
+
+            // ── LOCAL LLM BRIDGE (ollama) ──────────────────────────────────
+            // Progressive enhancement: the section stays hidden unless an
+            // ollama endpoint answers on localhost. The page must be served
+            // from a localhost origin (ollama's default CORS allowlist);
+            // file:// or remote origins require OLLAMA_ORIGINS on the server.
+            const OLLAMA_BASE = "http://localhost:11434";
+            const LOCAL_MODEL_PREF = /qwen/i;
+            let localAbort = null;
+
+            function setLocalStatus(key, extra) {
+                els.localLlmStatus.textContent = t(key) + (extra ? ` ${extra}` : "");
+            }
+
+            async function detectLocalLlm() {
+                try {
+                    const res = await fetch(`${OLLAMA_BASE}/api/tags`, {
+                        signal: AbortSignal.timeout(1500),
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const models = (data.models || [])
+                        .map((m) => m.name)
+                        .filter((n) => !/embed/i.test(n));
+                    if (!models.length) return;
+                    models.sort((a, b) => (LOCAL_MODEL_PREF.test(b) ? 1 : 0) - (LOCAL_MODEL_PREF.test(a) ? 1 : 0));
+                    els.localModel.innerHTML = models
+                        .map((n) => `<option value="${esc(n)}">${esc(n)}</option>`)
+                        .join("");
+                    els.localLlmSection.classList.remove("hidden");
+                    setLocalStatus("local.status.idle");
+                } catch {
+                    /* no local endpoint — section stays hidden */
+                }
+            }
+
+            async function expandLocally() {
+                const idea = (els.localIdea.value || "").trim();
+                if (!idea) {
+                    setLocalStatus("local.status.noIdea");
+                    els.localIdea.focus();
+                    return;
+                }
+                const spec = els.promptOutput.textContent || "";
+                const userPrompt = `${spec}\n\n---\n\nIDEA: ${idea}\n\nExpand this idea into the production-ready output following the spec above. Begin output immediately with the first heading — no preamble.`;
+                localAbort = new AbortController();
+                els.localExpandBtn.classList.add("hidden");
+                els.localStopBtn.classList.remove("hidden");
+                els.localOutput.textContent = "";
+                setLocalStatus("local.status.running");
+                const t0 = Date.now();
+                try {
+                    const res = await fetch(`${OLLAMA_BASE}/api/chat`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        signal: localAbort.signal,
+                        body: JSON.stringify({
+                            model: els.localModel.value,
+                            messages: [{ role: "user", content: userPrompt }],
+                            stream: true,
+                            think: false,
+                            options: { temperature: 0.7, num_ctx: 16384, num_predict: 8192 },
+                        }),
+                    });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const reader = res.body.getReader();
+                    const dec = new TextDecoder();
+                    let buf = "", tokens = 0;
+                    for (;;) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buf += dec.decode(value, { stream: true });
+                        const lines = buf.split("\n");
+                        buf = lines.pop();
+                        for (const line of lines) {
+                            if (!line.trim()) continue;
+                            const chunk = JSON.parse(line);
+                            if (chunk.message?.content) {
+                                els.localOutput.textContent += chunk.message.content;
+                                els.localOutput.scrollTop = els.localOutput.scrollHeight;
+                            }
+                            if (chunk.done && chunk.eval_count) tokens = chunk.eval_count;
+                        }
+                    }
+                    const secs = ((Date.now() - t0) / 1000).toFixed(1);
+                    const rate = tokens ? ` · ${(tokens / ((Date.now() - t0) / 1000)).toFixed(1)} tok/s` : "";
+                    setLocalStatus("local.status.idle", `${secs}s${rate}`);
+                } catch (e) {
+                    setLocalStatus(e.name === "AbortError" ? "local.status.stopped" : "local.status.error");
+                } finally {
+                    localAbort = null;
+                    els.localExpandBtn.classList.remove("hidden");
+                    els.localStopBtn.classList.add("hidden");
+                }
+            }
+
+            els.localExpandBtn.addEventListener("click", expandLocally);
+            els.localStopBtn.addEventListener("click", () => localAbort?.abort());
+            els.localCopyBtn.addEventListener("click", () => {
+                navigator.clipboard.writeText(els.localOutput.textContent || "");
+                els.localCopyBtn.textContent = t("btn.copied");
+                setTimeout(() => (els.localCopyBtn.textContent = t("local.copy")), 1200);
+            });
+            if (typeof window.fetch === "function") detectLocalLlm();
             els.savePresetBtn?.addEventListener("click", savePreset);
             els.themeToggle.addEventListener("click", () => {
                 document.documentElement.dataset.theme =

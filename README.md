@@ -130,13 +130,27 @@ Get a free `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/
 
 ---
 
+## Local Expand (optional local LLM bridge)
+
+If [ollama](https://ollama.com) is running on your machine, the page auto-detects it and shows a "🖥️ Local Expand" section: type an IDEA, click once, and the generated prompt is expanded by your local model (e.g. `qwen3.8:27b`) with streaming output — no copy-pasting into another AI agent.
+
+- Serve the page from localhost (ollama's default CORS allowlist only covers localhost origins). On macOS just **double-click `PromptStudio.command`** (starts the server and opens the browser), or manually:
+  ```bash
+  cd prompt-studio && python3 -m http.server 8765
+  open http://localhost:8765/prompt-studio.html
+  ```
+- Opening via `file://` or a remote domain requires setting `OLLAMA_ORIGINS` on the ollama side (e.g. `launchctl setenv OLLAMA_ORIGINS "*"` then restart ollama)
+- When no ollama endpoint is found the section stays hidden; the classic template-copy workflow is untouched
+
+---
+
 ## Privacy
 
 | Thing | Where it lives |
 |---|---|
 | Builder state, templates, versions | Browser `localStorage` only |
 | Generated prompts | In-memory only |
-| LLM expansion | Your choice of LLM; PromptStudio doesn't call any LLM itself |
+| LLM expansion | Your choice of LLM; PromptStudio calls no LLM by default (Local Expand is opt-in and only talks to your own `localhost` ollama) |
 | Validation eval | Optional, runs on your machine with your own `GEMINI_API_KEY` |
 
 No analytics. No telemetry. No cloud sync. No account.

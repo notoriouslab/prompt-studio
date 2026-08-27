@@ -140,6 +140,7 @@ If [ollama](https://ollama.com) is running on your machine, the page auto-detect
   open http://localhost:8765/prompt-studio.html
   ```
 - Opening via `file://` or a remote domain requires setting `OLLAMA_ORIGINS` on the ollama side (e.g. `launchctl setenv OLLAMA_ORIGINS "*"` then restart ollama)
+- Input type toggles between IDEA / Screenplay: paste a full screenplay (e.g. from an AI screenwriting skill) and the Screenplay Input Protocol kicks in — dialogue kept verbatim, scenes split into shots, characters mapped to Actor N, dialogue mode switched on automatically
 - When no ollama endpoint is found the section stays hidden; the classic template-copy workflow is untouched
 
 ---

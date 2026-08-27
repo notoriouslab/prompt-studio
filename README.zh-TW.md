@@ -140,6 +140,7 @@ node eval.js                       # L2（需 GEMINI_API_KEY）
   open http://localhost:8765/prompt-studio.html
   ```
 - 以 `file://` 直接開檔或部署到遠端網域時，需在 ollama 端設 `OLLAMA_ORIGINS`（例如 `launchctl setenv OLLAMA_ORIGINS "*"` 後重啟 ollama）
+- 輸入類型可切「IDEA / 劇本」：貼上完整劇本（如 AI 編劇 skill 的產出）時走劇本輸入協定——對白逐字保留、場拆 shot、角色自動映射 Actor N，並自動切換「有對白」
 - 偵測不到 ollama 時區塊自動隱藏，原本的「產 template 手動貼」流程完全不受影響
 
 ---

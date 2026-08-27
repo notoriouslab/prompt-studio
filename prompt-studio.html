@@ -1250,6 +1250,10 @@
                                         <span class="word-count" id="localLlmStatus"></span>
                                     </h2>
                                     <div class="actions">
+                                        <select id="localInputType" style="max-width: 130px">
+                                            <option value="idea" data-i18n="opt.localInput.idea">IDEA</option>
+                                            <option value="screenplay" data-i18n="opt.localInput.screenplay">Screenplay</option>
+                                        </select>
                                         <select id="localModel" style="max-width: 220px"></select>
                                         <button class="btn btn-primary btn-sm" id="localExpandBtn" data-i18n="local.expand">Expand Locally</button>
                                         <button class="btn btn-warn btn-sm hidden" id="localStopBtn" data-i18n="local.stop">Stop</button>
@@ -1829,6 +1833,10 @@
                     "local.stop": "停止",
                     "local.copy": "複製 Markdown",
                     "ph.localIdea": "IDEA：一小段話描述你要的影片（會連同上方 Prompt 一起送給本地模型）",
+                    "ph.localScreenplay": "貼上完整劇本（場次標頭＋角色＋對白）：對白逐字保留、場拆 shot、角色自動映射 Actor N",
+                    "local.status.dialogueOn": "已自動切換為「有對白」",
+                    "opt.localInput.idea": "IDEA",
+                    "opt.localInput.screenplay": "劇本",
                     "local.status.idle": "就緒",
                     "local.status.noIdea": "請先輸入 IDEA",
                     "local.status.running": "生成中…",
@@ -2090,6 +2098,10 @@
                     "local.stop": "Stop",
                     "local.copy": "Copy Markdown",
                     "ph.localIdea": "IDEA: one short paragraph describing the video (sent to the local model together with the prompt above)",
+                    "ph.localScreenplay": "Paste a full screenplay (scene headings + characters + dialogue): lines kept verbatim, scenes split into shots, characters mapped to Actor N",
+                    "local.status.dialogueOn": "dialogue mode switched on",
+                    "opt.localInput.idea": "IDEA",
+                    "opt.localInput.screenplay": "Screenplay",
                     "local.status.idle": "ready",
                     "local.status.noIdea": "enter an IDEA first",
                     "local.status.running": "generating…",
@@ -2471,6 +2483,7 @@
                 "themeToggle",
                 "localLlmSection",
                 "localLlmStatus",
+                "localInputType",
                 "localModel",
                 "localExpandBtn",
                 "localStopBtn",
@@ -5140,6 +5153,16 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 }
             }
 
+            // 劇本輸入協定：搭配上游編劇 skill（如 AI-drama-pound）產出的完整劇本。
+            // 覆寫模板的 IDEA 展開框架：對白逐字保留、場拆 shot、角色名映射 Actor N。
+            const SCREENPLAY_PROTOCOL = `## Screenplay Input Protocol
+The input below is a complete SCREENPLAY (scene headings, character names, dialogue), not a loose idea. These rules override the IDEA-expansion framing above:
+1. Preserve every scripted dialogue line VERBATIM — never rewrite, translate, or summarize it. If a line exceeds the platform's per-clip dialogue limit, split it at natural pauses across consecutive shots; never paraphrase.
+2. Map each named character to a numbered actor alias (Actor 1, Actor 2, ...) with a frozen visual description. Scripted character names must never appear inside any T2I / I2V prompt text.
+3. Decompose scenes into shots in screenplay order — one primary action or one dialogue line per shot. The shot count follows the screenplay's content; where it conflicts with the shot count stated above, the screenplay wins.
+4. Treat the screenplay's specified conditions (locations, time of day, props, wardrobe, OS/VO markers) as frozen facts. Adapt devices the platform cannot render (flashbacks, phone screens, voice-over) into in-frame equivalents and list each adaptation under a final "Adaptation Notes" heading.
+5. If the screenplay contains dialogue lines, emit them as spoken dialogue even when the spec above requests minimal or no dialogue — the screenplay overrides that preference. Wrap each line as a speech act (e.g. Actor 1 says in a [tone] tone, natural Mandarin accent: "...") with the scripted words inside ASCII double quotes, verbatim.`;
+
             async function expandLocally() {
                 const idea = (els.localIdea.value || "").trim();
                 if (!idea) {
@@ -5148,7 +5171,10 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     return;
                 }
                 const spec = els.promptOutput.textContent || "";
-                const userPrompt = `${spec}\n\n---\n\nIDEA: ${idea}\n\nExpand this idea into the production-ready output following the spec above. Begin output immediately with the first heading — no preamble.`;
+                const isScript = els.localInputType.value === "screenplay";
+                const userPrompt = isScript
+                    ? `${spec}\n\n${SCREENPLAY_PROTOCOL}\n\n---\n\nSCREENPLAY:\n${idea}\n\nExpand this screenplay into the production-ready output following the spec and the Screenplay Input Protocol above. Begin output immediately with the first heading — no preamble.`
+                    : `${spec}\n\n---\n\nIDEA: ${idea}\n\nExpand this idea into the production-ready output following the spec above. Begin output immediately with the first heading — no preamble.`;
                 localAbort = new AbortController();
                 els.localExpandBtn.classList.add("hidden");
                 els.localStopBtn.classList.remove("hidden");
@@ -5200,6 +5226,18 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 }
             }
 
+            els.localInputType.addEventListener("change", () => {
+                const isScript = els.localInputType.value === "screenplay";
+                els.localIdea.rows = isScript ? 8 : 2;
+                els.localIdea.placeholder = t(isScript ? "ph.localScreenplay" : "ph.localIdea");
+                // 劇本幾乎必含對白；模板若停在「少對白」，Tier 1 hard constraint 會
+                // 贏過後置協定、把台詞砍成無聲演技 —— 在 spec 生成層就切換，不靠 LLM 仲裁。
+                if (isScript && els.dialogueMode.value === "none") {
+                    els.dialogueMode.value = "dialogue";
+                    els.dialogueMode.dispatchEvent(new Event("change"));
+                    setLocalStatus("local.status.dialogueOn");
+                }
+            });
             els.localExpandBtn.addEventListener("click", expandLocally);
             els.localStopBtn.addEventListener("click", () => localAbort?.abort());
             els.localCopyBtn.addEventListener("click", () => {

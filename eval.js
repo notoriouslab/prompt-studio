@@ -11,7 +11,7 @@
 //
 // What it does (POC stage):
 //   1. Loads PromptStudio's generatePrompt() from the inline <script>
-//   2. For each eval case: generate spec → expand via Gemini 2.0 Flash → print output
+//   2. For each eval case: generate spec → expand via Gemini (GEMINI_MODEL) → print output
 //   3. (Future) run regex assertions to check spec rules took effect
 //
 // Requires:
@@ -24,6 +24,7 @@ const path = require("path");
 const os = require("os");
 
 const HTML_FILE = path.join(__dirname, "prompt-studio.html");
+const GEMINI_MODEL = "gemini-3.6-flash";
 
 // ─── Secrets ─────────────────────────────────────────────────────────
 function loadSecrets() {
@@ -64,7 +65,7 @@ const FileReader=function(){this.readAsText=()=>{};};const Blob=function(){};con
 }
 
 // ─── Gemini API call ─────────────────────────────────────────────────
-async function callGemini(apiKey, prompt, { model = "gemini-2.0-flash", temperature = 0.7, maxOutputTokens = 8192 } = {}) {
+async function callGemini(apiKey, prompt, { model = GEMINI_MODEL, temperature = 0.7, maxOutputTokens = 8192 } = {}) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const body = {
         contents: [{ parts: [{ text: prompt }] }],
@@ -94,7 +95,8 @@ const BASE_STATE = {
 const ASSERTIONS = {
     dialogue_wrap: (output) => {
         // dialogue should be wrapped as: says in a [tone, ...] accent: "..."
-        const matches = output.match(/(says|replies) in (a|an) [\w\s,]+ accent: ["「『]/g) || [];
+        // tolerate curly quotes / full-width colon / "with a ... accent" phrasing (gemini-3.6-flash varies)
+        const matches = output.match(/(says|replies) in (a|an) [\w\s,]+accent[:：]\s*["“「『]/g) || [];
         if (matches.length < 1) {
             return { pass: false, reason: `dialogue wrap pattern not found (expected ≥ 1, got 0)` };
         }
@@ -130,6 +132,39 @@ const ASSERTIONS = {
         }
         return { pass: true, reason: "2 # sections" };
     },
+    photoreal_face_lock: (output) => {
+        // live mediaType, shot WITH a human face: faceLock fragments should land in the T2I prompt
+        const signals = [/visible pores/i, /skin smoothing|beauty filter|waxy skin/i, /sensor grain|RAW/i];
+        const hit = signals.filter((re) => re.test(output));
+        if (hit.length < 2) {
+            return { pass: false, reason: `faceLock fragments not found (expected ≥ 2 of 3 signal groups, got ${hit.length})` };
+        }
+        return { pass: true, reason: `photoreal signals ${hit.length}/3` };
+    },
+    photoreal_no_face_leak: (output) => {
+        // live mediaType, shot with NO people: generic photoreal lock present, faceLock absent.
+        // Guards against the LLM inventing people to justify skin terms in empty scenes.
+        if (!/sensor grain|RAW/i.test(output)) {
+            return { pass: false, reason: "generic photoreal lock (sensor grain / RAW) missing" };
+        }
+        const leaked = [/visible pores/i, /skin smoothing/i, /beauty filter/i, /waxy skin/i].filter((re) => re.test(output));
+        if (leaked.length > 0) {
+            return { pass: false, reason: `faceLock leaked into no-people shot (${leaked.length} fragment group(s))` };
+        }
+        return { pass: true, reason: "generic lock present, no faceLock leak" };
+    },
+    closeup_toolkit: (output) => {
+        // live mediaType, extreme close-up brief: toolkit should yield real gear / light source / crop framing, and no bare quality words
+        const signals = [/\b\d{2,3}mm\b|f\/\d(\.\d)?|Canon|Sony|prime lens/i, /softbox|single (large )?light|key light/i, /fills the frame|cropped|extreme (facial )?close-up/i];
+        const hit = signals.filter((re) => re.test(output));
+        if (/\b8k\b|ultra realistic/i.test(output)) {
+            return { pass: false, reason: "quality-word anti-pattern (8k / ultra realistic) present" };
+        }
+        if (hit.length < 2) {
+            return { pass: false, reason: `close-up toolkit signals weak (expected ≥ 2 of 3 groups, got ${hit.length})` };
+        }
+        return { pass: true, reason: `toolkit signals ${hit.length}/3, no quality words` };
+    },
     full_section_count: (output) => {
         const h1s = (output.match(/^# [^\n]+/gm) || []).length;
         if (h1s < 7) {
@@ -156,13 +191,19 @@ const CASES = [
         name: "sora2_single_shot_dialogue",
         state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "narrative-character", duration: "10-20 seconds", aspectRatio: "16:9", mediaType: "live" },
         idea: "深夜便利店場景：一個 30 歲女性顧客買咖啡，店員微笑說『歡迎光臨』，10 秒 cinematic 真人風格。",
-        assertions: ["dialogue_wrap"],
+        assertions: ["dialogue_wrap", "photoreal_face_lock"],
     },
     {
         name: "veo3_single_shot_narrative",
         state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "narrative-scene", dialogueMode: "none", duration: "5-8 seconds", aspectRatio: "16:9", mediaType: "live" },
         idea: "夕陽下的台灣稻田，金黃色光線，鏡頭緩慢推進，遠方中央山脈剪影，6 秒史詩氛圍。",
-        assertions: [],
+        assertions: ["photoreal_no_face_leak"],
+    },
+    {
+        name: "live_extreme_closeup_portrait",
+        state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "narrative-character", dialogueMode: "none", duration: "5-8 seconds", aspectRatio: "16:9", mediaType: "live" },
+        idea: "一位 60 歲台灣漁夫的極近特寫肖像，臉部曬痕與皺紋，凝視鏡頭後緩緩眨眼，攝影棚黑背景，6 秒。",
+        assertions: ["photoreal_face_lock", "closeup_toolkit"],
     },
     {
         name: "cinemagraph_illustration_kyoto",
@@ -213,7 +254,7 @@ async function main() {
 
         const userPrompt = `${spec}\n\n---\n\nIDEA: ${c.idea}\n\nExpand this idea into the production-ready output following the spec above. Begin output immediately with the first heading — no preamble.`;
 
-        console.log("\n... calling Gemini 2.0 Flash ...");
+        console.log(`\n... calling ${GEMINI_MODEL} ...`);
         const t0 = Date.now();
         let expanded;
         try {
@@ -264,7 +305,7 @@ async function main() {
                 `> Auto-generated by \`eval.js --save-samples\` — DO NOT hand-edit; rerun to refresh.`,
                 ``,
                 `**Generated**: ${new Date().toISOString()}`,
-                `**Model**: gemini-2.0-flash`,
+                `**Model**: ${GEMINI_MODEL}`,
                 `**Spec length**: ${spec.length} chars`,
                 `**Output length**: ${expanded.length} chars`,
                 `**Latency**: ${dt}s`,

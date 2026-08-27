@@ -2577,9 +2577,14 @@
                     label_en: "Live Action",
                     title: "Idea To Cinematic Live-Action Story",
                     style: "cinematic live-action scene with realistic performance",
-                    face: "natural facial detail and believable human expression",
+                    face: "believable human expression with unretouched photographic skin detail (visible pores, fine vellus hair, subtle facial asymmetry)",
                     visualLock:
-                        "realistic human identity, authentic lighting, natural skin detail, clean frame",
+                        "realistic human identity, natural color like an unedited RAW frame, fine sensor grain, NO CGI or 3D-render look, clean frame",
+                    // Injected into [details] only when a human face is visible in the
+                    // shot — baking it into visualLock makes the LLM invent people to
+                    // justify the skin terms in empty scenes (eval-verified 2026-08-27).
+                    faceLock:
+                        "unretouched skin texture with visible pores and natural facial asymmetry, NO skin smoothing, NO beauty filter, NO waxy skin",
                     t2iBase: "Cinematic live-action film still",
                     motionBase: "cinematic live-action shot",
                 },
@@ -2625,6 +2630,7 @@
                             style: v.style,
                             face: v.face,
                             visualLock: v.visualLock,
+                            faceLock: v.faceLock || null,
                             t2iBase: v.t2iBase,
                             motionBase: v.motionBase,
                         },
@@ -3101,6 +3107,27 @@
                 return state.styleExtra ? `## Tier 3 — Style\n- ${state.styleExtra}` : "";
             }
 
+            // faceLock is conditional, never baked into the T2I pattern itself:
+            // an unconditional skin-texture lock makes the LLM invent people in
+            // empty scenes to justify it (eval-verified 2026-08-27).
+            function faceLockRule(media) {
+                return media.faceLock
+                    ? `Face realism rule: when a human face is visible in a shot, add \`${media.faceLock}\` into the [details] / [environment details] slot of that shot's T2I prompt. Omit it entirely for shots with no visible people.`
+                    : null;
+            }
+
+            // Per-shot creative guidance, not a fixed lock — only for shots the
+            // brief pushes toward an intimate facial close-up. live-action only.
+            function closeUpToolkit(media) {
+                return media.faceLock
+                    ? `### Photoreal Close-Up Toolkit (live-action, optional per shot)
+Apply only when a shot is an intimate facial close-up; skip for wider shots.
+- Camera: name real gear, not quality words. Anti-pattern ❌ \`8k, ultra realistic, extremely detailed face\`. Correct ✅ \`shot on a Canon EOS R5 with an 85mm f/1.4 prime lens wide open, focus locked on the near eye\`.
+- Lighting: describe the source and its shadow, not the mood. Anti-pattern ❌ \`cinematic dramatic lighting\`. Correct ✅ \`lit by a single large softbox high camera-left, soft falloff, the far side of the face dropping into shadow\`.
+- Framing: state distance and crop, not adjectives. Anti-pattern ❌ \`beautiful close-up portrait\`. Correct ✅ \`extreme facial close-up, face fills the frame, top of head cropped above the hairline, eyes on the upper third\`.`
+                    : null;
+            }
+
             const SILENT_CHECKS = {
                 "storyboard-runsheet": (state, { dialogue }) => [
                     "✓ All required sections present, in order, exact spelling — no other headings emitted",
@@ -3316,7 +3343,7 @@ Per shot, use \`## Shot N\` H2 heading + bulleted fields (NOT a markdown table).
 - \`**Image-To-Video Prompt:** Animate this image into a [duration]-second ${media.motionBase}. Keep character identity, clothing, environment, and composition consistent. Camera [movement]. [0-2 seconds]: [action description]. [2-4 seconds]: [action description].${dialogue ? ' [4-6 seconds]: [Actor Alias], [continuity anchor], says in a [tone], clear [language] accent: "[dialogue line]". Animate natural lipsync exactly to the quoted words.' : " [4-6 seconds]: [action description]. No dialogue. Hold expression and breathing naturally."}\`
 
 Timestamps must be continuous with zero gaps across consecutive shots.
-Keep each [time-segment] to ONE simple motion — crowded segments produce mushy, rushed clips.`;
+Keep each [time-segment] to ONE simple motion — crowded segments produce mushy, rushed clips.${media.faceLock ? `\n${faceLockRule(media)}\n\n${closeUpToolkit(media)}` : ""}`;
                 }
                 return `## Section Schemas
 
@@ -3341,7 +3368,7 @@ Columns per character: Name | Actor Alias | Role | Age | Physical | Clothing | P
 
 ### Generation Prompt Patterns
 - **T2I**: \`${media.t2iBase} of [Actor Alias], [continuity anchor] in [setting], [action/emotion], [composition/camera], [lighting], [environment details], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame.\`
-- **I2V** ${dialogue ? "(speaking shot)" : ""}: \`Animate this image into a [duration]-second ${media.motionBase}. Keep character identity, clothing, environment, and composition consistent. Camera [movement]. [Character action]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. ${dialogue ? '[Actor Alias], [continuity anchor], says in a [tone], clear [language] accent: "[dialogue]". Animate natural lipsync exactly to the quoted words.' : "No dialogue. Hold expression and breathing naturally."}\`
+- **I2V** ${dialogue ? "(speaking shot)" : ""}: \`Animate this image into a [duration]-second ${media.motionBase}. Keep character identity, clothing, environment, and composition consistent. Camera [movement]. [Character action]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. ${dialogue ? '[Actor Alias], [continuity anchor], says in a [tone], clear [language] accent: "[dialogue]". Animate natural lipsync exactly to the quoted words.' : "No dialogue. Hold expression and breathing naturally."}\`${media.faceLock ? `\n- ${faceLockRule(media)}\n\n${closeUpToolkit(media)}` : ""}
 
 ${
     dialogue
@@ -3380,7 +3407,7 @@ Answer in Markdown. Emit EXACTLY these two blocks. No "Shot Brief", no sub-field
 \`${media.t2iBase} of [subject + setting], [action], [camera + framing], [lighting], [details], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame.\`
 
 ### Image-to-Video Prompt
-\`Animate this image into a ${state.duration} ${media.motionBase}. Keep character identity, wardrobe, environment, and composition consistent. Camera [movement]. [Character action]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. ${dialogue ? '[speaker reference], says in a [tone], clear [language] accent: "[dialogue]". Animate natural lipsync.' : "No dialogue. Hold expression and breathing naturally."}\``,
+\`Animate this image into a ${state.duration} ${media.motionBase}. Keep character identity, wardrobe, environment, and composition consistent. Camera [movement]. [Character action]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. ${dialogue ? '[speaker reference], says in a [tone], clear [language] accent: "[dialogue]". Animate natural lipsync.' : "No dialogue. Hold expression and breathing naturally."}\`${media.faceLock ? `\n\n${faceLockRule(media)}\n\n${closeUpToolkit(media)}` : ""}`,
                     silentChecksBlock(SILENT_CHECKS["single-shot"](), "## Silent Quality Checks"),
                     customRulesBlock(state),
                 ]);
@@ -3414,7 +3441,7 @@ One short paragraph describing ONLY the change, then pinning the rest:
 (On VideoExpress this maps to the "Last Frame Smart Edit" field, which edits the generated first-frame image — do not restate the full scene.)
 
 ### Transition Prompt
-\`Animate from the first frame to the last frame: [motion arc in 2-3 time-segmented beats, e.g. [0-2 seconds]: ..., [2-5 seconds]: ...]. Camera stays [locked / one slow move]. Keep subject identity, environment, palette, and lighting consistent throughout.${dialogue ? ' [speaker reference], says in a [tone], clear [language] accent: "[line ≤ 100 chars]". Animate natural lipsync.' : " No dialogue."}\``,
+\`Animate from the first frame to the last frame: [motion arc in 2-3 time-segmented beats, e.g. [0-2 seconds]: ..., [2-5 seconds]: ...]. Camera stays [locked / one slow move]. Keep subject identity, environment, palette, and lighting consistent throughout.${dialogue ? ' [speaker reference], says in a [tone], clear [language] accent: "[line ≤ 100 chars]". Animate natural lipsync.' : " No dialogue."}\`${media.faceLock ? `\n\n${faceLockRule(media)}` : "" /* no closeUpToolkit here: FFLF Smart Edit fields must stay lean */}`,
                     silentChecksBlock(SILENT_CHECKS["first-last"](), "## Silent Quality Checks"),
                     customRulesBlock(state),
                 ]);

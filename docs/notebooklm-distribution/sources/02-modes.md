@@ -401,7 +401,7 @@ The T2I / I2V patterns reference three slots: `<t2iBase>`, `<motionBase>`, `<vis
 
 | MediaType | Human subject | Product / object subject | Human + product mixed |
 |-----------|---------------|--------------------------|------------------------|
-| `live` | `realistic human identity, natural skin detail, clean frame` | `product identity preserved, material consistency, accurate proportions, clean frame` | `realistic human identity, product identity preserved, material consistency, clean frame` |
+| `live` | `realistic human identity, unretouched skin texture with visible pores and natural facial asymmetry, natural color like an unedited RAW frame, fine sensor grain, NO skin smoothing, NO beauty filter, NO waxy CGI look, clean frame` | `product identity preserved, material consistency, accurate proportions, natural color like an unedited RAW frame, fine sensor grain, NO CGI or 3D-render look, clean frame` | `realistic human identity, unretouched skin with visible pores, product identity preserved, material consistency, fine sensor grain like an unedited RAW frame, NO skin smoothing, NO waxy CGI look, clean frame` |
 | `3d` | `premium stylized 3D animation` | `premium stylized 3D animation, accurate proportions` | `premium stylized 3D animation` |
 | `2d-animation` | `consistent 2D character design, defined linework, clean color fills, layout-friendly composition` | `consistent 2D object design, defined linework, clean color fills, layout-friendly composition` | combine both |
 | `illustration` | `consistent illustration style, clean linework, monochrome or limited palette, editorial poster aesthetic` | (variants identical) | (variants identical) |
@@ -414,7 +414,7 @@ For each shot, classify the main subject BEFORE composing the T2I:
 - **Product / object subject** = the shot foregrounds a product, prop, machine, food, environment, or any non-human object as the primary visual focus. Even shots that incidentally include human hands but center on the product belong here.
 - **Mixed** = both human and product are co-equal in frame (e.g. a barista pouring coffee where both the hands AND the carafe are featured).
 
-**Picking the wrong variant introduces noise.** Example: emitting `realistic human identity, natural skin detail` on a shot of a coffee tower without humans pushes the T2I model to invent or merge human elements into the product frame — the machine and the cup get mashed together.
+**Picking the wrong variant introduces noise.** Example: emitting `realistic human identity, unretouched skin texture with visible pores` on a shot of a coffee tower without humans pushes the T2I model to invent or merge human elements into the product frame — the machine and the cup get mashed together. This is why skin-texture tokens (pores, facial asymmetry, NO skin smoothing) live ONLY in the Human and Mixed columns, never in the Product/object column.
 
 ### §4.4 Domain-driven defaults
 
@@ -422,6 +422,14 @@ For each shot, classify the main subject BEFORE composing the T2I:
 - When `domain = product-demo`, default visualLock variant is **Product / object subject** (the product is the hero). Override per-shot to Human or Mixed if a shot specifically features a person.
 - When `domain ∈ {narrative-character, real-interview, educational}`, default variant is **Human subject**. Override per-shot to Product/object for cutaway shots that focus on an object.
 - When `domain = motion-explainer`, default mediaType is `2d-animation` (use `illustration` for a flatter editorial look), and the visualLock variant is the **Product / object** column — there is no human identity to preserve. Restate the palette and type system in every shot in place of a continuity anchor.
+
+### §4.5 Photoreal close-up toolkit (`live` only, optional per shot)
+
+Photographic realism comes from imperfection and concrete gear, not quality words. Apply only when a shot is an intimate facial close-up; skip for wider shots.
+
+- Camera: name real gear, not quality words. Anti-pattern ❌ `8k, ultra realistic, extremely detailed face`. Correct ✅ `shot on a Canon EOS R5 with an 85mm f/1.4 prime lens wide open, focus locked on the near eye`.
+- Lighting (fills the `<lighting>` slot, never visualLock): describe the source and its shadow, not the mood. Anti-pattern ❌ `cinematic dramatic lighting`. Correct ✅ `lit by a single large softbox high camera-left, soft falloff, the far side of the face dropping into shadow`.
+- Framing: state distance and crop, not adjectives. Anti-pattern ❌ `beautiful close-up portrait`. Correct ✅ `extreme facial close-up, face fills the frame, top of head cropped above the hairline, eyes on the upper third`.
 
 ---
 

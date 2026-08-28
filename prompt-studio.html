@@ -2989,7 +2989,7 @@
                 if (state.language === "english-only")
                     return "Use English for all structural content and all dialogue.";
                 if (state.language === "zh-only")
-                    return "Use Traditional Chinese (Taiwan) for the full output.";
+                    return 'Write the ENTIRE output in Traditional Chinese (Taiwan) — including every Text-To-Image and Image-To-Video prompt line (e.g. 「電影感寫實劇照，深夜便利商店內，……」), not only the narrative sections. Any English prompt patterns shown in the section schemas define STRUCTURE only; render their content in 繁體中文. Keep verbatim only: actor aliases (Actor 1), aspect ratios (16:9), timestamps, and camera/lens tokens (85mm f/1.4).';
                 return "Keep structural sections and technical metadata in English. Keep spoken dialogue in Traditional Chinese (Taiwan) when requested.";
             }
 
@@ -3276,7 +3276,16 @@ Apply only when a shot is an intimate facial close-up; skip for wider shots.
             const PromptBuilder = {
                 build(state) {
                     const fn = MODE_BUILDERS[state.mode] || buildStoryboard;
-                    return fn(state);
+                    let text = fn(state);
+                    // zh-only 語言指令埋在 Tier 2 會輸給 spec 裡的英文硬片段
+                    // （faceLock 詞彙、schema 範例）——弱模型模仿範例而非服從指令。
+                    // 提升為標題後第一個 hard 區塊，並宣告英文片段的翻譯規則。
+                    if (state.language === "zh-only") {
+                        const nl = text.indexOf("\n");
+                        const zhBlock = `\n## Output Language — HARD CONSTRAINT (overrides every English pattern below)\nWrite the ENTIRE output in Traditional Chinese (Taiwan), including every Text-To-Image and Image-To-Video prompt line. All English phrases below (photoreal fragments, schema patterns, example sentences) define structure and required MEANING only — translate them into 繁體中文 (e.g. "unretouched skin texture with visible pores" → 「未修飾的皮膚質感，毛孔清晰可見」). Keep verbatim only: actor aliases (Actor 1), aspect ratios (16:9), timestamps ([0-2 seconds] → [0-2 秒] is allowed), and camera/lens tokens (85mm f/1.4).\n`;
+                        text = nl === -1 ? text + "\n" + zhBlock : text.slice(0, nl) + "\n" + zhBlock + text.slice(nl);
+                    }
+                    return text;
                 },
             };
 
@@ -5307,6 +5316,7 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
                 "duration",
                 "aspectRatio",
                 "shotStyle",
+                "outputMode",
                 "language",
             ].forEach((id) => {
                 const el = document.getElementById(id);

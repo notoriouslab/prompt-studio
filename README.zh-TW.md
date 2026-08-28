@@ -140,7 +140,8 @@ node eval.js                       # L2（需 GEMINI_API_KEY）
   open http://localhost:8765/prompt-studio.html
   ```
 - 以 `file://` 直接開檔或部署到遠端網域時，需在 ollama 端設 `OLLAMA_ORIGINS`（例如 `launchctl setenv OLLAMA_ORIGINS "*"` 後重啟 ollama）
-- 輸入類型可切「IDEA / 劇本」：貼上完整劇本（如 AI 編劇 skill 的產出）時走劇本輸入協定——對白逐字保留、場拆 shot、角色自動映射 Actor N，並自動切換「有對白」
+- 輸入類型三檔「IDEA / 劇本 / 概念→劇本」：貼完整劇本走劇本輸入協定（對白逐字保留、場拆 shot、角色映射 Actor N、自動切「有對白」）；「概念→劇本」則先在本地把故事概念寫成劇本（編劇規範濃縮自 MIT 授權的 [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound)，時長與畫幅自動帶入），過目修改後一鍵轉入劇本輸入
+- 偵測到 ollama 時「即時 Prompt」內文預設折疊（按鈕與字數保留，點 ▸ 展開）——本地流程裡它只是中間產物
 - 偵測不到 ollama 時區塊自動隱藏，原本的「產 template 手動貼」流程完全不受影響
 
 ---

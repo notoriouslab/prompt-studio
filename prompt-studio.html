@@ -1211,6 +1211,11 @@
                                         disabled
                                     >↷</button>
                                     <button
+                                        class="btn btn-secondary btn-sm"
+                                        id="specToggleBtn"
+                                        title="Collapse / expand"
+                                    >▾</button>
+                                    <button
                                         class="btn btn-primary btn-sm"
                                         id="copyPromptBtn"
                                         data-i18n="btn.copy"
@@ -1250,13 +1255,15 @@
                                         <span class="word-count" id="localLlmStatus"></span>
                                     </h2>
                                     <div class="actions">
-                                        <select id="localInputType" style="max-width: 130px">
+                                        <select id="localInputType" style="max-width: 150px">
                                             <option value="idea" data-i18n="opt.localInput.idea">IDEA</option>
                                             <option value="screenplay" data-i18n="opt.localInput.screenplay">Screenplay</option>
+                                            <option value="concept" data-i18n="opt.localInput.concept">Concept→Script</option>
                                         </select>
                                         <select id="localModel" style="max-width: 220px"></select>
                                         <button class="btn btn-primary btn-sm" id="localExpandBtn" data-i18n="local.expand">Expand Locally</button>
                                         <button class="btn btn-warn btn-sm hidden" id="localStopBtn" data-i18n="local.stop">Stop</button>
+                                        <button class="btn btn-secondary btn-sm hidden" id="localToScriptBtn" data-i18n="local.toScript">⬆ Move to screenplay input</button>
                                         <button class="btn btn-secondary btn-sm" id="localCopyBtn" data-i18n="local.copy">Copy Markdown</button>
                                     </div>
                                 </div>
@@ -1835,6 +1842,11 @@
                     "ph.localIdea": "IDEA：一小段話描述你要的影片（會連同上方 Prompt 一起送給本地模型）",
                     "ph.localScreenplay": "貼上完整劇本（場次標頭＋角色＋對白）：對白逐字保留、場拆 shot、角色自動映射 Actor N",
                     "local.status.dialogueOn": "已自動切換為「有對白」",
+                    "opt.localInput.concept": "概念→劇本",
+                    "ph.localConcept": "故事概念：類型、主角與目標、阻力、結局方向（時長與畫幅會從上方設定自動帶入）",
+                    "local.writeScript": "產生劇本",
+                    "local.toScript": "⬆ 轉入劇本輸入",
+                    "local.status.scriptReady": "劇本完成，過目修改後轉入",
                     "opt.localInput.idea": "IDEA",
                     "opt.localInput.screenplay": "劇本",
                     "local.status.idle": "就緒",
@@ -2100,6 +2112,11 @@
                     "ph.localIdea": "IDEA: one short paragraph describing the video (sent to the local model together with the prompt above)",
                     "ph.localScreenplay": "Paste a full screenplay (scene headings + characters + dialogue): lines kept verbatim, scenes split into shots, characters mapped to Actor N",
                     "local.status.dialogueOn": "dialogue mode switched on",
+                    "opt.localInput.concept": "Concept→Script",
+                    "ph.localConcept": "Story concept: genre, protagonist & goal, opposition, ending direction (duration & aspect are taken from the settings above)",
+                    "local.writeScript": "Write Screenplay",
+                    "local.toScript": "⬆ Move to screenplay input",
+                    "local.status.scriptReady": "screenplay ready — review, then move it over",
                     "opt.localInput.idea": "IDEA",
                     "opt.localInput.screenplay": "Screenplay",
                     "local.status.idle": "ready",
@@ -2484,6 +2501,8 @@
                 "localLlmSection",
                 "localLlmStatus",
                 "localInputType",
+                "localToScriptBtn",
+                "specToggleBtn",
                 "localModel",
                 "localExpandBtn",
                 "localStopBtn",
@@ -5157,6 +5176,8 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                         .join("");
                     els.localLlmSection.classList.remove("hidden");
                     setLocalStatus("local.status.idle");
+                    const saved = localStorage.getItem("ps_spec_collapsed");
+                    setSpecCollapsed(saved === null ? true : saved === "1", false);
                 } catch {
                     /* no local endpoint — section stays hidden */
                 }
@@ -5172,6 +5193,26 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
 4. Treat the screenplay's specified conditions (locations, time of day, props, wardrobe, OS/VO markers) as frozen facts. Adapt devices the platform cannot render (flashbacks, phone screens, voice-over) into in-frame equivalents and list each adaptation under a final "Adaptation Notes" heading.
 5. If the screenplay contains dialogue lines, emit them as spoken dialogue even when the spec above requests minimal or no dialogue — the screenplay overrides that preference. Wrap each line as a speech act (e.g. Actor 1 says in a [tone] tone, natural Mandarin accent: "...") with the scripted words inside ASCII double quotes, verbatim.`;
 
+            // 編劇指示：濃縮自 MIT 授權的 AI-drama-pound（github.com/POUND0423/AI-drama-pound）
+            // 編劇規範，並修掉本地 27B 實測的三個毛病：腦暴洩漏進交付物、遺失畫幅條件、混入簡體字。
+            // 概念模式不帶上方 spec——spec 是分鏡規則書，餵編劇階段會污染成 T2I 輸出。
+            function dramaInstructions(state) {
+                const vertical = state.aspectRatio === "9:16";
+                return `你是短劇編劇。把使用者的故事概念寫成一集可拍攝的完整短劇劇本。
+
+製作限制（不得違反）：
+- 總時長：${state.duration}，內容總量必須拍得完（對白加動作以每秒約 4 個中文字估算）
+- 畫幅：${state.aspectRatio}${vertical ? "（豎屏：關鍵人物、訊息與動作須在單一垂直畫面中清晰可辨）" : "（橫屏）"}
+
+硬規則：
+- 直接以場次標頭開場。除劇本本體外不得輸出任何文字：不寫假設、不寫方案比較、不寫腦暴過程、不寫線索對照表、不寫製作提示
+- 全程台灣繁體中文，禁止任何簡體字
+- 場次標頭格式「N. 內景／外景・地點・時間」；角色名獨立成行、首次出現附極短身分，臺詞置於其下；括號僅標簡短語氣或即時動作，不解釋內心
+- 用現在正在發生的可見、可聽行動描述畫面；避免解說性對白；每場結束時，資訊、關係、目標、風險或情緒至少一項已不可逆地改變
+- 角色轉變需有前置事件支撐；若有結尾反轉，須在前文埋至少兩處回看能成立的線索
+- 結尾用「切黑。」收束`;
+            }
+
             async function expandLocally() {
                 const idea = (els.localIdea.value || "").trim();
                 if (!idea) {
@@ -5179,14 +5220,18 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
                     els.localIdea.focus();
                     return;
                 }
+                const inputType = els.localInputType.value;
                 const spec = els.promptOutput.textContent || "";
-                const isScript = els.localInputType.value === "screenplay";
-                const userPrompt = isScript
-                    ? `${spec}\n\n${SCREENPLAY_PROTOCOL}\n\n---\n\nSCREENPLAY:\n${idea}\n\nExpand this screenplay into the production-ready output following the spec and the Screenplay Input Protocol above. Begin output immediately with the first heading — no preamble.`
-                    : `${spec}\n\n---\n\nIDEA: ${idea}\n\nExpand this idea into the production-ready output following the spec above. Begin output immediately with the first heading — no preamble.`;
+                const userPrompt =
+                    inputType === "concept"
+                        ? `${dramaInstructions(getBuilderState())}\n\n---\n\n故事概念：\n${idea}`
+                        : inputType === "screenplay"
+                          ? `${spec}\n\n${SCREENPLAY_PROTOCOL}\n\n---\n\nSCREENPLAY:\n${idea}\n\nExpand this screenplay into the production-ready output following the spec and the Screenplay Input Protocol above. Begin output immediately with the first heading — no preamble.`
+                          : `${spec}\n\n---\n\nIDEA: ${idea}\n\nExpand this idea into the production-ready output following the spec above. Begin output immediately with the first heading — no preamble.`;
                 localAbort = new AbortController();
                 els.localExpandBtn.classList.add("hidden");
                 els.localStopBtn.classList.remove("hidden");
+                els.localToScriptBtn.classList.add("hidden");
                 els.localOutput.textContent = "";
                 setLocalStatus("local.status.running");
                 const t0 = Date.now();
@@ -5225,7 +5270,12 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
                     }
                     const secs = ((Date.now() - t0) / 1000).toFixed(1);
                     const rate = tokens ? ` · ${(tokens / ((Date.now() - t0) / 1000)).toFixed(1)} tok/s` : "";
-                    setLocalStatus("local.status.idle", `${secs}s${rate}`);
+                    if (inputType === "concept" && els.localOutput.textContent.trim()) {
+                        els.localToScriptBtn.classList.remove("hidden");
+                        setLocalStatus("local.status.scriptReady", `${secs}s${rate}`);
+                    } else {
+                        setLocalStatus("local.status.idle", `${secs}s${rate}`);
+                    }
                 } catch (e) {
                     setLocalStatus(e.name === "AbortError" ? "local.status.stopped" : "local.status.error");
                 } finally {
@@ -5236,9 +5286,14 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
             }
 
             els.localInputType.addEventListener("change", () => {
-                const isScript = els.localInputType.value === "screenplay";
-                els.localIdea.rows = isScript ? 8 : 2;
-                els.localIdea.placeholder = t(isScript ? "ph.localScreenplay" : "ph.localIdea");
+                const type = els.localInputType.value;
+                const isScript = type === "screenplay";
+                els.localIdea.rows = isScript ? 8 : type === "concept" ? 3 : 2;
+                els.localIdea.placeholder = t(
+                    isScript ? "ph.localScreenplay" : type === "concept" ? "ph.localConcept" : "ph.localIdea",
+                );
+                els.localExpandBtn.textContent = t(type === "concept" ? "local.writeScript" : "local.expand");
+                if (type !== "concept") els.localToScriptBtn.classList.add("hidden");
                 // 劇本幾乎必含對白；模板若停在「少對白」，Tier 1 hard constraint 會
                 // 贏過後置協定、把台詞砍成無聲演技 —— 在 spec 生成層就切換，不靠 LLM 仲裁。
                 if (isScript && els.dialogueMode.value === "none") {
@@ -5249,6 +5304,23 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
             });
             els.localExpandBtn.addEventListener("click", expandLocally);
             els.localStopBtn.addEventListener("click", () => localAbort?.abort());
+            els.localToScriptBtn.addEventListener("click", () => {
+                els.localIdea.value = els.localOutput.textContent.trim();
+                els.localToScriptBtn.classList.add("hidden");
+                els.localInputType.value = "screenplay";
+                els.localInputType.dispatchEvent(new Event("change"));
+            });
+
+            // ── 即時 Prompt 折疊：本地流程裡 spec 只是中間產物，偵測到 ollama 時
+            // 預設收起（標題列與按鈕保留），手動開合記憶於 localStorage ──
+            function setSpecCollapsed(collapsed, remember) {
+                els.promptOutput.classList.toggle("hidden", collapsed);
+                els.specToggleBtn.textContent = collapsed ? "▸" : "▾";
+                if (remember) localStorage.setItem("ps_spec_collapsed", collapsed ? "1" : "0");
+            }
+            els.specToggleBtn.addEventListener("click", () =>
+                setSpecCollapsed(!els.promptOutput.classList.contains("hidden"), true),
+            );
             els.localCopyBtn.addEventListener("click", () => {
                 navigator.clipboard.writeText(els.localOutput.textContent || "");
                 els.localCopyBtn.textContent = t("btn.copied");

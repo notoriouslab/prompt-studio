@@ -1274,6 +1274,16 @@
                                     placeholder="IDEA: describe the video you want, in one short paragraph"
                                     style="width: 100%; margin: 8px 0"
                                 ></textarea>
+                                <div id="localReviseRow" class="hidden" style="display: flex; gap: 6px; margin: 0 0 8px">
+                                    <input
+                                        id="localReviseInput"
+                                        type="text"
+                                        style="flex: 1"
+                                        data-i18n-ph="ph.localRevise"
+                                        placeholder="Revision note: name the problem; the model rewrites the full output under the same rules"
+                                    />
+                                    <button class="btn btn-primary btn-sm" id="localReviseBtn" data-i18n="local.revise">Revise</button>
+                                </div>
                                 <pre class="code tall" id="localOutput"></pre>
                             </div>
                         </section>
@@ -1846,6 +1856,8 @@
                     "ph.localConcept": "故事概念：類型、主角與目標、阻力、結局方向（時長與畫幅會從上方設定自動帶入）",
                     "local.writeScript": "產生劇本",
                     "local.toScript": "⬆ 轉入劇本輸入",
+                    "local.revise": "修訂",
+                    "ph.localRevise": "修訂指示：指出問題（例：shot5 缺行進中的環境流動感），模型會帶著規則書重出完整修訂版",
                     "local.status.scriptReady": "劇本完成，過目修改後轉入",
                     "opt.localInput.idea": "IDEA",
                     "opt.localInput.screenplay": "劇本",
@@ -2116,6 +2128,8 @@
                     "ph.localConcept": "Story concept: genre, protagonist & goal, opposition, ending direction (duration & aspect are taken from the settings above)",
                     "local.writeScript": "Write Screenplay",
                     "local.toScript": "⬆ Move to screenplay input",
+                    "local.revise": "Revise",
+                    "ph.localRevise": "Revision note: name the problem (e.g. shot 5 lacks in-motion environmental flow); the model rewrites the full output under the same rules",
                     "local.status.scriptReady": "screenplay ready — review, then move it over",
                     "opt.localInput.idea": "IDEA",
                     "opt.localInput.screenplay": "Screenplay",
@@ -2502,6 +2516,9 @@
                 "localLlmStatus",
                 "localInputType",
                 "localToScriptBtn",
+                "localReviseRow",
+                "localReviseInput",
+                "localReviseBtn",
                 "specToggleBtn",
                 "localModel",
                 "localExpandBtn",
@@ -3204,6 +3221,18 @@
                     : null;
             }
 
+            // T2I 可畫性規則：2026-08-29 VE 實拍迭代回灌（鏡中反射難產實證 + 本地修訂輪歸納）。
+            // 適用所有 mediaType——鏡面反射/畫中畫/動態詞是 diffusion 模型通病，不限 live。
+            function drawabilityRules() {
+                return `### T2I Drawability Rules (every T2I prompt, all media types)
+- ONE subject, ONE layer per frame. Never request mirror reflections, reflections containing people or objects, or a second scene inside the frame. Anti-pattern ❌ \`face fills the frame, with the rear-view mirror showing the passenger behind\`. Correct ✅ \`extreme close-up; his head turns 15 degrees right, eyes tracking something behind him (off-frame)\`.
+- Never describe the CONTENT of an in-frame photo, screen, or painting — picture-in-picture fails. Describe the object only, and hang story clues on real objects in the scene instead. Anti-pattern ❌ \`a photo showing an 8-year-old girl smiling on a beach\`. Correct ✅ \`a creased, faded photograph, partly covered by his fingers, its image indistinct\`.
+- A T2I prompt describes a STATIC pose only. Motion verbs (trembling, sliding, falling) belong in the I2V prompt; render effort as static evidence. Anti-pattern ❌ \`his hand trembling on the pipe\`. Correct ✅ \`knuckles white, veins raised, gripping the pipe\`.
+- Framing consistency check: in a tight head-and-shoulders crop, nothing below the shoulders (chest pockets, hands, lap props) may be requested in the same frame — widen the crop or move the prop.
+- Moving-vehicle or traveling scenes: even a tight close-up carries environmental motion cues in its I2V prompt (light streaks passing on the glass, rain slanting past the window, subtle cabin vibration) so the frame never feels parked — the camera itself stays static.
+- The I2V prompt never repeats the T2I quality or negative vocabulary — open with \`Keep the character identity, wardrobe, lighting direction, and composition of the source image unchanged.\` then describe motion only.`;
+            }
+
             // Per-shot creative guidance, not a fixed lock — only for shots the
             // brief pushes toward an intimate facial close-up. live-action only.
             function closeUpToolkit(media) {
@@ -3440,7 +3469,7 @@ Per shot, use \`## Shot N\` H2 heading + bulleted fields (NOT a markdown table).
 - \`**Image-To-Video Prompt:** Animate this image into a [duration]-second ${media.motionBase}. Keep character identity, clothing, environment, and composition consistent. Camera [movement]. [0-2 seconds]: [action description]. [2-4 seconds]: [action description].${dialogue ? ' [4-6 seconds]: [Actor Alias], [continuity anchor], says in a [tone], clear [language] accent: "[dialogue line]". Animate natural lipsync exactly to the quoted words.' : " [4-6 seconds]: [action description]. No dialogue. Hold expression and breathing naturally."}\`
 
 Timestamps must be continuous with zero gaps across consecutive shots.
-Keep each [time-segment] to ONE simple motion — crowded segments produce mushy, rushed clips.${media.faceLock ? `\n${faceLockRule(media)}\n\n${closeUpToolkit(media)}` : ""}`;
+Keep each [time-segment] to ONE simple motion — crowded segments produce mushy, rushed clips.\n\n${drawabilityRules()}${media.faceLock ? `\n${faceLockRule(media)}\n\n${closeUpToolkit(media)}` : ""}`;
                 }
                 return `## Section Schemas
 
@@ -3465,7 +3494,7 @@ Columns per character: Name | Actor Alias | Role | Age | Physical | Clothing | P
 
 ### Generation Prompt Patterns
 - **T2I**: \`${media.t2iBase} of [Actor Alias], [continuity anchor] in [setting], [action/emotion], [composition/camera], [lighting], [environment details], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame.\`
-- **I2V** ${dialogue ? "(speaking shot)" : ""}: \`Animate this image into a [duration]-second ${media.motionBase}. Keep character identity, clothing, environment, and composition consistent. Camera [movement]. [Character action]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. ${dialogue ? '[Actor Alias], [continuity anchor], says in a [tone], clear [language] accent: "[dialogue]". Animate natural lipsync exactly to the quoted words.' : "No dialogue. Hold expression and breathing naturally."}\`${media.faceLock ? `\n- ${faceLockRule(media)}\n\n${closeUpToolkit(media)}` : ""}
+- **I2V** ${dialogue ? "(speaking shot)" : ""}: \`Animate this image into a [duration]-second ${media.motionBase}. Keep character identity, clothing, environment, and composition consistent. Camera [movement]. [Character action]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. ${dialogue ? '[Actor Alias], [continuity anchor], says in a [tone], clear [language] accent: "[dialogue]". Animate natural lipsync exactly to the quoted words.' : "No dialogue. Hold expression and breathing naturally."}\`\n\n${drawabilityRules()}${media.faceLock ? `\n- ${faceLockRule(media)}\n\n${closeUpToolkit(media)}` : ""}
 
 ${
     dialogue
@@ -3504,7 +3533,7 @@ Answer in Markdown. Emit EXACTLY these two blocks. No "Shot Brief", no sub-field
 \`${media.t2iBase} of [subject + setting], [action], [camera + framing], [lighting], [details], ${media.visualLock}, ${state.aspectRatio} aspect ratio, clean unmarked frame.\`
 
 ### Image-to-Video Prompt
-\`Animate this image into a ${state.duration} ${media.motionBase}. Keep character identity, wardrobe, environment, and composition consistent. Camera [movement]. [Character action]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. ${dialogue ? '[speaker reference], says in a [tone], clear [language] accent: "[dialogue]". Animate natural lipsync.' : "No dialogue. Hold expression and breathing naturally."}\`${media.faceLock ? `\n\n${faceLockRule(media)}\n\n${closeUpToolkit(media)}` : ""}`,
+\`Animate this image into a ${state.duration} ${media.motionBase}. Keep character identity, wardrobe, environment, and composition consistent. Camera [movement]. [Character action]. Face shifts from [emotion] to [emotion]. Add subtle [environmental motion]. ${dialogue ? '[speaker reference], says in a [tone], clear [language] accent: "[dialogue]". Animate natural lipsync.' : "No dialogue. Hold expression and breathing naturally."}\`\n\n${drawabilityRules()}${media.faceLock ? `\n\n${faceLockRule(media)}\n\n${closeUpToolkit(media)}` : ""}`,
                     silentChecksBlock(SILENT_CHECKS["single-shot"](), "## Silent Quality Checks"),
                     customRulesBlock(state),
                 ]);
@@ -5228,10 +5257,38 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
                         : inputType === "screenplay"
                           ? `${spec}\n\n${SCREENPLAY_PROTOCOL}\n\n---\n\nSCREENPLAY:\n${idea}\n\nExpand this screenplay into the production-ready output following the spec and the Screenplay Input Protocol above. Begin output immediately with the first heading — no preamble.`
                           : `${spec}\n\n---\n\nIDEA: ${idea}\n\nExpand this idea into the production-ready output following the spec above. Begin output immediately with the first heading — no preamble.`;
+                await runLocalChat([{ role: "user", content: userPrompt }], inputType);
+            }
+
+            // 修訂輪基底：只保留「原始規則書 prompt + 最新輸出」，不累積中間批評——
+            // 每輪修訂都帶完整規則書，脫離 PS 的裸聊會漂移（實證：test02 建議加字幕/換平台）。
+            let localBase = null;
+
+            async function reviseLocally() {
+                const note = (els.localReviseInput.value || "").trim();
+                if (!note || !localBase) {
+                    els.localReviseInput.focus();
+                    return;
+                }
+                const messages = [
+                    { role: "user", content: localBase.prompt },
+                    { role: "assistant", content: localBase.output },
+                    {
+                        role: "user",
+                        content: `修訂指示：${note}\n\n請依指示修訂上一版，輸出完整修訂後的全文（不是差異列表），維持原輸出格式，並繼續遵守最初訊息中的所有規則。`,
+                    },
+                ];
+                els.localReviseInput.value = "";
+                await runLocalChat(messages, localBase.inputType);
+            }
+
+            async function runLocalChat(messages, inputType) {
+                if (localAbort) return; // 重入保護：Enter 鍵/程式化點擊可繞過按鈕隱藏，併發 stream 會互踩輸出區
                 localAbort = new AbortController();
                 els.localExpandBtn.classList.add("hidden");
                 els.localStopBtn.classList.remove("hidden");
                 els.localToScriptBtn.classList.add("hidden");
+                els.localReviseRow.classList.add("hidden");
                 els.localOutput.textContent = "";
                 setLocalStatus("local.status.running");
                 const t0 = Date.now();
@@ -5242,10 +5299,10 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
                         signal: localAbort.signal,
                         body: JSON.stringify({
                             model: els.localModel.value,
-                            messages: [{ role: "user", content: userPrompt }],
+                            messages,
                             stream: true,
                             think: false,
-                            options: { temperature: 0.7, num_ctx: 16384, num_predict: 8192 },
+                            options: { temperature: 0.7, num_ctx: 24576, num_predict: 8192 },
                         }),
                     });
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -5270,7 +5327,12 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
                     }
                     const secs = ((Date.now() - t0) / 1000).toFixed(1);
                     const rate = tokens ? ` · ${(tokens / ((Date.now() - t0) / 1000)).toFixed(1)} tok/s` : "";
-                    if (inputType === "concept" && els.localOutput.textContent.trim()) {
+                    const finalText = els.localOutput.textContent.trim();
+                    if (finalText) {
+                        localBase = { prompt: messages[0].content, output: finalText, inputType };
+                        els.localReviseRow.classList.remove("hidden");
+                    }
+                    if (inputType === "concept" && finalText) {
                         els.localToScriptBtn.classList.remove("hidden");
                         setLocalStatus("local.status.scriptReady", `${secs}s${rate}`);
                     } else {
@@ -5304,6 +5366,10 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
             });
             els.localExpandBtn.addEventListener("click", expandLocally);
             els.localStopBtn.addEventListener("click", () => localAbort?.abort());
+            els.localReviseBtn.addEventListener("click", reviseLocally);
+            els.localReviseInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") reviseLocally();
+            });
             els.localToScriptBtn.addEventListener("click", () => {
                 els.localIdea.value = els.localOutput.textContent.trim();
                 els.localToScriptBtn.classList.add("hidden");

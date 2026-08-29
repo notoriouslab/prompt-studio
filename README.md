@@ -141,6 +141,7 @@ If [ollama](https://ollama.com) is running on your machine, the page auto-detect
   ```
 - Opening via `file://` or a remote domain requires setting `OLLAMA_ORIGINS` on the ollama side (e.g. `launchctl setenv OLLAMA_ORIGINS "*"` then restart ollama)
 - Three input types — IDEA / Screenplay / Concept→Script: pasting a screenplay triggers the Screenplay Input Protocol (dialogue verbatim, scenes split into shots, characters mapped to Actor N, dialogue mode auto-on); Concept→Script first drafts a screenplay locally (screenwriting rules condensed from the MIT-licensed [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound), duration & aspect injected from your settings), which you review and move over in one click
+- After an expansion a Revise row appears: type a critique (e.g. "shot 5 lacks in-motion environmental flow") and the model rewrites the full output with the complete rulebook still in context — iterate as many rounds as needed
 - When ollama is detected the Live Prompt body starts collapsed (buttons and word count stay; click ▸ to expand) — in the local flow it is only an intermediate artifact
 - When no ollama endpoint is found the section stays hidden; the classic template-copy workflow is untouched
 

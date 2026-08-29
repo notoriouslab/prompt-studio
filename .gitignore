@@ -21,3 +21,7 @@ yarn-error.log*
 .env.*
 *.secrets.json
 .gstack/
+
+# Private distributions (kept local, not for upstream)
+docs/notebooklm-distribution/
+docs/gemini-gem-distribution/

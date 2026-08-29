@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Prompt Studio</title>
+        <title>Video Prompt Studio</title>
         <style>
             /* ── v6: fixed type scale, no clamp(), unified control sizing ──
                v6.2 a11y bump: +1-3px across the scale for easier reading */
@@ -888,7 +888,7 @@
                 <div class="brand">
                     <div class="logo-mark" aria-hidden="true"></div>
                     <div class="brand-text">
-                        <strong>Prompt Studio</strong
+                        <strong>Video Prompt Studio</strong
                         ><span class="muted" data-i18n="header.subtitle"
                             >Mode × Platform · 本地優先</span
                         >
@@ -1115,13 +1115,13 @@
                             <option
                                 value="english-only"
                                 data-i18n="opt.lang.eng"
+                                selected
                             >
                                 English only
                             </option>
                             <option
                                 value="zh-only"
                                 data-i18n="opt.lang.zh"
-                                selected
                             >
                                 繁中 only
                             </option>
@@ -2290,7 +2290,7 @@
                 );
             }
 
-            let currentLang = localStorage.getItem(LANG_KEY) || "zh";
+            let currentLang = localStorage.getItem(LANG_KEY) || "en";
             function t(key, params) {
                 let s =
                     (I18N[currentLang] && I18N[currentLang][key]) ||
@@ -5219,7 +5219,8 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
             // 概念模式不帶上方 spec——spec 是分鏡規則書，餵編劇階段會污染成 T2I 輸出。
             function dramaInstructions(state) {
                 const vertical = state.aspectRatio === "9:16";
-                return `你是短劇編劇。把使用者的故事概念寫成一集可拍攝的完整短劇劇本。
+                if (state.language === "zh-only")
+                    return `你是短劇編劇。把使用者的故事概念寫成一集可拍攝的完整短劇劇本。
 
 製作限制（不得違反）：
 - 總時長：${state.duration}，內容總量必須拍得完（對白加動作以每秒約 4 個中文字估算）
@@ -5232,6 +5233,19 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
 - 用現在正在發生的可見、可聽行動描述畫面；避免解說性對白；每場結束時，資訊、關係、目標、風險或情緒至少一項已不可逆地改變
 - 角色轉變需有前置事件支撐；若有結尾反轉，須在前文埋至少兩處回看能成立的線索
 - 結尾用「切黑。」收束`;
+                return `You are a short-drama screenwriter. Turn the user's story concept into one complete, shootable episode screenplay.
+
+Production limits (must not be violated):
+- Total duration: ${state.duration}. The full content must be shootable within it (estimate dialogue plus action at roughly 2.5 words per second).
+- Aspect: ${state.aspectRatio}${vertical ? " (vertical: key people, information and actions must read clearly in a single vertical frame)" : " (landscape)"}.
+${state.language === "english-structure-zh-dialogue" ? "- Write structure and action in English; spoken dialogue lines in Traditional Chinese (Taiwan)." : ""}
+
+Hard rules:
+- Open directly with the first scene heading. Output NOTHING but the screenplay itself: no assumptions, no option comparisons, no brainstorming, no clue tables, no production notes.
+- Scene heading format "N. INT./EXT. - Location - Time". Character names on their own line with a very short identity tag on first appearance, dialogue beneath; parentheticals only for brief tone or immediate action, never inner thoughts.
+- Describe the frame through visible, audible actions happening now; avoid expository dialogue; by the end of every scene at least one of information, relationships, goals, stakes or emotion has irreversibly changed.
+- Character turns need a planted prior event; if the ending twists, plant at least two clues earlier that hold up on rewatch.
+- Close with "CUT TO BLACK."`;
             }
 
             async function expandLocally() {
@@ -5245,7 +5259,7 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
                 const spec = els.promptOutput.textContent || "";
                 const userPrompt =
                     inputType === "concept"
-                        ? `${dramaInstructions(getBuilderState())}\n\n---\n\n故事概念：\n${idea}`
+                        ? `${dramaInstructions(getBuilderState())}\n\n---\n\nSTORY CONCEPT:\n${idea}`
                         : inputType === "screenplay"
                           ? `${spec}\n\n${SCREENPLAY_PROTOCOL}\n\n---\n\nSCREENPLAY:\n${idea}\n\nExpand this screenplay into the production-ready output following the spec and the Screenplay Input Protocol above. Begin output immediately with the first heading — no preamble.`
                           : `${spec}\n\n---\n\nIDEA: ${idea}\n\nExpand this idea into the production-ready output following the spec above. Begin output immediately with the first heading — no preamble.`;
@@ -5267,7 +5281,7 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
                     { role: "assistant", content: localBase.output },
                     {
                         role: "user",
-                        content: `修訂指示：${note}\n\n請依指示修訂上一版，輸出完整修訂後的全文（不是差異列表），維持原輸出格式，並繼續遵守最初訊息中的所有規則。`,
+                        content: `Revision note: ${note}\n\nRevise the previous version accordingly. Output the complete revised document (not a diff), keep the original output format, and keep obeying every rule from the first message.`,
                     },
                 ];
                 els.localReviseInput.value = "";

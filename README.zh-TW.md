@@ -1,6 +1,6 @@
 <div align="center">
 
-# PromptStudio
+# Video Prompt Studio
 
 [![License](https://img.shields.io/github/license/notoriouslab/prompt-studio?style=flat-square)](LICENSE)
 [![Single-file HTML](https://img.shields.io/badge/Single--file-HTML-orange?style=flat-square)]()

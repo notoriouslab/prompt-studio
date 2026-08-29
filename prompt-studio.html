@@ -1056,24 +1056,6 @@
                         </select>
                     </div>
                     <div class="field-inline">
-                        <label data-i18n="adv.checkMode">Checks</label
-                        ><select id="checkMode">
-                            <option
-                                value="minimal"
-                                data-i18n="opt.check.minimal"
-                            >
-                                Minimal
-                            </option>
-                            <option
-                                value="standard"
-                                selected
-                                data-i18n="opt.check.standard"
-                            >
-                                Standard
-                            </option>
-                        </select>
-                    </div>
-                    <div class="field-inline">
                         <label data-i18n="adv.subtitleMode">Subtitle</label
                         ><select id="subtitleMode">
                             <option value="soft" data-i18n="opt.subtitle.soft">
@@ -1748,6 +1730,7 @@
                     "header.theme": "◐",
                     // nav
                     "nav.builder": "🔨 Builder",
+                    "nav.manage": "管理",
                     "nav.platforms": "📡 平台",
                     "nav.presets": "⚡ Presets",
                     "nav.templates": "📄 模板",
@@ -1793,7 +1776,6 @@
                     "adv.domain": "題材領域",
                     "adv.priorityMode": "規則優先級",
                     "adv.lengthMode": "Prompt 長度",
-                    "adv.checkMode": "驗證清單",
                     "adv.subtitleMode": "字幕抑制",
                     "adv.shotStyle": "鏡頭策略",
                     "adv.outputMode": "輸出格式",
@@ -1813,8 +1795,6 @@
                     "opt.length.short": "Short",
                     "opt.length.standard": "Standard",
                     "opt.length.detailed": "Detailed",
-                    "opt.check.minimal": "Minimal",
-                    "opt.check.standard": "Standard",
                     "opt.subtitle.soft": "柔性",
                     "opt.subtitle.strict": "嚴格",
                     "opt.shot.tight": "中近景優先",
@@ -2020,6 +2000,7 @@
                     "header.theme": "◐",
                     // nav
                     "nav.builder": "🔨 Builder",
+                    "nav.manage": "Manage",
                     "nav.platforms": "📡 Platforms",
                     "nav.presets": "⚡ Presets",
                     "nav.templates": "📄 Templates",
@@ -2065,7 +2046,6 @@
                     "adv.domain": "Domain",
                     "adv.priorityMode": "Priority",
                     "adv.lengthMode": "Prompt Length",
-                    "adv.checkMode": "Checks",
                     "adv.subtitleMode": "Subtitle",
                     "adv.shotStyle": "Shot Style",
                     "adv.outputMode": "Output Mode",
@@ -2085,8 +2065,6 @@
                     "opt.length.short": "Short",
                     "opt.length.standard": "Standard",
                     "opt.length.detailed": "Detailed",
-                    "opt.check.minimal": "Minimal",
-                    "opt.check.standard": "Standard",
                     "opt.subtitle.soft": "Soft",
                     "opt.subtitle.strict": "Strict",
                     "opt.shot.tight": "Close-up first",
@@ -2452,7 +2430,6 @@
                 "domain",
                 "priorityMode",
                 "lengthMode",
-                "checkMode",
                 "subtitleMode",
                 "shotStyle",
                 "outputMode",
@@ -2895,7 +2872,6 @@
                     domain: els.domain.value,
                     priorityMode: els.priorityMode.value,
                     lengthMode: els.lengthMode.value,
-                    checkMode: els.checkMode.value,
                     subtitleMode: els.subtitleMode.value,
                     duration: els.duration.value,
                     aspectRatio: els.aspectRatio.value,
@@ -4772,11 +4748,28 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
             }
 
             // ── NAV ────────────────────────────────────────────────────────
+            // VE-only 日常流程只用 builder；其餘 view 是 template/平台管理工具，
+            // 收進「⚙ 管理」入口，開啟或正位於管理 view 時才展開整排 tab。
+            let navManageOpen = false;
+            window.toggleNavManage = function () {
+                navManageOpen = !navManageOpen;
+                renderNav();
+            };
             function renderNav() {
-                els.navTabs.innerHTML = VIEWS.map(
-                    (v) =>
-                        `<button class="tab ${currentView === v ? "active" : ""}" onclick="window.switchView('${v}')">${t("nav." + v)}</button>`,
-                ).join("");
+                const managed = VIEWS.filter((v) => v !== "builder");
+                const inManaged = managed.includes(currentView);
+                const open = navManageOpen || inManaged;
+                els.navTabs.innerHTML =
+                    `<button class="tab ${currentView === "builder" ? "active" : ""}" onclick="window.switchView('builder')">${t("nav.builder")}</button>` +
+                    `<button class="tab" onclick="window.toggleNavManage()">⚙ ${t("nav.manage")} ${open ? "▾" : "▸"}</button>` +
+                    (open
+                        ? managed
+                              .map(
+                                  (v) =>
+                                      `<button class="tab ${currentView === v ? "active" : ""}" onclick="window.switchView('${v}')">${t("nav." + v)}</button>`,
+                              )
+                              .join("")
+                        : "");
             }
             window.switchView = function (v) {
                 currentView = v;
@@ -5051,7 +5044,6 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                             domain: t.domain,
                             priorityMode: "balanced",
                             lengthMode: "standard",
-                            checkMode: "standard",
                             subtitleMode: "soft",
                             duration:
                                 t.defaultMode === "short-form"
@@ -5449,7 +5441,6 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
                 "domain",
                 "priorityMode",
                 "lengthMode",
-                "checkMode",
                 "subtitleMode",
                 "duration",
                 "aspectRatio",

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Prompt Studio — production-ready video-gen prompts</title>
+<meta name="description" content="Turn one idea into production-ready prompts for AI video generation. A single-file web app: paste the output into any AI agent, or run the whole pipeline against your own local LLM. No account, no tracking.">
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1d1d1f; --muted: #6e6e73; --card: #f5f5f7;
+    --accent: #0a84ff; --accent-fg: #ffffff; --green: #1f7a37;
+    --border: #d2d2d7; --warn-bg: #fff8e6; --warn-border: #e6c96b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --fg: #f5f5f7; --muted: #98989d; --card: #2c2c2e;
+      --accent: #0a84ff; --green: #4cd964;
+      --border: #3a3a3c; --warn-bg: #3a3320; --warn-border: #8a7a3a;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+      "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.75; font-size: 17px;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { font-size: 1.9em; line-height: 1.3; margin: 24px 0 8px; }
+  h2 { font-size: 1.35em; margin: 56px 0 16px; padding-top: 8px; }
+  h3 { font-size: 1.1em; margin: 28px 0 8px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); font-size: 0.92em; }
+  .hero { text-align: center; padding-top: 24px; }
+  .hero .tagline { font-size: 1.15em; margin: 16px auto; max-width: 40em; }
+  .badges { color: var(--muted); font-size: 0.9em; margin-bottom: 8px; }
+  .gh-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    margin: 4px 0 10px; }
+  .gh-btn { display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 18px; font-size: 0.88em; font-weight: 600;
+    background: var(--card); color: var(--fg); text-decoration: none;
+    border: 1px solid rgba(128,128,128,0.25); }
+  .gh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .gh-btn svg { width: 15px; height: 15px; fill: currentColor; flex: none; }
+  .gh-count { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .dl-box {
+    background: var(--card); border-radius: 16px;
+    padding: 28px 20px; margin: 28px 0;
+  }
+  .dl-buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .dl-btn {
+    display: inline-block; text-decoration: none;
+    background: var(--accent); color: var(--accent-fg);
+    border-radius: 12px; padding: 14px 26px;
+    font-size: 1.08em; font-weight: 600; min-width: 240px;
+  }
+  .dl-btn small { display: block; font-weight: 400; font-size: 0.78em; opacity: 0.85; }
+  .dl-btn.secondary { background: var(--card); color: var(--fg);
+    border: 1px solid var(--border); }
+  .dl-note { margin-top: 14px; }
+  .free { color: var(--green); font-weight: 600; }
+  .steps { counter-reset: step; list-style: none; }
+  .steps li {
+    counter-increment: step; position: relative;
+    padding: 0 0 18px 52px; margin: 0;
+  }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-fg);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  figure { margin: 24px 0; }
+  figure img {
+    max-width: 100%; border-radius: 12px; border: 1px solid var(--border);
+    display: block; margin: 0 auto;
+  }
+  figcaption { color: var(--muted); font-size: 0.9em; margin-top: 8px; text-align: center; }
+  ul.features { list-style: none; }
+  ul.features li { padding: 6px 0 6px 30px; position: relative; }
+  ul.features li::before { content: "✓"; position: absolute; left: 4px;
+    color: var(--green); font-weight: 700; }
+  details {
+    background: var(--card); border-radius: 12px;
+    padding: 14px 18px; margin: 10px 0;
+  }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin-top: 10px; }
+  code { background: var(--card); border-radius: 5px; padding: 1px 6px;
+    font-size: 0.88em; }
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 0.9em; }
+  @media (max-width: 480px) { body { font-size: 16px; } .dl-btn { width: 100%; } }
+</style>
+</head>
+<body>
+<main>
+
+<div class="hero">
+  <h1>Video Prompt Studio</h1>
+  <p class="tagline">Turn one idea into production-ready prompts for AI video
+  generation: character bibles, timestamped shots, T2I / I2V pairs, lipsync-safe
+  dialogue.<br>
+  <strong>A single HTML file that runs entirely in your browser. No account, no
+  upload, no tracking — and with a local LLM, nothing ever leaves your
+  machine.</strong></p>
+  <p class="badges">Single-file web app · <span class="free">Free</span> ·
+  Open source (MIT) · Works offline · <a href="zh.html">中文版</a></p>
+
+  <div class="gh-row">
+    <a class="gh-btn" href="https://github.com/notoriouslab/prompt-studio"
+       title="Star this project on GitHub (login required)">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+      Star<span class="gh-count" id="gh-stars"></span></a>
+    <a class="gh-btn" href="https://github.com/notoriouslab/prompt-studio/fork"
+       title="Fork your own copy on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"/></svg>
+      Fork<span class="gh-count" id="gh-forks"></span></a>
+    <a class="gh-btn" href="https://github.com/notoriouslab/prompt-studio/subscription"
+       title="Watch this project for updates (login required)">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.831.88 9.577.43 8.899a1.62 1.62 0 0 1 0-1.798c.45-.678 1.367-1.932 2.637-3.023C4.33 2.992 6.019 2 8 2ZM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.825.742-3.955 1.715-1.124.967-1.954 2.096-2.366 2.717ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z"/></svg>
+      Watch<span class="gh-count" id="gh-watch"></span></a>
+    <a class="gh-btn" href="https://github.com/notoriouslab/prompt-studio/releases"
+       title="Total downloads across all releases">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14ZM7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"/></svg>
+      Downloads<span class="gh-count" id="gh-downloads"></span></a>
+  </div>
+
+  <div class="dl-box">
+    <h2 style="margin:0 0 6px; padding:0">Try it now</h2>
+    <p class="muted" id="ver-line" style="margin-bottom:16px">Fetching the latest version…</p>
+    <div class="dl-buttons">
+      <a class="dl-btn" href="prompt-studio.html">
+         Open the App<small>runs right here in your browser, nothing to install</small></a>
+      <a class="dl-btn secondary" href="https://github.com/notoriouslab/prompt-studio">
+         Get it locally<small>clone the repo — unlocks the local-LLM pipeline</small></a>
+    </div>
+    <p class="dl-note muted">The online app is fully functional for the copy-paste
+    workflow. Running it from your own machine (double-click
+    <code>PromptStudio.command</code> on macOS or <code>PromptStudio.bat</code> on
+    Windows) additionally connects it to your local
+    <a href="https://ollama.com">ollama</a> for the fully on-device pipeline.</p>
+  </div>
+</div>
+
+<h2>Why this exists</h2>
+<p>Custom AI agents keep getting sunset. Google's Gemini Gems is the latest:
+in-app notices point to an October 2026 retirement. Every rulebook you carefully
+built inside a vendor's agent goes with it.</p>
+<p>Video Prompt Studio takes the opposite bet: <strong>your prompt pipeline should
+not live inside anyone's agent</strong>. It generates a complete, self-contained
+rulebook prompt — copy it into ChatGPT, Claude, Gemini, or whatever comes next,
+and it just works. And if you run a local model with ollama, you don't even need
+the copy-paste: the whole idea-to-shot-list pipeline runs on your own hardware.</p>
+
+<h2>What it does</h2>
+<p>You pick a mode — multi-shot storyboard, single shot, first/last frame,
+talking avatar, or vertical short-form — set duration and aspect, and describe
+your idea. The app compiles a production spec: hard constraints, platform
+calibrations (field-tested against
+<a href="https://videoexpress.ai">VideoExpress.ai</a>), photorealism rules,
+anti-subtitle-burn rules, and T2I drawability rules learned from real generation
+failures. An AI agent expands that spec into paste-ready prompts.</p>
+
+<figure>
+  <img src="docs/landing/shot-full.png" alt="Video Prompt Studio main interface: mode chips, settings, and the Local Expand panel" loading="lazy" width="1440">
+  <figcaption>One screen: pick a mode, set duration and aspect, feed it an idea</figcaption>
+</figure>
+
+<h2>The local pipeline: concept → screenplay → shot prompts</h2>
+<p>With ollama detected, a <strong>Local Expand</strong> panel appears and the
+pipeline becomes three stages, all on-device:</p>
+<ol class="steps">
+  <li><strong>Concept → Script</strong><br>
+    Type a one-line story concept. A screenwriting ruleset (adapted from the
+    MIT-licensed AI-drama-pound) drafts a complete, shootable screenplay —
+    scene headings, planted twist clues, no expository dialogue.</li>
+  <li><strong>Screenplay → Shot prompts</strong><br>
+    Review the script, move it over with one click. Dialogue is kept verbatim,
+    scenes are decomposed into timestamped shots, characters become numbered
+    actor aliases with frozen visual descriptions.</li>
+  <li><strong>Revise until it's right</strong><br>
+    Type a critique ("shot 5 lacks in-motion environmental flow") and the model
+    rewrites the full output with the complete rulebook still in context —
+    iteration never drifts away from the platform rules.</li>
+</ol>
+
+<figure>
+  <img src="docs/landing/shot-concept.png" alt="Concept-to-Script stage: a one-line story concept drafted into a full screenplay" loading="lazy" width="1200">
+  <figcaption>Concept → Script: a one-liner becomes a shootable screenplay, locally</figcaption>
+</figure>
+<figure>
+  <img src="docs/landing/shot-expand.png" alt="Shot prompt expansion with the revision row" loading="lazy" width="1200">
+  <figcaption>Screenplay → timestamped shot prompts, with revision rounds</figcaption>
+</figure>
+<figure>
+  <img src="docs/landing/shot-videoexpress.jpg" alt="Generated prompts pasted into VideoExpress: image prompt and time-segmented video prompt fields" loading="lazy" width="1200">
+  <figcaption>The destination: prompts drop straight into your video generator's
+  image / video fields (VideoExpress shown)</figcaption>
+</figure>
+
+<h2>Core features</h2>
+<ul class="features">
+  <li><strong>Agent-portable by design</strong>: the output is a plain prompt —
+    works in any chat AI today, and any chat AI that exists next year</li>
+  <li><strong>Optional fully-local pipeline</strong>: concept, screenplay, shot
+    prompts and revisions against your own ollama; nothing leaves your machine</li>
+  <li><strong>Field-tested platform rules</strong>: VideoExpress calibrations from
+    real runs — actor aliasing against identity drift, lipsync dialogue limits,
+    anti-subtitle-burn phrasing, per-shot density budgets</li>
+  <li><strong>T2I drawability rules</strong>: no mirror reflections, no
+    picture-in-picture, static pose in T2I with motion reserved for I2V —
+    distilled from prompts that actually failed to render</li>
+  <li><strong>Five modes</strong>: storyboard, single shot, first/last frame,
+    talking avatar, vertical short-form — plus minimal / full / run-sheet output</li>
+  <li><strong>Run-sheet output for browser agents</strong>: a machine-executable
+    work order an agent (e.g. Claude in Chrome) can follow to drive the video
+    platform end to end</li>
+  <li><strong>Single file, local-first</strong>: templates and versions live in
+    your browser's localStorage; export and import as JSON anytime</li>
+</ul>
+
+<h2>FAQ</h2>
+<details>
+  <summary>Do I need an account or an API key?</summary>
+  <p>No. The app itself calls no AI service. You either paste its output into a
+  chat AI you already use, or point it at your own local ollama. GitHub is just
+  where the code lives.</p>
+</details>
+<details>
+  <summary>Is it free?</summary>
+  <p>Completely free and open source (MIT). It's a tool built for our own video
+  production pipeline, with no business model, sign-ups, or telemetry.</p>
+</details>
+<details>
+  <summary>Where does my data live?</summary>
+  <p>In your browser's localStorage, on your device. The online app makes no
+  network requests except the GitHub version check on this page. The local-LLM
+  mode talks only to <code>localhost</code>.</p>
+</details>
+<details>
+  <summary>Which video generators does it target?</summary>
+  <p>The built-in calibrations are field-tested against VideoExpress.ai. The
+  generated specs are plain English though — the structure (character bible,
+  timestamped T2I / I2V pairs) carries over to other generators, you just lose
+  the platform-specific tuning.</p>
+</details>
+<details>
+  <summary>What do I need for the local pipeline?</summary>
+  <p><a href="https://ollama.com">ollama</a> with a capable model (we test with
+  Qwen 27B on a 36 GB Mac), plus serving the page from localhost — the bundled
+  <code>PromptStudio.command</code> / <code>PromptStudio.bat</code> launchers do
+  that in one double-click. Without ollama the panel simply hides and the
+  copy-paste workflow is untouched.</p>
+</details>
+<details>
+  <summary>Is there a Chinese version?</summary>
+  <p>Yes — the app is fully bilingual (toggle in the top bar), and this page has
+  a <a href="zh.html">中文版</a>.</p>
+</details>
+
+<footer>
+  <p>Video Prompt Studio is part of the notoriouslab open-source toolbox ·
+  <a href="https://github.com/notoriouslab/prompt-studio">Source &amp; full docs (GitHub)</a> ·
+  <a href="https://github.com/notoriouslab/prompt-studio/releases">All releases</a></p>
+</footer>
+
+</main>
+<script>
+(function () {
+  var ver = document.getElementById("ver-line");
+  fetch("https://api.github.com/repos/notoriouslab/prompt-studio/releases/latest")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (rel) {
+      ver.textContent = "Latest release " + rel.tag_name + " ("
+        + (rel.published_at || "").slice(0, 10) + ")";
+    })
+    .catch(function () {
+      ver.textContent = "Open the app online, or clone the repo for local use";
+    });
+
+  // Live counts. Note: the API's watchers_count is actually the star count;
+  // real watchers are subscribers_count. On failure counts stay blank and the
+  // buttons still work.
+  fetch("https://api.github.com/repos/notoriouslab/prompt-studio")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (repo) {
+      function put(id, n) {
+        var el = document.getElementById(id);
+        if (el && typeof n === "number") el.textContent = " " + n.toLocaleString();
+      }
+      put("gh-stars", repo.stargazers_count);
+      put("gh-forks", repo.forks_count);
+      put("gh-watch", repo.subscribers_count);
+    })
+    .catch(function () { /* leave counts blank */ });
+
+  // Total downloads = sum of every asset across all releases.
+  fetch("https://api.github.com/repos/notoriouslab/prompt-studio/releases?per_page=100")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (rels) {
+      var total = 0;
+      for (var i = 0; i < rels.length; i++) {
+        var assets = rels[i].assets || [];
+        for (var j = 0; j < assets.length; j++) total += assets[j].download_count || 0;
+      }
+      var el = document.getElementById("gh-downloads");
+      if (el && total > 0) el.textContent = " " + total.toLocaleString();
+    })
+    .catch(function () { /* leave counts blank */ });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Prompt Studio：AI 影片提示詞工作台</title>
+<meta name="description" content="把一個點子變成可直接生片的 AI 影片提示詞。單檔網頁工具：產出可貼進任何 AI 助手，也能接自己電腦上的本地模型全程離線跑。免帳號、零追蹤。">
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1d1d1f; --muted: #6e6e73; --card: #f5f5f7;
+    --accent: #0a84ff; --accent-fg: #ffffff; --green: #1f7a37;
+    --border: #d2d2d7; --warn-bg: #fff8e6; --warn-border: #e6c96b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --fg: #f5f5f7; --muted: #98989d; --card: #2c2c2e;
+      --accent: #0a84ff; --green: #4cd964;
+      --border: #3a3a3c; --warn-bg: #3a3320; --warn-border: #8a7a3a;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+      "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.75; font-size: 17px;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { font-size: 1.9em; line-height: 1.3; margin: 24px 0 8px; }
+  h2 { font-size: 1.35em; margin: 56px 0 16px; padding-top: 8px; }
+  h3 { font-size: 1.1em; margin: 28px 0 8px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); font-size: 0.92em; }
+  .hero { text-align: center; padding-top: 24px; }
+  .hero .tagline { font-size: 1.15em; margin: 16px auto; max-width: 40em; }
+  .badges { color: var(--muted); font-size: 0.9em; margin-bottom: 8px; }
+  .gh-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    margin: 4px 0 10px; }
+  .gh-btn { display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 18px; font-size: 0.88em; font-weight: 600;
+    background: var(--card); color: var(--fg); text-decoration: none;
+    border: 1px solid rgba(128,128,128,0.25); }
+  .gh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .gh-btn svg { width: 15px; height: 15px; fill: currentColor; flex: none; }
+  .gh-count { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .dl-box {
+    background: var(--card); border-radius: 16px;
+    padding: 28px 20px; margin: 28px 0;
+  }
+  .dl-buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .dl-btn {
+    display: inline-block; text-decoration: none;
+    background: var(--accent); color: var(--accent-fg);
+    border-radius: 12px; padding: 14px 26px;
+    font-size: 1.08em; font-weight: 600; min-width: 240px;
+  }
+  .dl-btn small { display: block; font-weight: 400; font-size: 0.78em; opacity: 0.85; }
+  .dl-btn.secondary { background: var(--card); color: var(--fg);
+    border: 1px solid var(--border); }
+  .dl-note { margin-top: 14px; }
+  .free { color: var(--green); font-weight: 600; }
+  .steps { counter-reset: step; list-style: none; }
+  .steps li {
+    counter-increment: step; position: relative;
+    padding: 0 0 18px 52px; margin: 0;
+  }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-fg);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  figure { margin: 24px 0; }
+  figure img {
+    max-width: 100%; border-radius: 12px; border: 1px solid var(--border);
+    display: block; margin: 0 auto;
+  }
+  figcaption { color: var(--muted); font-size: 0.9em; margin-top: 8px; text-align: center; }
+  ul.features { list-style: none; }
+  ul.features li { padding: 6px 0 6px 30px; position: relative; }
+  ul.features li::before { content: "✓"; position: absolute; left: 4px;
+    color: var(--green); font-weight: 700; }
+  details {
+    background: var(--card); border-radius: 12px;
+    padding: 14px 18px; margin: 10px 0;
+  }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin-top: 10px; }
+  code { background: var(--card); border-radius: 5px; padding: 1px 6px;
+    font-size: 0.88em; }
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 0.9em; }
+  @media (max-width: 480px) { body { font-size: 16px; } .dl-btn { width: 100%; } }
+</style>
+</head>
+<body>
+<main>
+
+<div class="hero">
+  <h1>Video Prompt Studio</h1>
+  <p class="tagline">把一個點子變成可直接生片的完整提示詞：角色設定書、
+  逐秒分鏡、文生圖與圖生影片成對指令、對嘴安全的台詞格式。<br>
+  <strong>單一 HTML 檔，全程在你的瀏覽器裡運作，免帳號、不上傳、零追蹤；
+  搭配本地模型時，所有內容都不離開你的電腦。</strong></p>
+  <p class="badges">單檔網頁工具 · <span class="free">完全免費</span> ·
+  開放原始碼（MIT 授權）· 離線可用 · <a href="index.html">English</a></p>
+
+  <div class="gh-row">
+    <a class="gh-btn" href="https://github.com/notoriouslab/prompt-studio"
+       title="到 GitHub 給這個專案一顆星（需登入）">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+      星標<span class="gh-count" id="gh-stars"></span></a>
+    <a class="gh-btn" href="https://github.com/notoriouslab/prompt-studio/fork"
+       title="到 GitHub 建立你自己的分支副本">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3.5 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 8.75a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Z"/></svg>
+      分支<span class="gh-count" id="gh-forks"></span></a>
+    <a class="gh-btn" href="https://github.com/notoriouslab/prompt-studio/subscription"
+       title="到 GitHub 關注這個專案的更新（需登入）">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.831.88 9.577.43 8.899a1.62 1.62 0 0 1 0-1.798c.45-.678 1.367-1.932 2.637-3.023C4.33 2.992 6.019 2 8 2ZM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.825.742-3.955 1.715-1.124.967-1.954 2.096-2.366 2.717ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z"/></svg>
+      關注<span class="gh-count" id="gh-watch"></span></a>
+    <a class="gh-btn" href="https://github.com/notoriouslab/prompt-studio/releases"
+       title="歷來所有版本的下載總和">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14ZM7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"/></svg>
+      累計下載<span class="gh-count" id="gh-downloads"></span></a>
+  </div>
+
+  <div class="dl-box">
+    <h2 style="margin:0 0 6px; padding:0">立即使用</h2>
+    <p class="muted" id="ver-line" style="margin-bottom:16px">正在取得最新版本…</p>
+    <div class="dl-buttons">
+      <a class="dl-btn" href="prompt-studio.html">
+         線上開啟<small>直接在瀏覽器裡跑，什麼都不用裝</small></a>
+      <a class="dl-btn secondary" href="https://github.com/notoriouslab/prompt-studio">
+         下載到本機<small>取得整個專案，解鎖本地模型流程</small></a>
+    </div>
+    <p class="dl-note muted">線上版的複製貼上流程已是完整功能。下載到自己電腦後
+    （macOS 雙擊 <code>PromptStudio.command</code>、Windows 雙擊
+    <code>PromptStudio.bat</code>），還會自動接上你本機的
+    <a href="https://ollama.com">ollama</a>，整條流程都在自己機器上跑。</p>
+  </div>
+</div>
+
+<h2>為什麼做這個</h2>
+<p>訂製型 AI 助手一個接一個收攤，最近的是 Google 的 Gemini Gems：
+應用內通知指向 2026 年 10 月停用。你在任何廠商的助手裡精心累積的規則書，
+都會跟著一起消失。</p>
+<p>Video Prompt Studio 押相反的注：<strong>你的提示詞產線不該住在任何一家的
+助手裡</strong>。它產出的是一份自足的完整規則書提示詞，貼進 ChatGPT、Claude、
+Gemini 或未來任何新工具都能直接用；若你用 ollama 跑本地模型，連貼都不用貼，
+從點子到分鏡表整條產線都在自己的硬體上完成。</p>
+
+<h2>它做什麼</h2>
+<p>選一種模式（多鏡分鏡、單鏡頭、首尾幀、談話頭像、直式短影音），設好時長
+與畫幅，描述你的點子。工具會編譯出一份製作規格：硬性限制、平台校準
+（以 <a href="https://videoexpress.ai">VideoExpress.ai</a> 實拍驗證）、
+寫實感規則、防字幕燒錄規則，以及從真實生成失敗中萃取的「可畫性」規則。
+AI 助手照著這份規格展開成可直接貼用的提示詞。</p>
+
+<figure>
+  <img src="docs/landing/shot-full.png" alt="Video Prompt Studio 主畫面：模式選擇、參數設定與本地展開面板" loading="lazy" width="1440">
+  <figcaption>一個畫面搞定：選模式、設時長畫幅、丟進點子</figcaption>
+</figure>
+
+<h2>本地產線：概念 → 劇本 → 分鏡提示詞</h2>
+<p>偵測到 ollama 時會出現<strong>本地展開</strong>面板，產線變成三段，
+全程在自己機器上：</p>
+<ol class="steps">
+  <li><strong>概念變劇本</strong><br>
+    打一句故事概念，內建編劇規範（改編自 MIT 授權的 AI-drama-pound）直接
+    產出可拍攝的完整劇本：場次標頭、埋好的反轉線索、不寫解說型對白。</li>
+  <li><strong>劇本變分鏡提示詞</strong><br>
+    過目劇本後一鍵轉入。台詞逐字保留、場景拆成帶時間軸的分鏡、
+    角色自動映射為編號演員代稱並凍結外觀描述。</li>
+  <li><strong>修訂到滿意為止</strong><br>
+    打一句批評（例如「shot 5 缺行進中的環境流動感」），模型帶著完整規則書
+    重出修訂版，迭代再多輪也不會漂移出平台規則。</li>
+</ol>
+
+<figure>
+  <img src="docs/landing/shot-concept.png" alt="概念變劇本：一句故事概念產出完整劇本" loading="lazy" width="1200">
+  <figcaption>概念變劇本：一句話在本地變成可拍攝的劇本</figcaption>
+</figure>
+<figure>
+  <img src="docs/landing/shot-expand.png" alt="分鏡提示詞展開與修訂列" loading="lazy" width="1200">
+  <figcaption>劇本展開成帶時間軸的分鏡提示詞，附修訂輪</figcaption>
+</figure>
+<figure>
+  <img src="docs/landing/shot-videoexpress.jpg" alt="產出的提示詞貼進 VideoExpress 的圖像與影片欄位" loading="lazy" width="1200">
+  <figcaption>終點站：提示詞直接落進影片生成工具的圖像與影片欄位
+  （圖為 VideoExpress）</figcaption>
+</figure>
+
+<h2>核心特色</h2>
+<ul class="features">
+  <li><strong>天生可攜</strong>：產出就是純文字提示詞，今天的任何聊天 AI
+    能用，明年出的新工具也能用</li>
+  <li><strong>可選的全本地產線</strong>：概念、劇本、分鏡與修訂全部打自己的
+    ollama，內容不離開你的電腦</li>
+  <li><strong>實拍驗證的平台規則</strong>：VideoExpress 真實跑片校準，
+    演員代稱抗跨鏡漂移、對嘴台詞長度上限、防字幕燒錄措辭、逐鏡密度預算</li>
+  <li><strong>可畫性規則</strong>：禁鏡中反射、禁畫中畫、文生圖只寫靜態
+    姿態而動作留給圖生影片，全部萃取自真實生成失敗的提示詞</li>
+  <li><strong>五種模式</strong>：多鏡分鏡、單鏡頭、首尾幀、談話頭像、
+    直式短影音，另有精簡、完整、工單三種輸出格式</li>
+  <li><strong>給瀏覽器代理的工單輸出</strong>：機器可執行的工作單，
+    AI 代理（如 Claude in Chrome）能照單全程操作影片平台</li>
+  <li><strong>單檔、本機優先</strong>：模板與版本存在瀏覽器的 localStorage，
+    隨時可用 JSON 匯出匯入</li>
+</ul>
+
+<h2>常見問題</h2>
+<details>
+  <summary>需要帳號或 API 金鑰嗎？</summary>
+  <p>不用。工具本身不呼叫任何 AI 服務；你把產出貼進自己慣用的聊天 AI，
+  或指向自己本機的 ollama。GitHub 只是存放程式碼的地方。</p>
+</details>
+<details>
+  <summary>免費嗎？</summary>
+  <p>完全免費且開放原始碼（MIT 授權）。它是為了自己的影片產線做的工具，
+  沒有商業模式、不用註冊、沒有遙測。</p>
+</details>
+<details>
+  <summary>我的資料存在哪？</summary>
+  <p>存在你裝置上的瀏覽器 localStorage。線上版除了本頁的 GitHub 版本查詢外
+  沒有任何網路請求；本地模型模式只跟 <code>localhost</code> 溝通。</p>
+</details>
+<details>
+  <summary>支援哪些影片生成工具？</summary>
+  <p>內建校準以 VideoExpress.ai 實拍驗證。不過產出的規格是純文字，
+  角色設定書與帶時間軸的成對提示詞這套結構搬去其他生成工具也能用，
+  只是少了平台專屬的調校。</p>
+</details>
+<details>
+  <summary>本地產線需要什麼？</summary>
+  <p>裝好 <a href="https://ollama.com">ollama</a> 與一個夠力的模型（我們以
+  36 GB 的 Mac 跑 Qwen 27B 測試），並從 localhost 開啟頁面，附帶的
+  <code>PromptStudio.command</code> 與 <code>PromptStudio.bat</code>
+  雙擊即可。沒有 ollama 時面板自動隱藏，複製貼上流程完全不受影響。</p>
+</details>
+<details>
+  <summary>有英文版嗎？</summary>
+  <p>有，工具本身中英雙語（右上角切換），本頁另有
+  <a href="index.html">English</a> 版。</p>
+</details>
+
+<footer>
+  <p>Video Prompt Studio 屬於 notoriouslab 開源工具組 ·
+  <a href="https://github.com/notoriouslab/prompt-studio">原始碼與完整說明（GitHub）</a> ·
+  <a href="https://github.com/notoriouslab/prompt-studio/releases">所有版本</a></p>
+</footer>
+
+</main>
+<script>
+(function () {
+  var ver = document.getElementById("ver-line");
+  fetch("https://api.github.com/repos/notoriouslab/prompt-studio/releases/latest")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (rel) {
+      ver.textContent = "最新版本 " + rel.tag_name + "（" + (rel.published_at || "").slice(0, 10) + " 發布）";
+    })
+    .catch(function () {
+      ver.textContent = "可直接線上開啟，或下載整個專案在本機使用";
+    });
+
+  // Live counts. Note: the API's watchers_count is actually the star count;
+  // real watchers are subscribers_count. On failure counts stay blank and the
+  // buttons still work.
+  fetch("https://api.github.com/repos/notoriouslab/prompt-studio")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (repo) {
+      function put(id, n) {
+        var el = document.getElementById(id);
+        if (el && typeof n === "number") el.textContent = " " + n.toLocaleString();
+      }
+      put("gh-stars", repo.stargazers_count);
+      put("gh-forks", repo.forks_count);
+      put("gh-watch", repo.subscribers_count);
+    })
+    .catch(function () { /* leave counts blank */ });
+
+  // Total downloads = sum of every asset across all releases.
+  fetch("https://api.github.com/repos/notoriouslab/prompt-studio/releases?per_page=100")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (rels) {
+      var total = 0;
+      for (var i = 0; i < rels.length; i++) {
+        var assets = rels[i].assets || [];
+        for (var j = 0; j < assets.length; j++) total += assets[j].download_count || 0;
+      }
+      var el = document.getElementById("gh-downloads");
+      if (el && total > 0) el.textContent = " " + total.toLocaleString();
+    })
+    .catch(function () { /* leave counts blank */ });
+})();
+</script>
+</body>
+</html>

@@ -2537,6 +2537,20 @@
                     dialogueBias:
                         "Prefer no dialogue or extremely minimal spoken lines.",
                 },
+                // 2026-08-30 氣氛層迭代：偽紀錄片恐怖 domain（外部 AI 建議經校準採納）
+                "horror-found-footage": {
+                    label_zh: "恐怖｜偽紀錄片",
+                    label_en: "Horror | Found Footage",
+                    defaultDialogueMode: "none",
+                    assumptions:
+                        "found-footage style horror/thriller: an ordinary recording device witnessing something wrong, dread built from atmosphere and restraint rather than jump-scare spectacle",
+                    subjectRule:
+                        "Horror palette: shift color temperature toward cold teal-cyan with desaturated skin, deep shadows that swallow detail, a subtle optical vignette darkening the frame corners, and light handheld micro-jitter as if held by an unsteady hand. Dread lives in the environment: every frame keeps one diegetic ambient element subtly alive (smoke, dust motes, a flickering source, curtains breathing). Never show the threat clearly; imply it at frame edges, in reflections avoided, in what the subject reacts to off-frame.",
+                    shotBias:
+                        "Alternate tight, slightly off-axis close-ups (subject not centered, headroom uncomfortable) with static wide shots held a beat too long. The camera behaves like a device, not a cinematographer: imperfect framing, occasional slow refocus.",
+                    dialogueBias:
+                        "Sparse, hushed, broken lines. After any spoken line, reserve a long dead-air beat (1-1.5s): mouth closed, body frozen, only the eyes move — as if listening for something answering back.",
+                },
                 "real-interview": {
                     label_zh: "真實｜訪談",
                     label_en: "Real | Interview",
@@ -3205,7 +3219,9 @@
 - Never describe the CONTENT of an in-frame photo, screen, or painting — picture-in-picture fails. Describe the object only, and hang story clues on real objects in the scene instead. Anti-pattern ❌ \`a photo showing an 8-year-old girl smiling on a beach\`. Correct ✅ \`a creased, faded photograph, partly covered by his fingers, its image indistinct\`.
 - A T2I prompt describes a STATIC pose only. Motion verbs (trembling, sliding, falling) belong in the I2V prompt; render effort as static evidence. Anti-pattern ❌ \`his hand trembling on the pipe\`. Correct ✅ \`knuckles white, veins raised, gripping the pipe\`.
 - Framing consistency check: in a tight head-and-shoulders crop, nothing below the shoulders (chest pockets, hands, lap props) may be requested in the same frame — widen the crop or move the prop.
-- Moving-vehicle or traveling scenes: even a tight close-up carries environmental motion cues in its I2V prompt (light streaks passing on the glass, rain slanting past the window, subtle cabin vibration) so the frame never feels parked — the camera itself stays static.
+- Emotions are written as concrete facial and body mechanics, never adjective labels. Anti-pattern ❌ \`a serious, tense expression\`. Correct ✅ \`jaw clenched, nostrils slightly flared, breath held in the chest\`. Applies to both T2I (static evidence) and I2V (the mechanics in motion).
+- Every I2V prompt ends with exactly ONE diegetic ambient micro-motion — something that plausibly exists in that scene and moves subtly (steam curling off a cup, dust drifting through the light, a curtain breathing) — so the frame never feels frozen. One only: stacking ambient motions produces mush. In moving-vehicle or traveling scenes this slot carries the travel cues (light streaks passing on the glass, rain slanting past the window, subtle cabin vibration) while the camera itself stays static.
+- A speaking shot never ends on the dialogue beat: reserve the final 0.5-1.5s for a silent reaction micro-beat (mouth closed, a named small movement — eyes tracking, a slow exhale, fingers tightening). Without it the model invents an unwanted sigh; tense or horror scenes use the long end of the range.
 - The I2V prompt never repeats the T2I quality or negative vocabulary — open with \`Keep the character identity, wardrobe, lighting direction, and composition of the source image unchanged.\` then describe motion only.`;
             }
 

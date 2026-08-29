@@ -3414,16 +3414,20 @@ Emit this block verbatim (the executor re-verifies every item before EVERY gener
 - Image Type: human
 - Use Consistent Character: ON — reference photo in slot 1, slot 2 EMPTY
 - Advanced Mode → Manual Video Length: 8s (set duration FIRST — ticking Lipsync hides the length controls; actual clip length follows the audio)
-${dialogue ? "- Lipsync HD Video: ON — speech goes ONLY in the Actor 1 Script field of the Create Lipsync Audio dialog that opens AFTER clicking Create Video; dialogue anywhere else renders a closed-mouth narration" : "- Lipsync HD Video: OFF (no dialogue in this project)"}
+${dialogue ? "- Lipsync HD Video: ON — speech goes ONLY in the Actor 1 Script field of the Create Lipsync Audio dialog that opens AFTER clicking Create Video; dialogue anywhere else renders a closed-mouth narration\n- With Lipsync ON, Create Video animates the CURRENTLY DISPLAYED image and ignores the Image Prompt — for EVERY scene: paste the scene's Image Prompt, click Create Image, wait, select a candidate, and only then Create Video (skipping Create Image reuses the previous scene's picture)" : "- Lipsync HD Video: OFF (no dialogue in this project)"}
+- Consistent Character locks the BACKGROUND of the reference photo too — if scenes change location, use a shallow-depth-of-field reference with a heavily blurred neutral background and keep all location words out of the bible; each scene's Image Prompt carries its own location clause
+- A detailed bible paragraph alone often holds identity across shots; when every scene shares one location, Consistent Character adds safety, but background-changing projects may work better with it OFF
 - "Automatically enhance my image prompt": OFF after the hero image is saved — the enhancer rewrites the bible and breaks identity
 - "Share this in the public gallery": OFF — re-verify after every modal reopen
 - Max 5 generations in parallel; poll the "My AI Videos" folder for completion
 - Media tile captions equal the prompt text — use them to match clips to scenes when ordering the timeline
+- Human QC gate: eyeball every generated image BEFORE animating it (location, props, framing match the scene); re-roll with sharpened wording instead of animating a wrong frame — the pipeline drafts, a person approves
 
 ### \`# How To Run\`
 Emit this block verbatim:
 - Agent execution: give this run sheet to a browser-capable agent (Claude in Chrome / Claude Code / ChatGPT agent mode) together with the official VideoExpress agent workflow: https://github.com/strontiumplatform/VideoExpress.ai-Full-Length-Consistent-Character-Realistic-Talking-Avatar-Video-Workflow — this run sheet REPLACES the workflow's own script-and-bible-writing step (its STEP 1); every other step of the workflow still applies.
-- Manual execution: apply the settings checklist once, then copy-paste each scene's fields into VideoExpress scene by scene, re-verifying the checklist before each generation.`;
+- Manual execution: apply the settings checklist once, then copy-paste each scene's fields into VideoExpress scene by scene, re-verifying the checklist before each generation.
+- Agent UI note: the generator modal's buttons often miss coordinate clicks — dispatch a DOM click on the button element instead; reopening the modal resets every field, so complete one scene end-to-end per modal session.`;
             }
 
             function storyboardSectionSchemas(state, media, dialogue, shotCount) {

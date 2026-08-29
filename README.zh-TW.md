@@ -134,7 +134,7 @@ node eval.js                       # L2（需 GEMINI_API_KEY）
 
 若你機器上跑著 [ollama](https://ollama.com)，頁面會自動偵測並顯示「🖥️ 本地展開」區塊：填 IDEA、按一鍵，產出的 prompt 直接由本地模型（如 `qwen3.8:27b`）串流展開，不必再貼到別的 AI agent。
 
-- 需以 localhost 開頁（ollama 預設 CORS 只放行 localhost origin）。macOS 直接**雙擊 `PromptStudio.command`**（自動起 server + 開瀏覽器），或手動：
+- 需以 localhost 開頁（ollama 預設 CORS 只放行 localhost origin）。macOS 雙擊 **`PromptStudio.command`**、Windows 雙擊 **`PromptStudio.bat`**（自動起 server + 開瀏覽器），或手動：
   ```bash
   cd prompt-studio && python3 -m http.server 8765
   open http://localhost:8765/prompt-studio.html

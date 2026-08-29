@@ -134,7 +134,7 @@ Get a free `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/
 
 If [ollama](https://ollama.com) is running on your machine, the page auto-detects it and shows a "🖥️ Local Expand" section: type an IDEA, click once, and the generated prompt is expanded by your local model (e.g. `qwen3.8:27b`) with streaming output — no copy-pasting into another AI agent.
 
-- Serve the page from localhost (ollama's default CORS allowlist only covers localhost origins). On macOS just **double-click `PromptStudio.command`** (starts the server and opens the browser), or manually:
+- Serve the page from localhost (ollama's default CORS allowlist only covers localhost origins). Double-click **`PromptStudio.command`** (macOS) or **`PromptStudio.bat`** (Windows) — starts the server and opens the browser — or manually:
   ```bash
   cd prompt-studio && python3 -m http.server 8765
   open http://localhost:8765/prompt-studio.html

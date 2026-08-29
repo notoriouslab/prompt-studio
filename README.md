@@ -12,19 +12,19 @@
 
 Built for and tested on **VideoExpress.ai** · single-file HTML · local-first · no build · no account
 
-[繁體中文](./README.zh-TW.md)
+**[Live app & website](https://notoriouslab.github.io/prompt-studio/)** · [繁體中文](./README.zh-TW.md)
 
-![PromptStudio](./docs/intro.jpg)
+![Video Prompt Studio](./docs/intro.jpg)
 
 </div>
 
 ---
 
-## Why PromptStudio?
+## Why Video Prompt Studio?
 
 Writing prompts for AI video tools is messy. Characters drift between shots. Chinese dialogue gets rendered as floating subtitles. The official one-size-fits-all workflows leave no room for directing.
 
-PromptStudio bakes real-run-calibrated VideoExpress best practices into an orthogonal **Mode × Platform × Domain × MediaType** matrix. Pick the combination, fill in the idea, get a system prompt — feed it to your LLM (Claude / GPT / Gemini) and the LLM expands it into a production-ready storyboard or single-shot script you can paste straight into VideoExpress.
+Video Prompt Studio bakes real-run-calibrated VideoExpress best practices into an orthogonal **Mode × Platform × Domain × MediaType** matrix. Pick the combination, fill in the idea, get a system prompt — feed it to your LLM (Claude / GPT / Gemini) and the LLM expands it into a production-ready storyboard or single-shot script you can paste straight into VideoExpress.
 
 > **Honesty note**: every pattern in this tool is dogfooded on VideoExpress.ai with real video-gen credits. Support for other platforms was removed rather than shipped untested — you can still add your own platform (with its own `customPromptBlock`) in the Platform registry.
 
@@ -153,7 +153,7 @@ If [ollama](https://ollama.com) is running on your machine, the page auto-detect
 |---|---|
 | Builder state, templates, versions | Browser `localStorage` only |
 | Generated prompts | In-memory only |
-| LLM expansion | Your choice of LLM; PromptStudio calls no LLM by default (Local Expand is opt-in and only talks to your own `localhost` ollama) |
+| LLM expansion | Your choice of LLM; Video Prompt Studio calls no LLM by default (Local Expand is opt-in and only talks to your own `localhost` ollama) |
 | Validation eval | Optional, runs on your machine with your own `GEMINI_API_KEY` |
 
 No analytics. No telemetry. No cloud sync. No account.

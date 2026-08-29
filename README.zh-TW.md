@@ -12,19 +12,19 @@
 
 專為 **VideoExpress.ai** 打造並實測校準 · 單檔 HTML · 本地優先 · 無安裝 · 無帳號
 
-[English](./README.md)
+**[線上直接用 / 官網](https://notoriouslab.github.io/prompt-studio/zh.html)** · [English](./README.md)
 
-![PromptStudio](./docs/intro.jpg)
+![Video Prompt Studio](./docs/intro.jpg)
 
 </div>
 
 ---
 
-## 為什麼要 PromptStudio？
+## 為什麼要 Video Prompt Studio？
 
 寫 AI 影片 prompt 常踩這些坑：角色跨 shot identity 容易漂掉；中文 dialogue 容易被誤判成畫面字幕亂跑；官方的一鍵式 workflow 又沒有留下導演空間。
 
-PromptStudio 把實際跑片校準過的 VideoExpress best practice 內化成 **Mode × Platform × Domain × MediaType** 的正交組合。選定組合、填 idea，產出對應的 system prompt，餵給你慣用的 LLM（Claude / GPT / Gemini）展開成完整的 storyboard 或 single-shot 腳本，直接 paste 進 VideoExpress。
+Video Prompt Studio 把實際跑片校準過的 VideoExpress best practice 內化成 **Mode × Platform × Domain × MediaType** 的正交組合。選定組合、填 idea，產出對應的 system prompt，餵給你慣用的 LLM（Claude / GPT / Gemini）展開成完整的 storyboard 或 single-shot 腳本，直接 paste 進 VideoExpress。
 
 > **誠實聲明**：本工具的每條 pattern 都在 VideoExpress.ai 上用真實生成 credits dogfood 過。其他平台的支援已移除而非帶病上架；需要的話可以在 Platform registry 自行新增平台（含自訂 `customPromptBlock`）。
 
@@ -153,7 +153,7 @@ node eval.js                       # L2（需 GEMINI_API_KEY）
 |---|---|
 | Builder state、templates、versions | 瀏覽器 `localStorage` only |
 | 產出的 prompt | 僅在記憶體中 |
-| LLM expansion | 你選用的 LLM；PromptStudio 預設不呼叫任何 LLM（Local Expand 為選用功能，只連你自己的 `localhost` ollama） |
+| LLM expansion | 你選用的 LLM；Video Prompt Studio 預設不呼叫任何 LLM（Local Expand 為選用功能，只連你自己的 `localhost` ollama） |
 | Validation eval | 選用功能，跑在你自己機器上，用你自己的 `GEMINI_API_KEY` |
 
 無 analytics、無 telemetry、無雲端同步、無帳號。

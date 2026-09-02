@@ -14,7 +14,7 @@
 
 **[線上直接用 / 官網](https://notoriouslab.github.io/prompt-studio/zh.html)** · [English](./README.md)
 
-![Video Prompt Studio](./docs/intro.jpg)
+![Video Prompt Studio 主畫面：模式選擇、參數設定與 AI 展開面板](./docs/landing/shot-full.png)
 
 </div>
 
@@ -151,6 +151,15 @@ Key 只存在瀏覽器 `localStorage`，只送往你選的 provider，沒有任�
 - 三種輸入 — IDEA / 劇本 / 概念→劇本：貼入完整劇本會啟動 Screenplay Input Protocol（對白逐字保留、場拆 shot、角色映射 Actor N、自動切「有對白」）；概念→劇本先產出一份劇本（編劇規範濃縮自 MIT 授權的 [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound)，時長／畫幅／題材基調由你的設定注入），過目後一鍵轉入
 - 展開後出現修訂列：輸入批評（如「shot 5 缺少行進中的環境動勢」），模型帶著完整規則書重寫全文，可多輪迭代不漂移
 - 輸出串流渲染成可讀版面（真表格、標題、場次標頭），**複製 Markdown** 仍複製原始文字
+
+![概念變劇本：一句故事概念產出完整劇本](./docs/landing/shot-concept.png)
+*概念 → 劇本：一句話變成可拍攝的劇本*
+
+![分鏡提示詞展開與修訂列](./docs/landing/shot-expand.png)
+*劇本 → 帶時間軸的分鏡提示詞，附修訂輪*
+
+![產出的提示詞貼進 VideoExpress 的圖像與影片欄位](./docs/landing/shot-videoexpress.jpg)
+*終點站：提示詞直接落進影片生成工具的圖像與影片欄位（圖為 VideoExpress）*
 
 ### 本地 Ollama 專屬事項
 

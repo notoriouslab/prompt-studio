@@ -14,7 +14,7 @@ Built for and tested on **VideoExpress.ai** · single-file HTML · local-first �
 
 **[Live app & website](https://notoriouslab.github.io/prompt-studio/)** · [繁體中文](./README.zh-TW.md)
 
-![Video Prompt Studio](./docs/intro.jpg)
+![Video Prompt Studio main interface: mode chips, settings, and the AI Expand panel](./docs/landing/shot-full.png)
 
 </div>
 
@@ -151,6 +151,15 @@ Shared by all providers:
 - Three input types — IDEA / Screenplay / Concept→Script: pasting a screenplay triggers the Screenplay Input Protocol (dialogue verbatim, scenes split into shots, characters mapped to Actor N, dialogue mode auto-on); Concept→Script first drafts a screenplay (screenwriting rules condensed from the MIT-licensed [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound), duration / aspect / domain tone injected from your settings), which you review and move over in one click
 - After an expansion a Revise row appears: type a critique (e.g. "shot 5 lacks in-motion environmental flow") and the model rewrites the full output with the complete rulebook still in context — iterate as many rounds as needed
 - Output streams in as rendered, readable Markdown (real tables, headings, scene headers); **Copy Markdown** still copies the raw text
+
+![Concept-to-Script stage: a one-line story concept drafted into a full screenplay](./docs/landing/shot-concept.png)
+*Concept → Script: a one-liner becomes a shootable screenplay*
+
+![Shot prompt expansion with the revision row](./docs/landing/shot-expand.png)
+*Screenplay → timestamped shot prompts, with revision rounds*
+
+![Generated prompts pasted into VideoExpress fields](./docs/landing/shot-videoexpress.jpg)
+*The destination: prompts drop straight into your video generator's image / video fields (VideoExpress shown)*
 
 ### Local Ollama specifics
 

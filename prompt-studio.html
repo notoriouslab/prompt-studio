@@ -423,6 +423,15 @@
                 flex-wrap: wrap;
                 font-size: var(--text-xs);
             }
+            .footer-links {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                white-space: nowrap;
+            }
+            .footer-links a {
+                color: var(--color-text-muted);
+            }
             .legacy-import-bar {
                 display: flex;
                 align-items: center;
@@ -1782,6 +1791,24 @@
                     <!-- legacy import bar removed in v6.2 — user is sole user, already migrated -->
                 </div>
                 <div class="footer-stats" id="footerStats"></div>
+                <div class="footer-links">
+                    <span>v0.8.0</span>
+                    ·
+                    <a
+                        href="https://github.com/notoriouslab/prompt-studio"
+                        target="_blank"
+                        rel="noopener"
+                        >GitHub</a
+                    >
+                    ·
+                    <a
+                        href="https://notoriouslab.github.io/prompt-studio/"
+                        target="_blank"
+                        rel="noopener"
+                        data-i18n="footer.site"
+                        >Website</a
+                    >
+                </div>
             </footer>
         </div>
 
@@ -2088,6 +2115,7 @@
                     // platform card
                     "pc.customBlock": "✓ custom block",
                     "pc.primary": "主要",
+                    "footer.site": "官網",
                     // builder chips + lint
                     "chip.noPlatform": "— 未選平台",
                     "badge.chars": "{n} 字",
@@ -2401,6 +2429,7 @@
                     "alert.resetDone": "Reset complete",
                     "pc.customBlock": "✓ custom block",
                     "pc.primary": "primary",
+                    "footer.site": "Website",
                     // builder chips + lint
                     "chip.noPlatform": "— no platform",
                     "badge.chars": "{n} chars",

@@ -137,11 +137,13 @@
       <a class="dl-btn secondary" href="https://github.com/notoriouslab/prompt-studio">
          Get it locally<small>clone the repo — unlocks the local-LLM pipeline</small></a>
     </div>
-    <p class="dl-note muted">The online app is fully functional for the copy-paste
-    workflow. Running it from your own machine (double-click
-    <code>PromptStudio.command</code> on macOS or <code>PromptStudio.bat</code> on
-    Windows) additionally connects it to your local
-    <a href="https://ollama.com">ollama</a> for the fully on-device pipeline.</p>
+    <p class="dl-note muted">The online app covers both everyday paths: copy-paste
+    (one-click ⧉ ChatGPT / ⧉ Gemini buttons) and the built-in AI Expand with your
+    own free <a href="https://aistudio.google.com/apikey">Gemini API key</a> (or any
+    OpenAI-compatible endpoint). The bundled launchers
+    (<code>PromptStudio.command</code> on macOS, <code>PromptStudio.bat</code> on
+    Windows) are only needed for the third path: a fully on-device pipeline against
+    your local <a href="https://ollama.com">ollama</a>.</p>
   </div>
 </div>
 
@@ -166,8 +168,10 @@ built inside a vendor's agent goes with it.</p>
 <p>Video Prompt Studio takes the opposite bet: <strong>your prompt pipeline should
 not live inside anyone's agent</strong>. It generates a complete, self-contained
 rulebook prompt — copy it into ChatGPT, Claude, Gemini, or whatever comes next,
-and it just works. And if you run a local model with ollama, you don't even need
-the copy-paste: the whole idea-to-shot-list pipeline runs on your own hardware.</p>
+and it just works. Prefer one click? Paste a free Gemini API key (or any
+OpenAI-compatible endpoint) into the built-in AI Expand panel. And if you run a
+local model with ollama, the whole idea-to-shot-list pipeline runs on your own
+hardware.</p>
 
 <h2>What it does</h2>
 <p>You pick a mode — multi-shot storyboard, single shot, first/last frame,
@@ -179,13 +183,14 @@ anti-subtitle-burn rules, and T2I drawability rules learned from real generation
 failures. An AI agent expands that spec into paste-ready prompts.</p>
 
 <figure>
-  <img src="docs/landing/shot-full.png" alt="Video Prompt Studio main interface: mode chips, settings, and the Local Expand panel" loading="lazy" width="1440">
+  <img src="docs/landing/shot-full.png" alt="Video Prompt Studio main interface: mode chips, settings, and the AI Expand panel" loading="lazy" width="1440">
   <figcaption>One screen: pick a mode, set duration and aspect, feed it an idea</figcaption>
 </figure>
 
-<h2>The local pipeline: concept → screenplay → shot prompts</h2>
-<p>With ollama detected, a <strong>Local Expand</strong> panel appears and the
-pipeline becomes three stages, all on-device:</p>
+<h2>The built-in pipeline: concept → screenplay → shot prompts</h2>
+<p>The <strong>AI Expand</strong> panel runs the pipeline in three stages without
+leaving the page — against your own free Gemini key, any OpenAI-compatible
+endpoint, or a local ollama:</p>
 <ol class="steps">
   <li><strong>Concept → Script</strong><br>
     Type a one-line story concept. A screenwriting ruleset (adapted from the
@@ -219,8 +224,10 @@ pipeline becomes three stages, all on-device:</p>
 <ul class="features">
   <li><strong>Agent-portable by design</strong>: the output is a plain prompt —
     works in any chat AI today, and any chat AI that exists next year</li>
-  <li><strong>Optional fully-local pipeline</strong>: concept, screenplay, shot
-    prompts and revisions against your own ollama; nothing leaves your machine</li>
+  <li><strong>Built-in AI Expand, your key or your hardware</strong>: expand
+    in-page with a free Gemini API key or any OpenAI-compatible endpoint (key
+    stays in your browser, calls go browser-direct) — or fully on-device against
+    your own ollama; output streams in as rendered, readable Markdown</li>
   <li><strong>Field-tested platform rules</strong>: VideoExpress calibrations from
     real runs — actor aliasing against identity drift, lipsync dialogue limits,
     anti-subtitle-burn phrasing, per-shot density budgets</li>
@@ -239,9 +246,10 @@ pipeline becomes three stages, all on-device:</p>
 <h2>FAQ</h2>
 <details>
   <summary>Do I need an account or an API key?</summary>
-  <p>No. The app itself calls no AI service. You either paste its output into a
-  chat AI you already use, or point it at your own local ollama. GitHub is just
-  where the code lives.</p>
+  <p>No account, ever. The copy-paste path needs no key at all — the ⧉ buttons
+  copy the prompt and open ChatGPT / Gemini for you. Optionally, bring your own
+  free <a href="https://aistudio.google.com/apikey">Gemini API key</a> (or an
+  OpenAI-compatible endpoint, or a local ollama) for one-click in-page expansion.</p>
 </details>
 <details>
   <summary>Is it free?</summary>
@@ -250,9 +258,10 @@ pipeline becomes three stages, all on-device:</p>
 </details>
 <details>
   <summary>Where does my data live?</summary>
-  <p>In your browser's localStorage, on your device. The online app makes no
-  network requests except the GitHub version check on this page. The local-LLM
-  mode talks only to <code>localhost</code>.</p>
+  <p>In your browser's localStorage, on your device — API keys included. The app
+  itself makes no network requests except the GitHub version check on this page;
+  AI Expand calls go browser-direct to the provider you picked, and the local-LLM
+  mode talks only to <code>localhost</code>. There is no backend.</p>
 </details>
 <details>
   <summary>Which video generators does it target?</summary>
@@ -262,12 +271,12 @@ pipeline becomes three stages, all on-device:</p>
   the platform-specific tuning.</p>
 </details>
 <details>
-  <summary>What do I need for the local pipeline?</summary>
+  <summary>What do I need for the local (ollama) path?</summary>
   <p><a href="https://ollama.com">ollama</a> with a capable model (we test with
   Qwen 27B on a 36 GB Mac), plus serving the page from localhost — the bundled
   <code>PromptStudio.command</code> / <code>PromptStudio.bat</code> launchers do
-  that in one double-click. Without ollama the panel simply hides and the
-  copy-paste workflow is untouched.</p>
+  that in one double-click. Without a reachable ollama the option is simply
+  greyed out; the Gemini-key and copy-paste paths are untouched.</p>
 </details>
 <details>
   <summary>Is there a Chinese version?</summary>

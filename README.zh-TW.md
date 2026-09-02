@@ -43,7 +43,11 @@ Video Prompt Studio 把實際跑片校準過的 VideoExpress best practice 內�
 1. Clone 或直接下載 [`prompt-studio.html`](https://raw.githubusercontent.com/notoriouslab/prompt-studio/main/prompt-studio.html)
 2. 任何瀏覽器打開 — 不需安裝、不需 server、不需帳號
 3. 選 **Mode** / **Platform** / **Domain** / **MediaType**，填入 idea
-4. 複製產出的 prompt → 餵給 LLM → 把 LLM 輸出貼進對應 video gen 工具
+4. 用 LLM 展開產出的 spec，三條路任選：
+   - **複製貼上**（零設定）：**⧉ ChatGPT** / **⧉ Gemini** 鈕會自動複製 prompt 並開啟聊天頁，貼上送出即可
+   - **內建 AI 展開＋自備免費 key**：在 🤖 AI 展開面板選 *Gemini API*，貼上 [AI Studio](https://aistudio.google.com/apikey) 的免費 key（或任何 OpenAI 相容端點：OpenRouter / Groq / Cerebras），填 idea 按展開，串流輸出直接渲染成可讀版面
+   - **本地 Ollama**（全程在自己機器）：見下方 [AI 展開](#ai-展開內建-llm-銜接) 一節，只有這條路需要附帶的 launcher
+5. 把 LLM 輸出貼進對應 video gen 工具
 
 ```bash
 git clone https://github.com/notoriouslab/prompt-studio.git
@@ -130,20 +134,34 @@ node eval.js                       # L2（需 GEMINI_API_KEY）
 
 ---
 
-## Local Expand（本地 LLM 銜接，選用）
+## AI 展開（內建 LLM 銜接）
 
-若你機器上跑著 [ollama](https://ollama.com)，頁面會自動偵測並顯示「🖥️ 本地展開」區塊：填 IDEA、按一鍵，產出的 prompt 直接由本地模型（如 `qwen3.8:27b`）串流展開，不必再貼到別的 AI agent。
+🤖 **AI 展開**面板讓 spec 不出頁面就能展開。三種 provider：
 
-- 需以 localhost 開頁（ollama 預設 CORS 只放行 localhost origin）。macOS 雙擊 **`PromptStudio.command`**、Windows 雙擊 **`PromptStudio.bat`**（自動起 server + 開瀏覽器），或手動：
+| Provider | 設定 | 路徑 |
+|---|---|---|
+| **Gemini API**（預設） | 貼 [AI Studio](https://aistudio.google.com/apikey) 免費 key，不用綁卡 | 瀏覽器直連 Google |
+| **OpenAI 相容** | key + Base URL（OpenRouter / Groq / Cerebras / LM Studio…） | 瀏覽器直連你的端點 |
+| **本地 Ollama** | 見下方 | 全程在本機 |
+
+Key 只存在瀏覽器 `localStorage`，只送往你選的 provider，沒有任何後端。撞到免費層速率限制（HTTP 429）會顯示等候提示。
+
+三種 provider 共用：
+
+- 三種輸入 — IDEA / 劇本 / 概念→劇本：貼入完整劇本會啟動 Screenplay Input Protocol（對白逐字保留、場拆 shot、角色映射 Actor N、自動切「有對白」）；概念→劇本先產出一份劇本（編劇規範濃縮自 MIT 授權的 [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound)，時長／畫幅／題材基調由你的設定注入），過目後一鍵轉入
+- 展開後出現修訂列：輸入批評（如「shot 5 缺少行進中的環境動勢」），模型帶著完整規則書重寫全文，可多輪迭代不漂移
+- 輸出串流渲染成可讀版面（真表格、標題、場次標頭），**複製 Markdown** 仍複製原始文字
+
+### 本地 Ollama 專屬事項
+
+唯一需要 launcher 的路徑。ollama 預設 CORS 只放行 localhost origin，頁面必須從 localhost 開：macOS 雙擊 **`PromptStudio.command`**、Windows 雙擊 **`PromptStudio.bat`**（自動起 server + 開瀏覽器），或手動：
   ```bash
   cd prompt-studio && python3 -m http.server 8765
   open http://localhost:8765/prompt-studio.html
   ```
-- 以 `file://` 直接開檔或部署到遠端網域時，需在 ollama 端設 `OLLAMA_ORIGINS`（例如 `launchctl setenv OLLAMA_ORIGINS "*"` 後重啟 ollama）
-- 輸入類型三檔「IDEA / 劇本 / 概念→劇本」：貼完整劇本走劇本輸入協定（對白逐字保留、場拆 shot、角色映射 Actor N、自動切「有對白」）；「概念→劇本」則先在本地把故事概念寫成劇本（編劇規範濃縮自 MIT 授權的 [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound)，時長與畫幅自動帶入），過目修改後一鍵轉入劇本輸入
-- 展開完成後出現「修訂」列：輸入批評（例：shot5 缺行進中的環境流動感），模型帶著完整規則書重出修訂版，可連續迭代（脫離頁面裸聊會漂移出規則，例如建議加字幕）
-- 偵測到 ollama 時「即時 Prompt」內文預設折疊（按鈕與字數保留，點 ▸ 展開）——本地流程裡它只是中間產物
-- 偵測不到 ollama 時區塊自動隱藏，原本的「產 template 手動貼」流程完全不受影響
+- 以 `file://` 直接開檔或部署到遠端網域時，除非在 ollama 端設 `OLLAMA_ORIGINS`（例如 `launchctl setenv OLLAMA_ORIGINS "*"` 後重啟 ollama），否則連不到 ollama——此時 Ollama 選項會反灰、本次自動退回 Gemini，你存的偏好不會被改寫
+- 偵測到 ollama 時「即時 Prompt」內文預設折疊（按鈕與字數保留，點 ▸ 展開）——展開流程裡它只是中間產物
+- 以 `qwen3.8:27b` 在 36 GB Mac 上實測；模型下拉列出你 ollama 裡現有的模型
 
 ---
 
@@ -153,7 +171,7 @@ node eval.js                       # L2（需 GEMINI_API_KEY）
 |---|---|
 | Builder state、templates、versions | 瀏覽器 `localStorage` only |
 | 產出的 prompt | 僅在記憶體中 |
-| LLM expansion | 你選用的 LLM；Video Prompt Studio 預設不呼叫任何 LLM（Local Expand 為選用功能，只連你自己的 `localhost` ollama） |
+| LLM expansion | 你選用的 LLM；Video Prompt Studio 預設不呼叫任何 LLM。AI 展開為選用功能：雲端 provider 由瀏覽器直連、用你自己的 key（只存 `localStorage`），本地 Ollama 只連 `localhost` |
 | Validation eval | 選用功能，跑在你自己機器上，用你自己的 `GEMINI_API_KEY` |
 
 無 analytics、無 telemetry、無雲端同步、無帳號。

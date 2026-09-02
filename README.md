@@ -43,7 +43,11 @@ Video Prompt Studio bakes real-run-calibrated VideoExpress best practices into a
 1. Clone or download [`prompt-studio.html`](https://raw.githubusercontent.com/notoriouslab/prompt-studio/main/prompt-studio.html)
 2. Open it in any modern browser — no install, no server, no account
 3. Pick **Mode** / **Platform** / **Domain** / **MediaType**, fill in your idea
-4. Copy the generated prompt → feed it to your LLM → paste the LLM output into the video-gen tool
+4. Expand the generated spec with an LLM — three paths, pick one:
+   - **Copy & paste** (zero setup): the **⧉ ChatGPT** / **⧉ Gemini** buttons copy the prompt and open the chat — paste, send, done
+   - **Built-in AI Expand with your own free key**: pick *Gemini API* in the 🤖 AI Expand panel, paste a free key from [AI Studio](https://aistudio.google.com/apikey) (or any OpenAI-compatible endpoint — OpenRouter, Groq, Cerebras), type the idea, click Expand — streaming output rendered in place
+   - **Local Ollama** (fully on-device): see [AI Expand](#ai-expand-built-in-llm-bridge) below — this is the only path that needs the bundled launcher
+5. Paste the LLM output into the video-gen tool
 
 ```bash
 git clone https://github.com/notoriouslab/prompt-studio.git
@@ -130,20 +134,36 @@ Get a free `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/
 
 ---
 
-## Local Expand (optional local LLM bridge)
+## AI Expand (built-in LLM bridge)
 
-If [ollama](https://ollama.com) is running on your machine, the page auto-detects it and shows a "🖥️ Local Expand" section: type an IDEA, click once, and the generated prompt is expanded by your local model (e.g. `qwen3.8:27b`) with streaming output — no copy-pasting into another AI agent.
+The 🤖 **AI Expand** panel expands the generated spec without leaving the page. Pick a provider:
 
-- Serve the page from localhost (ollama's default CORS allowlist only covers localhost origins). Double-click **`PromptStudio.command`** (macOS) or **`PromptStudio.bat`** (Windows) — starts the server and opens the browser — or manually:
-  ```bash
-  cd prompt-studio && python3 -m http.server 8765
-  open http://localhost:8765/prompt-studio.html
-  ```
-- Opening via `file://` or a remote domain requires setting `OLLAMA_ORIGINS` on the ollama side (e.g. `launchctl setenv OLLAMA_ORIGINS "*"` then restart ollama)
-- Three input types — IDEA / Screenplay / Concept→Script: pasting a screenplay triggers the Screenplay Input Protocol (dialogue verbatim, scenes split into shots, characters mapped to Actor N, dialogue mode auto-on); Concept→Script first drafts a screenplay locally (screenwriting rules condensed from the MIT-licensed [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound), duration & aspect injected from your settings), which you review and move over in one click
+| Provider | Setup | Where it runs |
+|---|---|---|
+| **Gemini API** (default) | paste a free key from [AI Studio](https://aistudio.google.com/apikey) — no credit card | browser → Google, direct |
+| **OpenAI-compatible** | key + base URL (OpenRouter / Groq / Cerebras / LM Studio…) | browser → your endpoint, direct |
+| **Local Ollama** | see below | fully on-device |
+
+Keys live only in your browser's `localStorage` and are sent only to the provider you picked — there is no backend. Free-tier rate limits (HTTP 429) are surfaced with a wait-and-retry hint.
+
+Shared by all providers:
+
+- Three input types — IDEA / Screenplay / Concept→Script: pasting a screenplay triggers the Screenplay Input Protocol (dialogue verbatim, scenes split into shots, characters mapped to Actor N, dialogue mode auto-on); Concept→Script first drafts a screenplay (screenwriting rules condensed from the MIT-licensed [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound), duration / aspect / domain tone injected from your settings), which you review and move over in one click
 - After an expansion a Revise row appears: type a critique (e.g. "shot 5 lacks in-motion environmental flow") and the model rewrites the full output with the complete rulebook still in context — iterate as many rounds as needed
-- When ollama is detected the Live Prompt body starts collapsed (buttons and word count stay; click ▸ to expand) — in the local flow it is only an intermediate artifact
-- When no ollama endpoint is found the section stays hidden; the classic template-copy workflow is untouched
+- Output streams in as rendered, readable Markdown (real tables, headings, scene headers); **Copy Markdown** still copies the raw text
+
+### Local Ollama specifics
+
+The only path that needs the bundled launcher. Ollama's default CORS allowlist covers localhost origins only, so the page must be served from localhost — double-click **`PromptStudio.command`** (macOS) or **`PromptStudio.bat`** (Windows), or manually:
+
+```bash
+cd prompt-studio && python3 -m http.server 8765
+open http://localhost:8765/prompt-studio.html
+```
+
+- Opening via `file://` or a remote domain can't reach ollama unless you set `OLLAMA_ORIGINS` on the ollama side (e.g. `launchctl setenv OLLAMA_ORIGINS "*"` then restart ollama). In that case the Ollama option is greyed out and the panel falls back to Gemini for the session — your stored preference is untouched
+- When ollama is detected the Live Prompt body starts collapsed (buttons and word count stay; click ▸ to expand) — in the expand flow it is only an intermediate artifact
+- Tested with `qwen3.8:27b` on a 36 GB Mac; the model dropdown lists whatever your ollama serves
 
 ---
 
@@ -153,7 +173,7 @@ If [ollama](https://ollama.com) is running on your machine, the page auto-detect
 |---|---|
 | Builder state, templates, versions | Browser `localStorage` only |
 | Generated prompts | In-memory only |
-| LLM expansion | Your choice of LLM; Video Prompt Studio calls no LLM by default (Local Expand is opt-in and only talks to your own `localhost` ollama) |
+| LLM expansion | Your choice of LLM; Video Prompt Studio calls no LLM by default. AI Expand is opt-in: cloud providers are called browser-direct with your own key (stored in `localStorage` only), Local Ollama talks only to `localhost` |
 | Validation eval | Optional, runs on your machine with your own `GEMINI_API_KEY` |
 
 No analytics. No telemetry. No cloud sync. No account.

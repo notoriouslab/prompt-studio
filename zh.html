@@ -135,9 +135,12 @@
       <a class="dl-btn secondary" href="https://github.com/notoriouslab/prompt-studio">
          下載到本機<small>取得整個專案，解鎖本地模型流程</small></a>
     </div>
-    <p class="dl-note muted">線上版的複製貼上流程已是完整功能。下載到自己電腦後
-    （macOS 雙擊 <code>PromptStudio.command</code>、Windows 雙擊
-    <code>PromptStudio.bat</code>），還會自動接上你本機的
+    <p class="dl-note muted">線上版已涵蓋兩條日常路徑：複製貼上（⧉ ChatGPT／⧉
+    Gemini 一鍵按鈕）與內建 AI 展開（自備免費
+    <a href="https://aistudio.google.com/apikey">Gemini API key</a> 或任何
+    OpenAI 相容端點）。附帶的 launcher（macOS
+    <code>PromptStudio.command</code>、Windows <code>PromptStudio.bat</code>）
+    只有第三條路才需要：接上你本機的
     <a href="https://ollama.com">ollama</a>，整條流程都在自己機器上跑。</p>
   </div>
 </div>
@@ -160,7 +163,8 @@
 都會跟著一起消失。</p>
 <p>Video Prompt Studio 押相反的注：<strong>你的提示詞產線不該住在任何一家的
 助手裡</strong>。它產出的是一份自足的完整規則書提示詞，貼進 ChatGPT、Claude、
-Gemini 或未來任何新工具都能直接用；若你用 ollama 跑本地模型，連貼都不用貼，
+Gemini 或未來任何新工具都能直接用。想一鍵完成？在內建的 AI 展開面板貼一組
+免費 Gemini API key（或任何 OpenAI 相容端點）即可；若你用 ollama 跑本地模型，
 從點子到分鏡表整條產線都在自己的硬體上完成。</p>
 
 <h2>它做什麼</h2>
@@ -171,13 +175,13 @@ Gemini 或未來任何新工具都能直接用；若你用 ollama 跑本地模�
 AI 助手照著這份規格展開成可直接貼用的提示詞。</p>
 
 <figure>
-  <img src="docs/landing/shot-full.png" alt="Video Prompt Studio 主畫面：模式選擇、參數設定與本地展開面板" loading="lazy" width="1440">
+  <img src="docs/landing/shot-full.png" alt="Video Prompt Studio 主畫面：模式選擇、參數設定與 AI 展開面板" loading="lazy" width="1440">
   <figcaption>一個畫面搞定：選模式、設時長畫幅、丟進點子</figcaption>
 </figure>
 
-<h2>本地產線：概念 → 劇本 → 分鏡提示詞</h2>
-<p>偵測到 ollama 時會出現<strong>本地展開</strong>面板，產線變成三段，
-全程在自己機器上：</p>
+<h2>內建產線：概念 → 劇本 → 分鏡提示詞</h2>
+<p><strong>AI 展開</strong>面板讓產線三段不出頁面就能完成——打自己的免費
+Gemini key、任何 OpenAI 相容端點，或本機 ollama：</p>
 <ol class="steps">
   <li><strong>概念變劇本</strong><br>
     打一句故事概念，內建編劇規範（改編自 MIT 授權的 <a href="https://github.com/POUND0423/AI-drama-pound">AI-drama-pound</a>）直接
@@ -208,8 +212,9 @@ AI 助手照著這份規格展開成可直接貼用的提示詞。</p>
 <ul class="features">
   <li><strong>天生可攜</strong>：產出就是純文字提示詞，今天的任何聊天 AI
     能用，明年出的新工具也能用</li>
-  <li><strong>可選的全本地產線</strong>：概念、劇本、分鏡與修訂全部打自己的
-    ollama，內容不離開你的電腦</li>
+  <li><strong>內建 AI 展開，自備 key 或自備硬體</strong>：貼免費 Gemini API
+    key 或任何 OpenAI 相容端點即可頁內展開（key 只存瀏覽器、呼叫瀏覽器直連），
+    也可全程打自己的 ollama；輸出串流渲染成可讀版面</li>
   <li><strong>實拍驗證的平台規則</strong>：VideoExpress 真實跑片校準，
     演員代稱抗跨鏡漂移、對嘴台詞長度上限、防字幕燒錄措辭、逐鏡密度預算</li>
   <li><strong>可畫性規則</strong>：禁鏡中反射、禁畫中畫、文生圖只寫靜態
@@ -225,8 +230,10 @@ AI 助手照著這份規格展開成可直接貼用的提示詞。</p>
 <h2>常見問題</h2>
 <details>
   <summary>需要帳號或 API 金鑰嗎？</summary>
-  <p>不用。工具本身不呼叫任何 AI 服務；你把產出貼進自己慣用的聊天 AI，
-  或指向自己本機的 ollama。GitHub 只是存放程式碼的地方。</p>
+  <p>永遠不需要帳號。複製貼上路徑完全不用金鑰：⧉ 按鈕會自動複製提示詞並開啟
+  ChatGPT／Gemini。想一鍵頁內展開，再自備免費
+  <a href="https://aistudio.google.com/apikey">Gemini API key</a>（或 OpenAI
+  相容端點、本機 ollama）即可。</p>
 </details>
 <details>
   <summary>免費嗎？</summary>
@@ -235,8 +242,9 @@ AI 助手照著這份規格展開成可直接貼用的提示詞。</p>
 </details>
 <details>
   <summary>我的資料存在哪？</summary>
-  <p>存在你裝置上的瀏覽器 localStorage。線上版除了本頁的 GitHub 版本查詢外
-  沒有任何網路請求；本地模型模式只跟 <code>localhost</code> 溝通。</p>
+  <p>存在你裝置上的瀏覽器 localStorage，API key 也是。工具本身除了本頁的
+  GitHub 版本查詢外沒有任何網路請求；AI 展開由瀏覽器直連你選的 provider，
+  本地模型模式只跟 <code>localhost</code> 溝通。沒有任何後端。</p>
 </details>
 <details>
   <summary>支援哪些影片生成工具？</summary>
@@ -245,11 +253,12 @@ AI 助手照著這份規格展開成可直接貼用的提示詞。</p>
   只是少了平台專屬的調校。</p>
 </details>
 <details>
-  <summary>本地產線需要什麼？</summary>
+  <summary>本地（ollama）路徑需要什麼？</summary>
   <p>裝好 <a href="https://ollama.com">ollama</a> 與一個夠力的模型（我們以
   36 GB 的 Mac 跑 Qwen 27B 測試），並從 localhost 開啟頁面，附帶的
   <code>PromptStudio.command</code> 與 <code>PromptStudio.bat</code>
-  雙擊即可。沒有 ollama 時面板自動隱藏，複製貼上流程完全不受影響。</p>
+  雙擊即可。連不到 ollama 時該選項只是反灰，Gemini key 與複製貼上兩條路
+  完全不受影響。</p>
 </details>
 <details>
   <summary>有英文版嗎？</summary>

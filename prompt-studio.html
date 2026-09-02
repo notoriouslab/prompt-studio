@@ -1239,6 +1239,18 @@
                                     </button>
                                     <button
                                         class="btn btn-secondary btn-sm"
+                                        id="openChatGptBtn"
+                                        data-i18n="btn.copyOpenChatGpt"
+                                        title="Copy prompt and open ChatGPT"
+                                    >⧉ ChatGPT</button>
+                                    <button
+                                        class="btn btn-secondary btn-sm"
+                                        id="openGeminiBtn"
+                                        data-i18n="btn.copyOpenGemini"
+                                        title="Copy prompt and open Gemini"
+                                    >⧉ Gemini</button>
+                                    <button
+                                        class="btn btn-secondary btn-sm"
                                         id="downloadPromptBtn"
                                         data-i18n="btn.download"
                                     >
@@ -1261,12 +1273,12 @@
                                 </div>
                             </div>
                             <pre class="code tall" id="promptOutput"></pre>
-                            <!-- Local LLM bridge: hidden unless an ollama endpoint is detected on localhost -->
-                            <div id="localLlmSection" class="hidden">
+                            <!-- AI expand bridge: local ollama (auto-detected) or a user-supplied cloud API key -->
+                            <div id="localLlmSection">
                                 <div class="divider"></div>
                                 <div class="panel-head">
                                     <h2 style="margin: 0">
-                                        <span data-i18n="local.title">Local Expand</span>
+                                        <span data-i18n="local.title">AI Expand</span>
                                         <span class="word-count" id="localLlmStatus"></span>
                                     </h2>
                                     <div class="actions">
@@ -1274,6 +1286,11 @@
                                             <option value="idea" data-i18n="opt.localInput.idea">IDEA</option>
                                             <option value="screenplay" data-i18n="opt.localInput.screenplay">Screenplay</option>
                                             <option value="concept" data-i18n="opt.localInput.concept">Concept→Script</option>
+                                        </select>
+                                        <select id="llmProvider" style="max-width: 170px">
+                                            <option value="gemini">Gemini API</option>
+                                            <option value="openai" data-i18n="opt.llm.openai">OpenAI-compatible</option>
+                                            <option value="ollama" data-i18n="opt.llm.ollama">Local Ollama</option>
                                         </select>
                                         <select id="localModel" style="max-width: 220px"></select>
                                         <button class="btn btn-primary btn-sm" id="localExpandBtn" data-i18n="local.expand">Expand Locally</button>
@@ -1289,6 +1306,39 @@
                                     placeholder="IDEA: describe the video you want, in one short paragraph"
                                     style="width: 100%; margin: 8px 0"
                                 ></textarea>
+                                <div id="llmCloudConfig" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 8px">
+                                    <input
+                                        id="llmApiKey"
+                                        type="password"
+                                        autocomplete="off"
+                                        style="max-width: 260px"
+                                        data-i18n-ph="ph.llmKey"
+                                        placeholder="API key (stored only in this browser)"
+                                    />
+                                    <input
+                                        id="llmModel"
+                                        type="text"
+                                        style="max-width: 210px"
+                                        data-i18n-ph="ph.llmModel"
+                                        placeholder="Model"
+                                    />
+                                    <input
+                                        id="llmBaseUrl"
+                                        type="text"
+                                        class="hidden"
+                                        style="max-width: 280px"
+                                        data-i18n-ph="ph.llmBase"
+                                        placeholder="Base URL, e.g. https://openrouter.ai/api/v1"
+                                    />
+                                    <a
+                                        id="llmKeyHint"
+                                        class="tiny muted"
+                                        href="https://aistudio.google.com/apikey"
+                                        target="_blank"
+                                        rel="noopener"
+                                        data-i18n="local.keyHint"
+                                    >Get a free Gemini API key →</a>
+                                </div>
                                 <div id="localReviseRow" class="hidden" style="display: flex; gap: 6px; margin: 0 0 8px">
                                     <input
                                         id="localReviseInput"
@@ -1858,8 +1908,20 @@
                     // builder action buttons
                     "btn.copy": "複製 Prompt",
                     "btn.copied": "✓ 已複製",
-                    "local.title": "🖥️ 本地展開",
-                    "local.expand": "本地展開",
+                    "local.title": "🤖 AI 展開",
+                    "local.expand": "展開",
+                    "opt.llm.ollama": "本地 Ollama",
+                    "opt.llm.openai": "OpenAI 相容",
+                    "ph.llmKey": "API Key（只存在本機瀏覽器）",
+                    "ph.llmModel": "模型名稱",
+                    "ph.llmBase": "Base URL，例 https://openrouter.ai/api/v1",
+                    "local.keyHint": "取得免費 Gemini API key →",
+                    "local.status.noOllama": "未偵測到本地 Ollama——改選 Gemini API（免費 key），或複製上方 prompt 貼到任一 AI 聊天",
+                    "local.status.noKey": "請先填 API Key 與模型名稱",
+                    "local.status.rateLimited": "免費層速率限制（HTTP 429）——等半分鐘再展開",
+                    "btn.copyOpenChatGpt": "⧉ ChatGPT",
+                    "btn.copyOpenGemini": "⧉ Gemini",
+                    "status.copiedOpen": "已複製，貼到開啟的聊天視窗即可",
                     "local.stop": "停止",
                     "local.copy": "複製 Markdown",
                     "ph.localIdea": "IDEA：一小段話描述你要的影片（會連同上方 Prompt 一起送給本地模型）",
@@ -2148,8 +2210,20 @@
                         "Leave empty to use only Prompt Bias; non-empty content inserts as ## Platform-Specific Rules",
                     // builder buttons
                     "btn.copy": "Copy Prompt",
-                    "local.title": "🖥️ Local Expand",
-                    "local.expand": "Expand Locally",
+                    "local.title": "🤖 AI Expand",
+                    "local.expand": "Expand",
+                    "opt.llm.ollama": "Local Ollama",
+                    "opt.llm.openai": "OpenAI-compatible",
+                    "ph.llmKey": "API key (stored only in this browser)",
+                    "ph.llmModel": "Model",
+                    "ph.llmBase": "Base URL, e.g. https://openrouter.ai/api/v1",
+                    "local.keyHint": "Get a free Gemini API key →",
+                    "local.status.noOllama": "No local Ollama detected — pick Gemini API (free key), or copy the prompt above into any AI chat",
+                    "local.status.noKey": "Enter an API key and model first",
+                    "local.status.rateLimited": "Free-tier rate limit (HTTP 429) — wait ~30s and expand again",
+                    "btn.copyOpenChatGpt": "⧉ ChatGPT",
+                    "btn.copyOpenGemini": "⧉ Gemini",
+                    "status.copiedOpen": "Copied — paste into the chat tab that just opened",
                     "local.stop": "Stop",
                     "local.copy": "Copy Markdown",
                     "ph.localIdea": "IDEA: one short paragraph describing the video (sent to the local model together with the prompt above)",
@@ -2571,6 +2645,14 @@
                 "localReviseBtn",
                 "specToggleBtn",
                 "localModel",
+                "llmProvider",
+                "llmApiKey",
+                "llmModel",
+                "llmBaseUrl",
+                "llmCloudConfig",
+                "llmKeyHint",
+                "openChatGptBtn",
+                "openGeminiBtn",
                 "localExpandBtn",
                 "localStopBtn",
                 "localCopyBtn",
@@ -5258,6 +5340,14 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     1800,
                 );
             });
+            // 零門檻路徑：複製 prompt 並開啟聊天服務，貼上即用
+            function copyAndOpen(url) {
+                navigator.clipboard.writeText(els.promptOutput.textContent || "");
+                window.open(url, "_blank", "noopener");
+                setLocalStatus("status.copiedOpen");
+            }
+            els.openChatGptBtn.addEventListener("click", () => copyAndOpen("https://chatgpt.com/"));
+            els.openGeminiBtn.addEventListener("click", () => copyAndOpen("https://gemini.google.com/"));
             els.downloadPromptBtn.addEventListener("click", () => {
                 const blob = new Blob([els.promptOutput.textContent || ""], {
                     type: "text/markdown",
@@ -5271,40 +5361,147 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
             els.saveVersionBtn.addEventListener("click", () => saveVersion());
 
             // ── LOCAL LLM BRIDGE (ollama) ──────────────────────────────────
-            // Progressive enhancement: the section stays hidden unless an
-            // ollama endpoint answers on localhost. The page must be served
-            // from a localhost origin (ollama's default CORS allowlist);
-            // file:// or remote origins require OLLAMA_ORIGINS on the server.
+            // AI Expand providers: local ollama (auto-detected on localhost;
+            // file:// or remote origins need OLLAMA_ORIGINS on the server) or
+            // a user-supplied cloud key (Gemini / any OpenAI-compatible API).
+            // Keys live only in this browser's localStorage — never sent
+            // anywhere except the provider the user picked.
             const OLLAMA_BASE = "http://localhost:11434";
             const LOCAL_MODEL_PREF = /qwen/i;
+            const LLM_DEFAULT_MODELS = { gemini: "gemini-2.5-flash", openai: "" };
             let localAbort = null;
+            let ollamaAvailable = false;
 
             function setLocalStatus(key, extra) {
                 els.localLlmStatus.textContent = t(key) + (extra ? ` ${extra}` : "");
             }
+
+            function syncLlmUi() {
+                const p = els.llmProvider.value;
+                const cloud = p !== "ollama";
+                els.llmCloudConfig.classList.toggle("hidden", !cloud);
+                els.localModel.classList.toggle("hidden", cloud);
+                els.llmBaseUrl.classList.toggle("hidden", p !== "openai");
+                els.llmKeyHint.classList.toggle("hidden", p !== "gemini");
+                if (cloud) {
+                    els.llmApiKey.value = localStorage.getItem(`ps_llm_${p}_key`) || "";
+                    els.llmModel.value = localStorage.getItem(`ps_llm_${p}_model`) || LLM_DEFAULT_MODELS[p] || "";
+                    if (p === "openai")
+                        els.llmBaseUrl.value = localStorage.getItem("ps_llm_openai_base") || "https://openrouter.ai/api/v1";
+                    setLocalStatus("local.status.idle");
+                } else {
+                    setLocalStatus(ollamaAvailable ? "local.status.idle" : "local.status.noOllama");
+                }
+            }
+
+            els.llmProvider.addEventListener("change", () => {
+                localStorage.setItem("ps_llm_provider", els.llmProvider.value);
+                syncLlmUi();
+            });
+            els.llmApiKey.addEventListener("change", () =>
+                localStorage.setItem(`ps_llm_${els.llmProvider.value}_key`, els.llmApiKey.value.trim()));
+            els.llmModel.addEventListener("change", () =>
+                localStorage.setItem(`ps_llm_${els.llmProvider.value}_model`, els.llmModel.value.trim()));
+            els.llmBaseUrl.addEventListener("change", () =>
+                localStorage.setItem("ps_llm_openai_base", els.llmBaseUrl.value.trim()));
 
             async function detectLocalLlm() {
                 try {
                     const res = await fetch(`${OLLAMA_BASE}/api/tags`, {
                         signal: AbortSignal.timeout(1500),
                     });
-                    if (!res.ok) return;
+                    if (!res.ok) throw new Error();
                     const data = await res.json();
                     const models = (data.models || [])
                         .map((m) => m.name)
                         .filter((n) => !/embed/i.test(n));
-                    if (!models.length) return;
+                    if (!models.length) throw new Error();
                     models.sort((a, b) => (LOCAL_MODEL_PREF.test(b) ? 1 : 0) - (LOCAL_MODEL_PREF.test(a) ? 1 : 0));
                     els.localModel.innerHTML = models
                         .map((n) => `<option value="${esc(n)}">${esc(n)}</option>`)
                         .join("");
-                    els.localLlmSection.classList.remove("hidden");
-                    setLocalStatus("local.status.idle");
-                    const saved = localStorage.getItem("ps_spec_collapsed");
-                    setSpecCollapsed(saved === null ? true : saved === "1", false);
+                    ollamaAvailable = true;
+                    // 沒存過偏好的老用戶（一直用 ollama）維持原行為
+                    if (!localStorage.getItem("ps_llm_provider")) els.llmProvider.value = "ollama";
                 } catch {
-                    /* no local endpoint — section stays hidden */
+                    ollamaAvailable = false;
                 }
+                const savedProvider = localStorage.getItem("ps_llm_provider");
+                if (savedProvider) els.llmProvider.value = savedProvider;
+                syncLlmUi();
+                const saved = localStorage.getItem("ps_spec_collapsed");
+                setSpecCollapsed(saved === null ? true : saved === "1", false);
+            }
+
+            // provider → fetch request 描述；stream 解析交給 parseLlmChunkLine
+            function buildLlmRequest(messages) {
+                const p = els.llmProvider.value;
+                if (p === "ollama")
+                    return {
+                        kind: "ollama",
+                        url: `${OLLAMA_BASE}/api/chat`,
+                        headers: { "Content-Type": "application/json" },
+                        body: {
+                            model: els.localModel.value,
+                            messages,
+                            stream: true,
+                            think: false,
+                            options: { temperature: 0.7, num_ctx: 24576, num_predict: 8192 },
+                        },
+                    };
+                const key = els.llmApiKey.value.trim();
+                const model = els.llmModel.value.trim();
+                if (!key || !model) return null;
+                if (p === "gemini")
+                    return {
+                        kind: "gemini",
+                        url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`,
+                        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+                        body: {
+                            contents: messages.map((m) => ({
+                                role: m.role === "assistant" ? "model" : "user",
+                                parts: [{ text: m.content }],
+                            })),
+                            generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+                        },
+                    };
+                return {
+                    kind: "openai",
+                    url: `${els.llmBaseUrl.value.trim().replace(/\/+$/, "")}/chat/completions`,
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+                    body: { model, messages, stream: true, temperature: 0.7 },
+                };
+            }
+
+            // 一行 stream → { text, tokens }；不認得的行回 null
+            function parseLlmChunkLine(kind, line) {
+                if (kind !== "ollama") {
+                    if (!line.startsWith("data:")) return null;
+                    line = line.slice(5).trim();
+                    if (!line || line === "[DONE]") return null;
+                }
+                let obj;
+                try {
+                    obj = JSON.parse(line);
+                } catch {
+                    return null;
+                }
+                if (kind === "ollama")
+                    return {
+                        text: obj.message?.content || "",
+                        tokens: obj.done && obj.eval_count ? obj.eval_count : 0,
+                    };
+                if (kind === "gemini")
+                    return {
+                        text: (obj.candidates?.[0]?.content?.parts || [])
+                            .map((pt) => pt.text || "")
+                            .join(""),
+                        tokens: obj.usageMetadata?.candidatesTokenCount || 0,
+                    };
+                return {
+                    text: obj.choices?.[0]?.delta?.content || "",
+                    tokens: obj.usage?.completion_tokens || 0,
+                };
             }
 
             // 劇本輸入協定：搭配上游編劇 skill（如 AI-drama-pound）產出的完整劇本。
@@ -5479,26 +5676,28 @@ Hard rules:
 
             async function runLocalChat(messages, inputType) {
                 if (localAbort) return; // 重入保護：Enter 鍵/程式化點擊可繞過按鈕隱藏，併發 stream 會互踩輸出區
+                const req = buildLlmRequest(messages);
+                if (!req) {
+                    setLocalStatus("local.status.noKey");
+                    els.llmApiKey.focus();
+                    return;
+                }
                 localAbort = new AbortController();
                 els.localExpandBtn.classList.add("hidden");
                 els.localStopBtn.classList.remove("hidden");
                 els.localToScriptBtn.classList.add("hidden");
                 els.localReviseRow.classList.add("hidden");
                 els.localOutput.textContent = "";
+                localRaw = "";
                 setLocalStatus("local.status.running");
                 const t0 = Date.now();
+                let lastRender = 0;
                 try {
-                    const res = await fetch(`${OLLAMA_BASE}/api/chat`, {
+                    const res = await fetch(req.url, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: req.headers,
                         signal: localAbort.signal,
-                        body: JSON.stringify({
-                            model: els.localModel.value,
-                            messages,
-                            stream: true,
-                            think: false,
-                            options: { temperature: 0.7, num_ctx: 24576, num_predict: 8192 },
-                        }),
+                        body: JSON.stringify(req.body),
                     });
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const reader = res.body.getReader();
@@ -5512,17 +5711,26 @@ Hard rules:
                         buf = lines.pop();
                         for (const line of lines) {
                             if (!line.trim()) continue;
-                            const chunk = JSON.parse(line);
-                            if (chunk.message?.content) {
-                                els.localOutput.textContent += chunk.message.content;
-                                els.localOutput.scrollTop = els.localOutput.scrollHeight;
+                            const chunk = parseLlmChunkLine(req.kind, line.trim());
+                            if (!chunk) continue;
+                            if (chunk.tokens) tokens = chunk.tokens;
+                            if (chunk.text) {
+                                localRaw += chunk.text;
+                                // 渲染節流：整篇重 parse 很便宜（<40KB），但每個
+                                // token 都重排 DOM 會卡，150ms 一次夠即時。
+                                if (Date.now() - lastRender > 150) {
+                                    lastRender = Date.now();
+                                    els.localOutput.innerHTML = renderLocalMd(localRaw);
+                                    els.localOutput.scrollTop = els.localOutput.scrollHeight;
+                                }
                             }
-                            if (chunk.done && chunk.eval_count) tokens = chunk.eval_count;
                         }
                     }
+                    els.localOutput.innerHTML = renderLocalMd(localRaw);
+                    els.localOutput.scrollTop = els.localOutput.scrollHeight;
                     const secs = ((Date.now() - t0) / 1000).toFixed(1);
                     const rate = tokens ? ` · ${(tokens / ((Date.now() - t0) / 1000)).toFixed(1)} tok/s` : "";
-                    const finalText = els.localOutput.textContent.trim();
+                    const finalText = localRaw.trim();
                     if (finalText) {
                         localBase = { prompt: messages[0].content, output: finalText, inputType };
                         els.localReviseRow.classList.remove("hidden");
@@ -5534,7 +5742,16 @@ Hard rules:
                         setLocalStatus("local.status.idle", `${secs}s${rate}`);
                     }
                 } catch (e) {
-                    setLocalStatus(e.name === "AbortError" ? "local.status.stopped" : "local.status.error");
+                    // 中斷/出錯：有上一版完整輸出就還原它（半截片段沒有留存價值，
+                    // 且會讓 Copy/轉劇本/修訂輪拿到殘稿）；沒有才顯示部分片段。
+                    if (localBase) {
+                        localRaw = localBase.output;
+                        els.localReviseRow.classList.remove("hidden");
+                    }
+                    els.localOutput.innerHTML = renderLocalMd(localRaw);
+                    if (e.name === "AbortError") setLocalStatus("local.status.stopped");
+                    else if (/HTTP 429/.test(e.message || "")) setLocalStatus("local.status.rateLimited");
+                    else setLocalStatus("local.status.error", e.message || "");
                 } finally {
                     localAbort = null;
                     els.localExpandBtn.classList.remove("hidden");
@@ -5566,7 +5783,7 @@ Hard rules:
                 if (e.key === "Enter") reviseLocally();
             });
             els.localToScriptBtn.addEventListener("click", () => {
-                els.localIdea.value = els.localOutput.textContent.trim();
+                els.localIdea.value = localRaw.trim();
                 els.localToScriptBtn.classList.add("hidden");
                 els.localInputType.value = "screenplay";
                 els.localInputType.dispatchEvent(new Event("change"));
@@ -5583,7 +5800,7 @@ Hard rules:
                 setSpecCollapsed(!els.promptOutput.classList.contains("hidden"), true),
             );
             els.localCopyBtn.addEventListener("click", () => {
-                navigator.clipboard.writeText(els.localOutput.textContent || "");
+                navigator.clipboard.writeText(localRaw || "");
                 els.localCopyBtn.textContent = t("btn.copied");
                 setTimeout(() => (els.localCopyBtn.textContent = t("local.copy")), 1200);
             });

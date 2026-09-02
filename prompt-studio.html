@@ -1917,6 +1917,7 @@
                     "ph.llmBase": "Base URL，例 https://openrouter.ai/api/v1",
                     "local.keyHint": "取得免費 Gemini API key →",
                     "local.status.noOllama": "未偵測到本地 Ollama——改選 Gemini API（免費 key），或複製上方 prompt 貼到任一 AI 聊天",
+                    "local.status.noOllamaFile": "file:// 開啟連不到本地 Ollama（CORS）——改用 PromptStudio.command 啟動，或直接用 Gemini API",
                     "local.status.noKey": "請先填 API Key 與模型名稱",
                     "local.status.rateLimited": "免費層速率限制（HTTP 429）——等半分鐘再展開",
                     "btn.copyOpenChatGpt": "⧉ ChatGPT",
@@ -2219,6 +2220,7 @@
                     "ph.llmBase": "Base URL, e.g. https://openrouter.ai/api/v1",
                     "local.keyHint": "Get a free Gemini API key →",
                     "local.status.noOllama": "No local Ollama detected — pick Gemini API (free key), or copy the prompt above into any AI chat",
+                    "local.status.noOllamaFile": "file:// pages can't reach local Ollama (CORS) — launch via PromptStudio.command, or just use Gemini API",
                     "local.status.noKey": "Enter an API key and model first",
                     "local.status.rateLimited": "Free-tier rate limit (HTTP 429) — wait ~30s and expand again",
                     "btn.copyOpenChatGpt": "⧉ ChatGPT",
@@ -5390,7 +5392,13 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                         els.llmBaseUrl.value = localStorage.getItem("ps_llm_openai_base") || "https://openrouter.ai/api/v1";
                     setLocalStatus("local.status.idle");
                 } else {
-                    setLocalStatus(ollamaAvailable ? "local.status.idle" : "local.status.noOllama");
+                    setLocalStatus(
+                        ollamaAvailable
+                            ? "local.status.idle"
+                            : location.protocol === "file:"
+                              ? "local.status.noOllamaFile"
+                              : "local.status.noOllama",
+                    );
                 }
             }
 
@@ -5428,7 +5436,15 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 }
                 const savedProvider = localStorage.getItem("ps_llm_provider");
                 if (savedProvider) els.llmProvider.value = savedProvider;
+                // 偵測不到就停用 Ollama 選項並退回 Gemini（不寫回偏好——
+                // file:// 被 ollama CORS 擋是常態，localhost 啟動時偏好照舊生效）
+                const ollamaOpt = els.llmProvider.querySelector('option[value="ollama"]');
+                if (ollamaOpt) ollamaOpt.disabled = !ollamaAvailable;
+                const fellBack = !ollamaAvailable && els.llmProvider.value === "ollama";
+                if (fellBack) els.llmProvider.value = "gemini";
                 syncLlmUi();
+                if (fellBack)
+                    setLocalStatus(location.protocol === "file:" ? "local.status.noOllamaFile" : "local.status.noOllama");
                 const saved = localStorage.getItem("ps_spec_collapsed");
                 setSpecCollapsed(saved === null ? true : saved === "1", false);
             }

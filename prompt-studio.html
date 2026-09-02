@@ -1992,6 +1992,26 @@
                     // platform card
                     "pc.customBlock": "✓ custom block",
                     "pc.primary": "主要",
+                    // builder chips + lint
+                    "chip.noPlatform": "— 未選平台",
+                    "badge.chars": "{n} 字",
+                    "lint.ok": "✓ 無明顯規則衝突",
+                    "lint.platModeUnsupported": "⚠️ {name} 不支援 {mode} mode（{detail}）",
+                    "lint.platAspect": "⚠️ {name} 限定 {allowed}，目前選 {current}",
+                    "lint.noPlatform": "ℹ️ 未選平台，prompt 不會套用 Platform Context 與 customPromptBlock",
+                    "lint.runsheetMode": "⚠️ VE 執行工單只支援 storyboard mode，其他 mode 會忽略此輸出格式",
+                    "lint.runsheetPlatform": "⚠️ VE 執行工單是 VideoExpress 專用格式（設定 checklist 與欄位路由都對應 VE 介面），建議切換平台為 VideoExpress.ai",
+                    "lint.firstLastDuration": "⚠️ first-last mode 是單一轉場，建議時長 5-15 秒",
+                    "lint.storyboardTooShort": "⚠️ 15 秒內的內容用 single-shot 或 first-last 更合適；storyboard 是多 shot 結構",
+                    "lint.shortformTooLong": "⚠️ short-form 建議 45 秒內；更長的內容建議改用 storyboard",
+                    "lint.shortformAspect": "⚠️ short-form mode 強制 9:16",
+                    "lint.shortformDuration": "⚠️ short-form 建議 15-45 秒，目前 {duration}",
+                    "lint.singleshotDuration": "⚠️ single-shot 應該 5-15 秒，目前 {duration}",
+                    "lint.avatarNoDialogue": "⚠️ avatar mode 但選了少對白模式 — talking head 沒對白會空洞",
+                    "lint.storyboardLipsync": "⚠️ storyboard + 有對白 + balanced 鏡頭：嘴型可能失真",
+                    "lint.detailedCreative": "⚠️ Detailed + 創作彈性：容易讓 prompt 變長並提高漂移",
+                    "lint.customRulesLong": "⚠️ 自訂規則偏長",
+                    "lint.promptLength": "ℹ️ Prompt {len} 字",
                 },
                 en: {
                     // header
@@ -2272,6 +2292,26 @@
                     "alert.resetDone": "Reset complete",
                     "pc.customBlock": "✓ custom block",
                     "pc.primary": "primary",
+                    // builder chips + lint
+                    "chip.noPlatform": "— no platform",
+                    "badge.chars": "{n} chars",
+                    "lint.ok": "✓ No obvious rule conflicts",
+                    "lint.platModeUnsupported": "⚠️ {name} does not support {mode} mode ({detail})",
+                    "lint.platAspect": "⚠️ {name} only supports {allowed}; currently {current}",
+                    "lint.noPlatform": "ℹ️ No platform selected — Platform Context and customPromptBlock are not applied",
+                    "lint.runsheetMode": "⚠️ The VE run sheet only supports storyboard mode; other modes ignore this output format",
+                    "lint.runsheetPlatform": "⚠️ The VE run sheet is a VideoExpress-specific format (its settings checklist and field routing map to the VE UI) — switch platform to VideoExpress.ai",
+                    "lint.firstLastDuration": "⚠️ first-last mode is a single transition — recommended duration 5-15 seconds",
+                    "lint.storyboardTooShort": "⚠️ Content under 15 seconds fits single-shot or first-last better; storyboard is a multi-shot structure",
+                    "lint.shortformTooLong": "⚠️ short-form works best under 45 seconds; use storyboard for longer content",
+                    "lint.shortformAspect": "⚠️ short-form mode enforces 9:16",
+                    "lint.shortformDuration": "⚠️ short-form recommends 15-45 seconds; currently {duration}",
+                    "lint.singleshotDuration": "⚠️ single-shot should be 5-15 seconds; currently {duration}",
+                    "lint.avatarNoDialogue": "⚠️ avatar mode with minimal dialogue — a talking head without dialogue feels empty",
+                    "lint.storyboardLipsync": "⚠️ storyboard + dialogue + balanced framing: lipsync may distort",
+                    "lint.detailedCreative": "⚠️ Detailed + creative flexibility: prompts get long and drift risk rises",
+                    "lint.customRulesLong": "⚠️ Custom rules are getting long",
+                    "lint.promptLength": "ℹ️ Prompt {len} chars",
                 },
             };
             // HTML escape helper for any user-controlled string injected via innerHTML
@@ -3686,7 +3726,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     if (!allowedModes.includes(state.mode)) {
                         warnings.push({
                             level: "warn",
-                            msg: `⚠️ ${esc(plat.name)} 不支援 ${state.mode} mode（primaryMode=${esc(plat.primaryMode)}${plat.compatibleModes.length ? ", compat=" + plat.compatibleModes.map(esc).join(",") : ""}）`,
+                            msg: t("lint.platModeUnsupported", { name: esc(plat.name), mode: state.mode, detail: `primaryMode=${esc(plat.primaryMode)}${plat.compatibleModes.length ? ", compat=" + plat.compatibleModes.map(esc).join(",") : ""}` }),
                         });
                     }
                     if (
@@ -3695,13 +3735,13 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     ) {
                         warnings.push({
                             level: "warn",
-                            msg: `⚠️ ${esc(plat.name)} 限定 ${plat.aspectRatio.map(esc).join("/")}，目前選 ${esc(state.aspectRatio)}`,
+                            msg: t("lint.platAspect", { name: esc(plat.name), allowed: plat.aspectRatio.map(esc).join("/"), current: esc(state.aspectRatio) }),
                         });
                     }
                 } else {
                     warnings.push({
                         level: "info",
-                        msg: "ℹ️ 未選平台，prompt 不會套用 Platform Context 與 customPromptBlock",
+                        msg: t("lint.noPlatform"),
                     });
                 }
 
@@ -3710,12 +3750,12 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     if (state.mode !== "storyboard")
                         warnings.push({
                             level: "warn",
-                            msg: "⚠️ VE 執行工單只支援 storyboard mode，其他 mode 會忽略此輸出格式",
+                            msg: t("lint.runsheetMode"),
                         });
                     if (state.platformId !== "plat_videoexpress")
                         warnings.push({
                             level: "warn",
-                            msg: "⚠️ VE 執行工單是 VideoExpress 專用格式（設定 checklist 與欄位路由都對應 VE 介面），建議切換平台為 VideoExpress.ai",
+                            msg: t("lint.runsheetPlatform"),
                         });
                 }
 
@@ -3726,7 +3766,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 )
                     warnings.push({
                         level: "warn",
-                        msg: "⚠️ first-last mode 是單一轉場，建議時長 5-15 秒",
+                        msg: t("lint.firstLastDuration"),
                     });
                 if (
                     state.mode === "storyboard" &&
@@ -3734,7 +3774,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 )
                     warnings.push({
                         level: "warn",
-                        msg: "⚠️ 15 秒內的內容用 single-shot 或 first-last 更合適；storyboard 是多 shot 結構",
+                        msg: t("lint.storyboardTooShort"),
                     });
                 if (
                     state.mode === "short-form" &&
@@ -3742,12 +3782,12 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 )
                     warnings.push({
                         level: "warn",
-                        msg: "⚠️ short-form 建議 45 秒內；更長的內容建議改用 storyboard",
+                        msg: t("lint.shortformTooLong"),
                     });
                 if (state.mode === "short-form" && state.aspectRatio !== "9:16")
                     warnings.push({
                         level: "warn",
-                        msg: "⚠️ short-form mode 強制 9:16",
+                        msg: t("lint.shortformAspect"),
                     });
                 if (
                     state.mode === "short-form" &&
@@ -3755,9 +3795,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 )
                     warnings.push({
                         level: "warn",
-                        msg:
-                            "⚠️ short-form 建議 15-45 秒，目前 " +
-                            state.duration,
+                        msg: t("lint.shortformDuration", { duration: state.duration }),
                     });
                 if (
                     state.mode === "single-shot" &&
@@ -3765,14 +3803,12 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 )
                     warnings.push({
                         level: "warn",
-                        msg:
-                            "⚠️ single-shot 應該 5-15 秒，目前 " +
-                            state.duration,
+                        msg: t("lint.singleshotDuration", { duration: state.duration }),
                     });
                 if (state.mode === "avatar" && state.dialogueMode === "none")
                     warnings.push({
                         level: "warn",
-                        msg: "⚠️ avatar mode 但選了少對白模式 — talking head 沒對白會空洞",
+                        msg: t("lint.avatarNoDialogue"),
                     });
                 if (
                     state.mode === "storyboard" &&
@@ -3781,7 +3817,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 )
                     warnings.push({
                         level: "warn",
-                        msg: "⚠️ storyboard + 有對白 + balanced 鏡頭：嘴型可能失真",
+                        msg: t("lint.storyboardLipsync"),
                     });
 
                 // generic
@@ -3791,10 +3827,10 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 )
                     warnings.push({
                         level: "warn",
-                        msg: "⚠️ Detailed + 創作彈性：容易讓 prompt 變長並提高漂移",
+                        msg: t("lint.detailedCreative"),
                     });
                 if ((state.customRules || "").length > 220)
-                    warnings.push({ level: "warn", msg: "⚠️ 自訂規則偏長" });
+                    warnings.push({ level: "warn", msg: t("lint.customRulesLong") });
 
                 // word count
                 const len = promptText.length;
@@ -3803,7 +3839,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                     lenLevel = "warn";
                 if (state.mode !== "storyboard" && len > 2500)
                     lenLevel = "warn";
-                warnings.push({ level: lenLevel, msg: `ℹ️ Prompt ${len} 字` });
+                warnings.push({ level: lenLevel, msg: t("lint.promptLength", { len }) });
 
                 return warnings;
             }
@@ -3820,7 +3856,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
 
                 // word count badge
                 const wc = text.length;
-                els.promptWordCount.textContent = `${wc} 字`;
+                els.promptWordCount.textContent = t("badge.chars", { n: wc });
                 els.promptWordCount.className =
                     "word-count" +
                     (wc > 5500 ? " bad" : wc > 3500 ? " warn" : "");
@@ -3831,10 +3867,10 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 );
                 const chips = [
                     `🎯 ${modeLabel(state.mode)}`,
-                    plat ? `📡 ${esc(plat.name)}` : "— no platform",
-                    maps.mediaType[state.mediaType].label,
-                    maps.domain[state.domain].label,
-                    state.dialogueMode === "dialogue" ? "有對白" : "少對白",
+                    plat ? `📡 ${esc(plat.name)}` : t("chip.noPlatform"),
+                    t(`opt.media.${state.mediaType}`),
+                    t(`opt.domain.${state.domain}`),
+                    t(`opt.dialogue.${state.dialogueMode}`),
                     state.priorityMode,
                     state.lengthMode,
                 ];
@@ -3853,7 +3889,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                                   `<div class="notice ${w.level === "warn" ? "warn" : "info"}" style="margin-bottom:6px">${w.msg}</div>`,
                           )
                           .join("")
-                    : '<div class="notice ok tiny">✓ 無明顯規則衝突</div>';
+                    : `<div class="notice ok tiny">${t("lint.ok")}</div>`;
 
                 schedulePushHistory();
                 return text;
@@ -3952,7 +3988,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                               (p) => p.family === selectedFamily,
                           );
                 els.activePlatform.innerHTML =
-                    '<option value="">— 選平台 —</option>' +
+                    `<option value="">${t("topbar.platform.placeholder")}</option>` +
                     platforms
                         .map(
                             (p) =>
@@ -4827,7 +4863,7 @@ ${dialogue ? "- Dialogue, if any, goes in the Action / Line column; keep under 6
                 const plat = db.platforms.find(
                     (p) => p.id === state.platformId,
                 );
-                return `${modeLabel(state.mode)} - ${maps.domain[state.domain]?.label || ""}${plat ? " [" + plat.name + "]" : ""}`;
+                return `${modeLabel(state.mode)} - ${t(`opt.domain.${state.domain}`)}${plat ? " [" + plat.name + "]" : ""}`;
             }
             function nextVersion(templateId) {
                 const versions = db.versions

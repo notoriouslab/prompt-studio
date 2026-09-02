@@ -5322,32 +5322,37 @@ The input below is a complete SCREENPLAY (scene headings, character names, dialo
             // 概念模式不帶上方 spec——spec 是分鏡規則書，餵編劇階段會污染成 T2I 輸出。
             function dramaInstructions(state) {
                 const vertical = state.aspectRatio === "9:16";
+                const domainTone = maps.domain[state.domain]?.assumptions || "";
                 if (state.language === "zh-only")
                     return `你是短劇編劇。把使用者的故事概念寫成一集可拍攝的完整短劇劇本。
 
 製作限制（不得違反）：
 - 總時長：${state.duration}，內容總量必須拍得完（對白加動作以每秒約 4 個中文字估算）
 - 畫幅：${state.aspectRatio}${vertical ? "（豎屏：關鍵人物、訊息與動作須在單一垂直畫面中清晰可辨）" : "（橫屏）"}
+- 題材領域基調（類型與氛圍必須落在這個範圍內；本行描述為英文、僅供定調，劇本本體一律台灣繁體中文，不得抄錄任何英文詞句）：${domainTone}${state.styleExtra ? `\n- 風格附註：${state.styleExtra}` : ""}
 
 硬規則：
 - 直接以場次標頭開場。除劇本本體外不得輸出任何文字：不寫假設、不寫方案比較、不寫腦暴過程、不寫線索對照表、不寫製作提示
 - 全程台灣繁體中文，禁止任何簡體字
 - 場次標頭格式「N. 內景／外景・地點・時間」；角色名獨立成行、首次出現附極短身分，臺詞置於其下；括號僅標簡短語氣或即時動作，不解釋內心
 - 用現在正在發生的可見、可聽行動描述畫面；避免解說性對白；每場結束時，資訊、關係、目標、風險或情緒至少一項已不可逆地改變
-- 角色轉變需有前置事件支撐；若有結尾反轉，須在前文埋至少兩處回看能成立的線索
+- 衝突強度與結局跟隨概念本身的情感基調：安靜的生活片段或情感小品就安靜收束，不強加反派、羞辱或黑暗反轉
+- 角色轉變需有前置事件支撐；只有概念本身暗示反轉時才設計反轉，且須在前文埋至少兩處回看能成立的線索
 - 結尾用「切黑。」收束`;
                 return `You are a short-drama screenwriter. Turn the user's story concept into one complete, shootable episode screenplay.
 
 Production limits (must not be violated):
 - Total duration: ${state.duration}. The full content must be shootable within it (estimate dialogue plus action at roughly 2.5 words per second).
 - Aspect: ${state.aspectRatio}${vertical ? " (vertical: key people, information and actions must read clearly in a single vertical frame)" : " (landscape)"}.
-${state.language === "english-structure-zh-dialogue" ? "- Write structure and action in English; spoken dialogue lines in Traditional Chinese (Taiwan)." : ""}
+- Genre grounding (the screenplay's genre and mood must stay inside this range): ${domainTone}${state.styleExtra ? `\n- Style note: ${state.styleExtra}` : ""}
+${state.language === "english-structure-zh-dialogue" ? "- Write structure and action in English; every spoken dialogue line in Traditional Chinese (Taiwan) — no Simplified characters. Estimate Chinese dialogue at roughly 4 characters per second." : ""}
 
 Hard rules:
 - Open directly with the first scene heading. Output NOTHING but the screenplay itself: no assumptions, no option comparisons, no brainstorming, no clue tables, no production notes.
 - Scene heading format "N. INT./EXT. - Location - Time". Character names on their own line with a very short identity tag on first appearance, dialogue beneath; parentheticals only for brief tone or immediate action, never inner thoughts.
 - Describe the frame through visible, audible actions happening now; avoid expository dialogue; by the end of every scene at least one of information, relationships, goals, stakes or emotion has irreversibly changed.
-- Character turns need a planted prior event; if the ending twists, plant at least two clues earlier that hold up on rewatch.
+- Match conflict intensity and the ending to the concept's emotional register: a quiet slice-of-life or tender vignette closes quietly — never force villains, humiliation, or dark twists onto it.
+- Character turns need a planted prior event; design a twist ONLY when the concept itself implies one, and then plant at least two clues earlier that hold up on rewatch.
 - Close with "CUT TO BLACK."`;
             }
 

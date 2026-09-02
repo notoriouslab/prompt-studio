@@ -3016,7 +3016,7 @@
                     return "Use English for all structural content and all dialogue.";
                 if (state.language === "zh-only")
                     return 'Write the ENTIRE output in Traditional Chinese (Taiwan) — including every Text-To-Image and Image-To-Video prompt line (e.g. 「電影感寫實劇照，深夜便利商店內，……」), not only the narrative sections. Any English prompt patterns shown in the section schemas define STRUCTURE only; render their content in 繁體中文. Keep verbatim only: actor aliases (Actor 1), aspect ratios (16:9), timestamps, and camera/lens tokens (85mm f/1.4).';
-                return "Keep structural sections and technical metadata in English. Keep spoken dialogue in Traditional Chinese (Taiwan) when requested.";
+                return 'Structural sections, technical metadata, and all T2I / I2V prompt bodies in English. EVERY spoken dialogue line in Traditional Chinese (Taiwan) with `natural Mandarin accent` in the speech-act wrap — see the Output Language hard-constraint block at the top.';
             }
 
             function platformContextBlock(state) {
@@ -3322,8 +3322,22 @@ Apply only when a shot is an intimate facial close-up; skip for wider shots.
                     // 提升為標題後第一個 hard 區塊，並宣告英文片段的翻譯規則。
                     if (state.language === "zh-only") {
                         const nl = text.indexOf("\n");
-                        const zhBlock = `\n## Output Language — HARD CONSTRAINT (overrides every English pattern below)\nWrite the ENTIRE output in Traditional Chinese (Taiwan), including every Text-To-Image and Image-To-Video prompt line. All English phrases below (photoreal fragments, schema patterns, example sentences) define structure and required MEANING only — translate them into 繁體中文 (e.g. "unretouched skin texture with visible pores" → 「未修飾的皮膚質感，毛孔清晰可見」). Keep verbatim only: actor aliases (Actor 1), aspect ratios (16:9), timestamps ([0-2 seconds] → [0-2 秒] is allowed), and camera/lens tokens (85mm f/1.4).\n`;
+                        const zhBlock = `\n## Output Language — HARD CONSTRAINT (overrides every English pattern below)\nWrite the ENTIRE output in Traditional Chinese (Taiwan), including every Text-To-Image and Image-To-Video prompt line. All English phrases below (photoreal fragments, schema patterns, example sentences) define structure and required MEANING only — translate them into 繁體中文 (e.g. "unretouched skin texture with visible pores" → 「未修飾的皮膚質感，毛孔清晰可見」). Keep verbatim only: actor aliases (Actor 1), aspect ratios (16:9), timestamps ([0-2 seconds] → [0-2 秒] is allowed), and camera/lens tokens (85mm f/1.4). All Chinese must be Traditional Chinese (Taiwan) — Simplified Chinese characters are FORBIDDEN. Chinese dialogue budget: ~4 Chinese characters per second of clip time (a 5-second shot carries ≈ 20 characters); this per-shot budget overrides any generic character cap below — split longer lines across shots.\n`;
                         text = nl === -1 ? text + "\n" + zhBlock : text.slice(0, nl) + "\n" + zhBlock + text.slice(nl);
+                    }
+                    // engzh 混合模式同樣需要 Tier 1 硬區塊：只靠 Tier 2 一句
+                    // 「Keep spoken dialogue in Traditional Chinese」弱模型必被
+                    // 英文 schema 範例帶走（實證：兩輪本地展開台詞全出英文）。
+                    // 範例對照塊 > 負面指令（examples-over-directives）。
+                    if (state.language === "english-structure-zh-dialogue") {
+                        const nl = text.indexOf("\n");
+                        // avatar / short-form 不走 speech-act wrap（TTS script / 視覺 hook），
+                        // 給精簡版：不帶 wrap 範例，voice direction 改綁 Mandarin。
+                        const wrapModes = ["storyboard", "single-shot", "first-last"];
+                        const zhDlgBlock = wrapModes.includes(state.mode)
+                            ? `\n## Output Language — HARD CONSTRAINT (overrides every English example below)\nStructure stays English: section headings, tables, Text-To-Image / Image-To-Video prompt bodies, camera and action descriptions, technical metadata. But EVERY spoken dialogue line — the words inside quotes — MUST be Traditional Chinese (Taiwan). Never English dialogue; Simplified Chinese characters are FORBIDDEN. In every speech-act wrap the accent token is always \`natural Mandarin accent\`.\n- Correct ✅: \`Actor 1, the 16-year-old Asian female student in a school uniform, says in a soft, hesitant tone, natural Mandarin accent: "我才沒有在看他啦。". Animate natural lipsync exactly to the quoted words.\`\n- Anti-pattern ❌: \`Actor 1 says in a soft tone, clear English accent: "I wasn't looking at him."\`\nChinese dialogue budget: ~4 Chinese characters per second of clip time (a 5-second shot carries ≈ 20 characters). This per-shot budget overrides the generic ≤ 120-character cap — split longer lines across shots.\n`
+                            : `\n## Output Language — HARD CONSTRAINT (overrides every English example below)\nStructure stays English: section headings, tables, visual prompt bodies, technical metadata. But EVERY spoken line — script sentences, dialogue, voice-over — MUST be Traditional Chinese (Taiwan). Never English speech; Simplified Chinese characters are FORBIDDEN. Voice/accent directions use Mandarin (e.g. \`Neutral Taiwanese Mandarin accent, warm confident tone\`), never an English accent. Chinese speech budget: ~4 Chinese characters per second of runtime.\n`;
+                        text = nl === -1 ? text + "\n" + zhDlgBlock : text.slice(0, nl) + "\n" + zhDlgBlock + text.slice(nl);
                     }
                     return text;
                 },
@@ -5274,6 +5288,13 @@ Hard rules:
                     setLocalStatus("local.status.noIdea");
                     els.localIdea.focus();
                     return;
+                }
+                // 中文 IDEA + english-only 會默默產英文台詞——自動升級為
+                // 「結構英/台詞中」並重生 spec，讓語言硬約束區塊進入本次展開。
+                // （比照 screenplay 模式教訓：覆寫做在 UI/spec 生成層，不靠協定文字。）
+                if (/[一-鿿]/.test(idea) && els.language.value === "english-only") {
+                    els.language.value = "english-structure-zh-dialogue";
+                    els.language.dispatchEvent(new Event("change")); // 觸發 buildPrompt 重生 spec
                 }
                 const inputType = els.localInputType.value;
                 const spec = els.promptOutput.textContent || "";

@@ -165,6 +165,43 @@ const ASSERTIONS = {
         }
         return { pass: true, reason: `toolkit signals ${hit.length}/3, no quality words` };
     },
+    zh_dialogue: (output) => {
+        // english-structure-zh-dialogue mode: every dialogue wrap's quoted line must be
+        // Traditional Chinese (contains CJK, no common Simplified-only chars); headings stay
+        // English; and no bare English dialogue may appear OUTSIDE the wrap either.
+        // Spec 的 ✅/❌ 對照範例若被回聲進輸出，不算對白——先剔除再驗。
+        const body = output
+            .split("\n")
+            .filter((l) => !/Anti-pattern|❌|Correct ✅/.test(l))
+            .join("\n");
+        const wraps = body.match(/(says|replies) in [^:：\n]{0,120}accent[:：]\s*["“「『][^"”」』\n]{1,200}/g) || [];
+        if (wraps.length < 1) {
+            return { pass: false, reason: "no dialogue wrap found to language-check" };
+        }
+        const nonZh = wraps.filter((w) => !/[一-鿿]/.test(w.split(/[:：]/).slice(1).join("")));
+        if (nonZh.length > 0) {
+            return { pass: false, reason: `${nonZh.length}/${wraps.length} dialogue line(s) not Chinese` };
+        }
+        // Bare English dialogue that skipped the wrap: `Actor N: "..."` lines or a
+        // table cell holding nothing but an English quote (# Dialogue Script Line column).
+        const bare = [
+            ...(body.match(/(?:Actor \d+|[A-Z][a-z]+)\s*[:：]\s*["“][A-Za-z][^"”\n]{5,}["”]/g) || []),
+            ...(body.match(/\|\s*["“][A-Za-z][^"”|\n]{5,}["”]\s*\|/g) || []),
+        ].filter((s) => !/[一-鿿]/.test(s));
+        if (bare.length > 0) {
+            return { pass: false, reason: `${bare.length} bare English dialogue line(s) outside the wrap, e.g. ${bare[0].slice(0, 60)}` };
+        }
+        // Simplified-only characters that never appear in Traditional text
+        const simplified = body.match(/[们说对问这来时会学过还进发东车华门业乐读书饭见长]/g) || [];
+        if (simplified.length > 0) {
+            return { pass: false, reason: `Simplified characters found: ${[...new Set(simplified)].join("")}` };
+        }
+        const nonEnHeadings = (body.match(/^# [^\n]+/gm) || []).filter((h) => /[一-鿿]/.test(h));
+        if (nonEnHeadings.length > 0) {
+            return { pass: false, reason: `non-English section heading(s): ${nonEnHeadings.join(", ")}` };
+        }
+        return { pass: true, reason: `zh dialogue × ${wraps.length}, no bare English lines, English headings, no Simplified chars` };
+    },
     full_section_count: (output) => {
         const h1s = (output.match(/^# [^\n]+/gm) || []).length;
         if (h1s < 7) {
@@ -179,19 +216,19 @@ const CASES = [
         name: "videoexpress_real_interview_dialogue",
         state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "real-interview", duration: "45-75 seconds", aspectRatio: "16:9" },
         idea: "孔毅博士 × AI 對人類衝擊的 KOL 訪談，雙人對談（一位 50 多歲博士、一位 30 歲主持人），現代錄音室場景，3D 動畫風格，預期 5-7 個 shot。",
-        assertions: ["dialogue_wrap", "actor_alias", "full_section_count"],
+        assertions: ["dialogue_wrap", "actor_alias", "full_section_count", "zh_dialogue"],
     },
     {
         name: "videoexpress_minimal_dialogue",
         state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "real-interview", outputMode: "minimal", duration: "45-75 seconds", aspectRatio: "16:9" },
         idea: "孔毅博士 × AI 對人類衝擊的 KOL 訪談，雙人對談，現代錄音室場景，3D 動畫風格，預期 5-7 個 shot。",
-        assertions: ["dialogue_wrap", "actor_alias", "minimal_section_purge", "minimal_section_count"],
+        assertions: ["dialogue_wrap", "actor_alias", "minimal_section_purge", "minimal_section_count", "zh_dialogue"],
     },
     {
         name: "sora2_single_shot_dialogue",
         state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "narrative-character", duration: "10-20 seconds", aspectRatio: "16:9", mediaType: "live" },
         idea: "深夜便利店場景：一個 30 歲女性顧客買咖啡，店員微笑說『歡迎光臨』，10 秒 cinematic 真人風格。",
-        assertions: ["dialogue_wrap", "photoreal_face_lock"],
+        assertions: ["dialogue_wrap", "photoreal_face_lock", "zh_dialogue"],
     },
     {
         name: "veo3_single_shot_narrative",

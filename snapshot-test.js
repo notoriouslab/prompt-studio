@@ -26,15 +26,12 @@ const HTML_FILE = path.join(__dirname, "prompt-studio.html");
 const SNAP_DIR = path.join(__dirname, "__snapshots__");
 const SNAP_FILE = path.join(SNAP_DIR, "prompt-studio.json");
 
-// ─── 12 representative cases (mode × variation) ─────────────────────
+// ─── Representative cases (mode × variation) ─────────────────────
 const BASE_STATE = {
     mediaType: "3d",
     dialogueMode: "dialogue",
     domain: "narrative-character",
-    priorityMode: "balanced",
-    lengthMode: "standard",
-    checkMode: "standard",
-    subtitleMode: "soft",
+    tone: "auto",
     shotStyle: "balanced",
     language: "english-structure-zh-dialogue",
     styleExtra: "sacred reverence",
@@ -48,12 +45,12 @@ const CASES = [
         state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "45-75 seconds", aspectRatio: "16:9" },
     },
     {
-        name: "storyboard_videoexpress_nodialogue_strict_tight_detailed",
-        state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "45-75 seconds", aspectRatio: "16:9", dialogueMode: "none", shotStyle: "tight", subtitleMode: "strict", lengthMode: "detailed" },
+        name: "storyboard_videoexpress_nodialogue_tight",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "45-75 seconds", aspectRatio: "16:9", dialogueMode: "none", shotStyle: "tight" },
     },
     {
-        name: "storyboard_noplatform_short_1to1",
-        state: { mode: "storyboard", platformId: "", duration: "30-45 seconds", aspectRatio: "1:1", lengthMode: "short" },
+        name: "storyboard_videoexpress_1to1_aspect_warn",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "30-45 seconds", aspectRatio: "1:1" },
     },
     {
         name: "storyboard_videoexpress_runsheet_dialogue",
@@ -75,10 +72,6 @@ const CASES = [
         name: "storyboard_videoexpress_minimal_dialogue",
         state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "45-75 seconds", aspectRatio: "16:9", outputMode: "minimal" },
     },
-    {
-        name: "storyboard_noplatform_minimal_nodialogue",
-        state: { mode: "storyboard", platformId: "", duration: "30-45 seconds", aspectRatio: "1:1", outputMode: "minimal", dialogueMode: "none" },
-    },
     // single-shot variations
     {
         name: "singleshot_videoexpress_balanced_16_9",
@@ -88,35 +81,40 @@ const CASES = [
         name: "singleshot_videoexpress_tight_9_16_nodialogue",
         state: { mode: "single-shot", platformId: "plat_videoexpress", duration: "10-15 seconds", aspectRatio: "9:16", dialogueMode: "none", shotStyle: "tight" },
     },
+    // VideoExpress v3.5 animation styles (official "Create Prompts · 10 Animation Styles" reference)
     {
-        name: "singleshot_noplatform_strict_1to1",
-        state: { mode: "single-shot", platformId: "", duration: "5-10 seconds", aspectRatio: "1:1", subtitleMode: "strict" },
-    },
-    // avatar variations
-    {
-        name: "avatar_videoexpress_long",
-        state: { mode: "avatar", platformId: "plat_videoexpress", duration: "60-180 seconds", aspectRatio: "9:16" },
+        name: "storyboard_videoexpress_claymation_minimal_dialogue",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "30-45 seconds", aspectRatio: "16:9", outputMode: "minimal", mediaType: "claymation" },
     },
     {
-        name: "avatar_videoexpress_dialogue_strict",
-        state: { mode: "avatar", platformId: "plat_videoexpress", duration: "60-90 seconds", aspectRatio: "16:9", dialogueMode: "dialogue", subtitleMode: "strict" },
+        name: "singleshot_videoexpress_pixelart_nodialogue",
+        state: { mode: "single-shot", platformId: "plat_videoexpress", duration: "5-10 seconds", aspectRatio: "16:9", dialogueMode: "none", mediaType: "pixel-art", domain: "narrative-scene" },
     },
     {
-        name: "avatar_noplatform_mid",
-        state: { mode: "avatar", platformId: "", duration: "30-45 seconds", aspectRatio: "9:16" },
+        name: "firstlast_videoexpress_watercolor_dialogue",
+        state: { mode: "first-last", platformId: "plat_videoexpress", duration: "5-10 seconds", aspectRatio: "9:16", mediaType: "watercolor" },
     },
-    // short-form variations
+    // tone axis (2026-09-19)
     {
-        name: "shortform_videoexpress_basic",
-        state: { mode: "short-form", platformId: "plat_videoexpress", duration: "15-30 seconds", aspectRatio: "9:16" },
-    },
-    {
-        name: "shortform_videoexpress_dialogue_strict_styled",
-        state: { mode: "short-form", platformId: "plat_videoexpress", duration: "15-30 seconds", aspectRatio: "9:16", dialogueMode: "dialogue", subtitleMode: "strict", styleExtra: "epic divine" },
+        name: "storyboard_videoexpress_full_tone_comedy",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "30-45 seconds", aspectRatio: "16:9", outputMode: "full", tone: "comedy" },
     },
     {
-        name: "shortform_noplatform",
-        state: { mode: "short-form", platformId: "", duration: "15-30 seconds", aspectRatio: "9:16" },
+        name: "singleshot_videoexpress_tone_horror_domain_lock",
+        state: { mode: "single-shot", platformId: "plat_videoexpress", duration: "5-10 seconds", aspectRatio: "9:16", dialogueMode: "none", domain: "horror-found-footage", mediaType: "live", tone: "horror" },
+    },
+    // zh-only: prompt-body templates are emitted in Traditional Chinese (2026-09-19)
+    {
+        name: "storyboard_videoexpress_minimal_zh_only",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", duration: "30-45 seconds", aspectRatio: "16:9", outputMode: "minimal", domain: "real-interview", mediaType: "live", language: "zh-only" },
+    },
+    {
+        name: "singleshot_videoexpress_zh_only_ghibli",
+        state: { mode: "single-shot", platformId: "plat_videoexpress", duration: "5-10 seconds", aspectRatio: "16:9", dialogueMode: "none", mediaType: "ghibli", domain: "narrative-scene", language: "zh-only" },
+    },
+    {
+        name: "firstlast_videoexpress_zh_only_paper",
+        state: { mode: "first-last", platformId: "plat_videoexpress", duration: "5-10 seconds", aspectRatio: "9:16", mediaType: "paper-cut", language: "zh-only" },
     },
 ];
 
@@ -128,11 +126,9 @@ function loadGenerator(htmlFile) {
     const src = m[1];
 
     const DEFAULTS_FOR_STUB = {
-        mediaType: "3d", dialogueMode: "none", domain: "narrative-character",
-        priorityMode: "balanced", lengthMode: "standard", checkMode: "standard",
-        subtitleMode: "soft", duration: "45-75 seconds", aspectRatio: "16:9",
+        mediaType: "3d", dialogueMode: "none", domain: "narrative-character", tone: "auto",
+        duration: "45-75 seconds", aspectRatio: "16:9",
         shotStyle: "balanced", language: "english-structure-zh-dialogue",
-        activePlatform: "", pf_family: "cinematic", pf_primaryMode: "storyboard",
     };
 
     const stubs = `

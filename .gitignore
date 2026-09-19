@@ -25,3 +25,7 @@ yarn-error.log*
 # Private distributions (kept local, not for upstream)
 docs/notebooklm-distribution/
 docs/gemini-gem-distribution/
+
+# patch by-products
+*.rej
+*.orig

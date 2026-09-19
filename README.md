@@ -24,9 +24,9 @@ Built for and tested on **VideoExpress.ai** · single-file HTML · local-first �
 
 Writing prompts for AI video tools is messy. Characters drift between shots. Chinese dialogue gets rendered as floating subtitles. The official one-size-fits-all workflows leave no room for directing.
 
-Video Prompt Studio bakes real-run-calibrated VideoExpress best practices into an orthogonal **Mode × Platform × Domain × MediaType** matrix. Pick the combination, fill in the idea, get a system prompt — feed it to your LLM (Claude / GPT / Gemini) and the LLM expands it into a production-ready storyboard or single-shot script you can paste straight into VideoExpress.
+Video Prompt Studio bakes real-run-calibrated VideoExpress best practices into an orthogonal **Mode × Domain × MediaType (+ Tone)** matrix. Pick the combination, fill in the idea, get a system prompt — feed it to your LLM (Claude / GPT / Gemini) and the LLM expands it into a production-ready storyboard or single-shot script you can paste straight into VideoExpress.
 
-> **Honesty note**: every pattern in this tool is dogfooded on VideoExpress.ai with real video-gen credits. Support for other platforms was removed rather than shipped untested — you can still add your own platform (with its own `customPromptBlock`) in the Platform registry.
+> **Honesty note**: every pattern in this tool is dogfooded on VideoExpress.ai with real video-gen credits. Support for other platforms was removed rather than shipped untested; the VideoExpress rules live in `DEFAULT_PLATFORMS` inside `prompt-studio.html`.
 
 ### Three differentiators
 
@@ -42,7 +42,7 @@ Video Prompt Studio bakes real-run-calibrated VideoExpress best practices into a
 
 1. Clone or download [`prompt-studio.html`](https://raw.githubusercontent.com/notoriouslab/prompt-studio/main/prompt-studio.html)
 2. Open it in any modern browser — no install, no server, no account
-3. Pick **Mode** / **Platform** / **Domain** / **MediaType**, fill in your idea
+3. Pick **Mode** / **Media Type** / **Domain** / **Tone**, fill in your idea
 4. Expand the generated spec with an LLM — three paths, pick one:
    - **Copy & paste** (zero setup): the **⧉ ChatGPT** / **⧉ Gemini** buttons copy the prompt and open the chat — paste, send, done
    - **Built-in AI Expand with your own free key**: pick *Gemini API* in the 🤖 AI Expand panel, paste a free key from [AI Studio](https://aistudio.google.com/apikey) (or any OpenAI-compatible endpoint — OpenRouter, Groq, Cerebras), type the idea, click Expand — streaming output rendered in place
@@ -60,9 +60,9 @@ open prompt-studio/prompt-studio.html
 
 | Platform | Modes | Highlight |
 |---|---|---|
-| **VideoExpress.ai** | storyboard / single-shot / first-last / avatar / short-form | full pipeline (6-9 shots), lipsync, consistent character, first/last frame — every rule dogfooded on real runs |
+| **VideoExpress.ai** | storyboard / single-shot / first-last | full pipeline (6-9 shots), lipsync, consistent character, first/last frame — every rule dogfooded on real runs |
 
-Need another platform? Add it yourself in the Platform registry (name, families, modes, and a custom prompt block) — it will show up in the selector alongside VideoExpress. Earlier registry entries for other platforms (Sora 2 / Veo 3.1 / Runway / Kling / Seedance / Talkingphotos / HeyGen / TikTok) were removed in favor of shipping only what is actually tested; they remain recoverable from git history.
+VideoExpress is the only target; there is no platform selector. Earlier entries for other platforms (Sora 2 / Veo 3.1 / Runway / Kling / Seedance / Talkingphotos / HeyGen / TikTok) were removed in favor of shipping only what is actually tested; they remain recoverable from git history.
 
 ## Supported Content Types
 
@@ -78,9 +78,9 @@ Need another platform? Add it yourself in the Platform registry (name, families,
 | `lifestyle-vlog` | travel, food, pet |
 | `editorial-cinemagraph` | living poster, subtle-motion poster |
 
-MediaType: **3D Animation** / **Live Action** / **2D Animation** / **Illustration**
+MediaType: **Live Action** / **Illustration** / **2D Animation** / the ten VideoExpress v3.5 animation styles — **3D**, **Claymation**, **8-Bit Pixel Art**, **Stop-Motion Puppet**, **Comic Book**, **Watercolor**, **Wool Felt**, **Paper Cut**, **Ghibli-Style Hand-Drawn**, **Low-Poly 3D** (each carries its own T2I opener and I2V material-stability negatives)
 
-Mode: **Storyboard** (full / minimal / VE run sheet) / **Single-Shot** / **First-Last** (frame-pair transition, maps to VE's First Frame Last Frame Beta) / **Avatar** / **Short-Form**
+Mode: **Storyboard** (full / minimal / VE run sheet) / **Single-Shot** / **First-Last** (frame-pair transition, maps to VE's First Frame Last Frame Beta). Every mode emits paste-ready T2I + I2V text; the former Avatar and Short-Form modes (no matching VideoExpress card, not paste-ready) were retired on 2026-09-19 — a talking head is a Storyboard run sheet, a vertical short is a 9:16 Storyboard.
 
 ---
 
@@ -90,17 +90,13 @@ Mode: **Storyboard** (full / minimal / VE run sheet) / **Single-Shot** / **First
 The "Real-time Prompt" pane updates as you change any field.
 
 ### Output modes
-Storyboard mode has three output styles — **Full** (8 sections including Character Bible, Emotional Arc, Continuity Lock) for production review, **Minimal** (2 sections, paste-ready) aligned with VideoExpress's compact format, or **VE Run Sheet**: an execution run sheet (frozen character bible, per-scene 3-field prompts with the <100-char Actor Script limit, settings checklist calibrated on real runs) that a browser agent — Claude in Chrome, Claude Code, ChatGPT agent mode — can execute against app.videoexpress.ai via the [official VideoExpress agent workflow](https://github.com/strontiumplatform/VideoExpress.ai-Full-Length-Consistent-Character-Realistic-Talking-Avatar-Video-Workflow), replacing its auto-written script with your directed one. The same sheet doubles as a manual copy-paste checklist for users without an agent.
-
-### Template + version management
-Save / load builder presets, track multiple versions per template.
+Storyboard mode has three output styles — **Full** (6 sections including Character Bible, Emotional Arc, Dialogue Script) for production review, **Minimal** (2 sections, paste-ready) aligned with VideoExpress's compact format, or **VE Run Sheet**: an execution run sheet (frozen character bible, per-scene 3-field prompts with the <100-char Actor Script limit, settings checklist calibrated on real runs) that a browser agent — Claude in Chrome, Claude Code, ChatGPT agent mode — can execute against app.videoexpress.ai via the [official VideoExpress agent workflow](https://github.com/strontiumplatform/VideoExpress.ai-Full-Length-Consistent-Character-Realistic-Talking-Avatar-Video-Workflow), replacing its auto-written script with your directed one. The same sheet doubles as a manual copy-paste checklist for users without an agent.
 
 ### Keyboard shortcuts
 | Key | Action |
 |---|---|
 | `Cmd/Ctrl + Z` | Undo builder changes |
 | `Cmd/Ctrl + Shift + Z` / `Ctrl + Y` | Redo |
-| `Cmd/Ctrl + S` | Save Version (template selected) |
 
 ### Bilingual UI
 🌐 EN / 中 toggle (bottom of Advanced section).
@@ -109,7 +105,7 @@ Save / load builder presets, track multiple versions per template.
 Add per-session rules that layer on top of Tier 3 style hints.
 
 ### Local-first
-All state lives in `localStorage`. No cloud, no account, no server.
+Only UI preferences and your optional AI Expand key live in `localStorage`; the prompt rules are the code itself. No cloud, no account, no server.
 
 ---
 
@@ -148,7 +144,7 @@ Keys live only in your browser's `localStorage` and are sent only to the provide
 
 Shared by all providers:
 
-- Three input types — IDEA / Screenplay / Concept→Script: pasting a screenplay triggers the Screenplay Input Protocol (dialogue verbatim, scenes split into shots, characters mapped to Actor N, dialogue mode auto-on); Concept→Script first drafts a screenplay (screenwriting rules condensed from the MIT-licensed [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound), duration / aspect / domain tone injected from your settings), which you review and move over in one click
+- One input box, one button — **Generate shot prompts**. Paste a full screenplay and it is detected automatically (scene headings or character/dialogue pairs): the Screenplay Input Protocol keeps dialogue verbatim, splits scenes into shots, maps characters to Actor N and switches dialogue mode on. Tick **write a screenplay first** to turn a one-line story concept into a shootable screenplay first (screenwriting rules condensed from the MIT-licensed [AI-drama-pound](https://github.com/POUND0423/AI-drama-pound); duration / aspect / domain tone are injected from your settings), drops it back into the same box for review (the tick clears itself), and the next press splits the screenplay into shots.
 - After an expansion a Revise row appears: type a critique (e.g. "shot 5 lacks in-motion environmental flow") and the model rewrites the full output with the complete rulebook still in context — iterate as many rounds as needed
 - Output streams in as rendered, readable Markdown (real tables, headings, scene headers); **Copy Markdown** still copies the raw text
 
@@ -180,7 +176,7 @@ open http://localhost:8765/prompt-studio.html
 
 | Thing | Where it lives |
 |---|---|
-| Builder state, templates, versions | Browser `localStorage` only |
+| UI preferences (language, theme, AI Expand provider + key) | Browser `localStorage` only |
 | Generated prompts | In-memory only |
 | LLM expansion | Your choice of LLM; Video Prompt Studio calls no LLM by default. AI Expand is opt-in: cloud providers are called browser-direct with your own key (stored in `localStorage` only), Local Ollama talks only to `localhost` |
 | Validation eval | Optional, runs on your machine with your own `GEMINI_API_KEY` |
@@ -191,7 +187,7 @@ No analytics. No telemetry. No cloud sync. No account.
 
 ## Design Principles
 
-- **Mode × Platform orthogonality** — mode shapes scaffolding, platform injects syntax
+- **Mode × Domain × MediaType × Tone orthogonality** — mode shapes the scaffolding, domain / media type / tone inject the rules; the VideoExpress block is fixed. Tone (comedy, warm, action, suspense, horror, romance, uplifting, documentary, or unspecified) exists because LLMs left to guess drift plain premises into thriller; unspecified now pins a neutral realistic register
 - **Rule once-only** — every rule lives in exactly the highest-weight Tier
 - **Local-first** — `localStorage` only, zero cloud
 - **Single-file** — one HTML, no build pipeline, no module resolution
@@ -206,7 +202,7 @@ Spec rule changes should keep both validation layers green:
 node snapshot-test.js && node eval.js
 ```
 
-New platform / domain / mediaType: edit the corresponding const in `prompt-studio.html` (`db.platforms` / `DOMAINS` / `MEDIATYPES`). They are single sources of truth — one edit propagates to the HTML form, i18n, rule lookups, and the prompt() hint.
+New domain / mediaType / VideoExpress rule: edit the corresponding const in `prompt-studio.html` (`DOMAINS` / `MEDIATYPES` / `DEFAULT_PLATFORMS`). They are single sources of truth — one edit propagates to the HTML form, i18n, rule lookups, and the prompt() hint.
 
 ---
 

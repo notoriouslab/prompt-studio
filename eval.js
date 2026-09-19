@@ -15,7 +15,11 @@
 //   3. (Future) run regex assertions to check spec rules took effect
 //
 // Requires:
-//   ~/.paiop_secrets.json with GEMINI_API_KEY
+//   ~/.paiop_secrets.json with GEMINI_API_KEY (Google AI Studio key, "AIza…"),
+//   or an OpenAI-compatible fallback picked in this order when no AI Studio key is present:
+//   GROQ_API_KEY (openai/gpt-oss-120b, free tier) → NVIDIA_API_KEY → OPENROUTER_API_KEY.
+//   Force one with --provider gemini|groq|nvidia|openrouter; --model <id> overrides the model.
+//   Transient 429/503 responses are retried 3× with backoff.
 //   Node 18+ for native fetch
 // ─────────────────────────────────────────────────────────────────────
 
@@ -42,11 +46,9 @@ function loadGenerator() {
     const src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
     const DEFAULTS = {
-        mediaType: "3d", dialogueMode: "none", domain: "narrative-character",
-        priorityMode: "balanced", lengthMode: "standard", checkMode: "standard",
-        subtitleMode: "soft", duration: "45-75 seconds", aspectRatio: "16:9",
+        mediaType: "3d", dialogueMode: "none", domain: "narrative-character", tone: "auto",
+        duration: "45-75 seconds", aspectRatio: "16:9",
         shotStyle: "balanced", language: "english-structure-zh-dialogue",
-        activePlatform: "", pf_family: "cinematic", pf_primaryMode: "storyboard",
     };
 
     const stubs = `
@@ -64,18 +66,34 @@ const FileReader=function(){this.readAsText=()=>{};};const Blob=function(){};con
     return api;
 }
 
+// ─── Transient-error retry (429 rate limit / 503 high demand) ────────
+const RETRY_DELAYS_MS = [8000, 20000, 45000];
+async function withRetry(label, fn) {
+    for (let attempt = 0; ; attempt++) {
+        const res = await fn();
+        if (res.ok) return res;
+        const transient = res.status === 429 || res.status === 503;
+        if (!transient || attempt >= RETRY_DELAYS_MS.length) return res;
+        const wait = RETRY_DELAYS_MS[attempt];
+        console.log(`  ⟳ ${label} ${res.status}, retry ${attempt + 1}/${RETRY_DELAYS_MS.length} in ${wait / 1000}s`);
+        await new Promise((r) => setTimeout(r, wait));
+    }
+}
+
 // ─── Gemini API call ─────────────────────────────────────────────────
-async function callGemini(apiKey, prompt, { model = GEMINI_MODEL, temperature = 0.7, maxOutputTokens = 8192 } = {}) {
+async function callGemini(apiKey, prompt, { model = GEMINI_MODEL, temperature = 0.7, maxOutputTokens = 16384 } = {}) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const body = {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { temperature, maxOutputTokens },
     };
-    const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-    });
+    const res = await withRetry(model, () =>
+        fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        }),
+    );
     const data = await res.json();
     if (!res.ok) {
         throw new Error(`Gemini API error: ${JSON.stringify(data).slice(0, 400)}`);
@@ -83,11 +101,52 @@ async function callGemini(apiKey, prompt, { model = GEMINI_MODEL, temperature = 
     return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
+// ─── OpenAI-compatible fallbacks ─────────────────────────────────────
+const OPENAI_COMPAT = {
+    groq: { key: "GROQ_API_KEY", url: "https://api.groq.com/openai/v1/chat/completions", model: "openai/gpt-oss-120b" },
+    nvidia: { key: "NVIDIA_API_KEY", url: "https://integrate.api.nvidia.com/v1/chat/completions", model: "nvidia/nemotron-3-super-120b-a12b" },
+    openrouter: { key: "OPENROUTER_API_KEY", url: "https://openrouter.ai/api/v1/chat/completions", model: `google/${GEMINI_MODEL}` },
+};
+async function callOpenAICompat(cfg, apiKey, prompt, { temperature = 0.7, maxOutputTokens = 16384 } = {}) {
+    const res = await withRetry(cfg.model, () =>
+        fetch(cfg.url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: cfg.model, temperature, max_tokens: maxOutputTokens, messages: [{ role: "user", content: prompt }] }),
+        }),
+    );
+    const data = await res.json();
+    if (!res.ok || data.error) {
+        throw new Error(`${cfg.model} API error: ${JSON.stringify(data).slice(0, 400)}`);
+    }
+    return data.choices?.[0]?.message?.content || "";
+}
+
+// Pick the provider: --provider <name>, else Gemini when a real AI Studio key ("AIza…")
+// is present, else the first OpenAI-compatible provider whose key exists.
+function pickProvider(secrets, args) {
+    const i = args.indexOf("--provider");
+    const forced = i >= 0 ? args[i + 1] : null;
+    const mi = args.indexOf("--model");
+    const modelOverride = mi >= 0 ? args[mi + 1] : null;
+    const geminiOk = typeof secrets.GEMINI_API_KEY === "string" && secrets.GEMINI_API_KEY.startsWith("AIza");
+    const name = forced || (geminiOk ? "gemini" : Object.keys(OPENAI_COMPAT).find((n) => secrets[OPENAI_COMPAT[n].key]) || "gemini");
+    if (OPENAI_COMPAT[name]) {
+        const cfg = { ...OPENAI_COMPAT[name], model: modelOverride || OPENAI_COMPAT[name].model };
+        if (!secrets[cfg.key]) throw new Error(`${cfg.key} not set in ~/.paiop_secrets.json`);
+        return { name, model: cfg.model, call: (prompt) => callOpenAICompat(cfg, secrets[cfg.key], prompt) };
+    }
+    if (name !== "gemini") throw new Error(`unknown --provider ${name} (gemini|${Object.keys(OPENAI_COMPAT).join("|")})`);
+    if (!secrets.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set in ~/.paiop_secrets.json");
+    if (!geminiOk) console.warn("⚠ GEMINI_API_KEY does not look like an AI Studio key (expected AIza…); the call may 401 — try --provider groq");
+    const model = modelOverride || GEMINI_MODEL;
+    return { name, model, call: (prompt) => callGemini(secrets.GEMINI_API_KEY, prompt, { model }) };
+}
+
 // ─── Eval cases ──────────────────────────────────────────────────────
 const BASE_STATE = {
-    mediaType: "3d", dialogueMode: "dialogue", domain: "narrative-character",
-    priorityMode: "balanced", lengthMode: "standard", checkMode: "standard",
-    subtitleMode: "soft", shotStyle: "balanced",
+    mediaType: "3d", dialogueMode: "dialogue", domain: "narrative-character", tone: "auto",
+    shotStyle: "balanced",
     language: "english-structure-zh-dialogue", styleExtra: "", customRules: "",
 };
 
@@ -101,6 +160,51 @@ const ASSERTIONS = {
             return { pass: false, reason: `dialogue wrap pattern not found (expected ≥ 1, got 0)` };
         }
         return { pass: true, reason: `dialogue wrap × ${matches.length}` };
+    },
+    ve35_i2v_tags: (output) => {
+        // Every I2V prompt must be ONE line carrying the eight VideoExpress v3.5 bracket tags in order
+        // (official "Create Prompts" grammar, 2026-09-19). Each [REFERENCE USE] opens one prompt.
+        const TAGS = ["[REFERENCE USE]", "[IDENTITY / CONTINUITY]", "[SCENE]", "[ACTION ", "[CAMERA]", "[LIGHT AND IMAGE]", "[PRODUCTION SOUND]", "[NEGATIVES]"];
+        const prompts = output.split("[REFERENCE USE]").slice(1).map((chunk) => "[REFERENCE USE]" + chunk.split("\n")[0]);
+        if (prompts.length < 1) return { pass: false, reason: "no [REFERENCE USE] tag found — I2V prompts did not adopt the v3.5 grammar" };
+        const bad = prompts.filter((p) => {
+            let pos = 0;
+            for (const t of TAGS) { const i = p.indexOf(t, pos); if (i < 0) return true; pos = i; }
+            return false;
+        });
+        if (bad.length) return { pass: false, reason: `${bad.length}/${prompts.length} I2V prompt(s) missing or misordering a tag: ${bad[0].slice(0, 160)}…` };
+        const unfilled = prompts.filter((p) => /<[^<>\n]{1,80}>/.test(p));
+        if (unfilled.length) return { pass: false, reason: `${unfilled.length}/${prompts.length} I2V prompt(s) still carry unfilled <slot> placeholders: ${unfilled[0].match(/<[^<>\n]{1,80}>/)[0]}` };
+        const stray = (output.match(/Animate this image|Animate natural lipsync/g) || []).length;
+        if (stray) return { pass: false, reason: `${stray} legacy boilerplate phrase(s) (Animate this image / Animate natural lipsync) still present` };
+        return { pass: true, reason: `${prompts.length} I2V prompt(s), all eight tags in order` };
+    },
+    zh_only_prompts: (output) => {
+        // zh-only: every T2I / I2V prompt body must be Traditional Chinese. Allowed ASCII: the eight
+        // uppercase tags, "Actor N", aspect ratios, time ranges, lens tokens. Flag runs of ≥4 English words.
+        const lines = output.split("\n").filter((l) => /Text-To-Image Prompt|Image-To-Video Prompt|^Actor \d+:/.test(l));
+        if (!lines.length) return { pass: false, reason: "no prompt lines found" };
+        const strip = (l) => l
+            .replace(/\[(REFERENCE USE|IDENTITY \/ CONTINUITY|SCENE|ACTION[^\]]*|CAMERA|LIGHT AND IMAGE|PRODUCTION SOUND|NEGATIVES)\]/g, " ")
+            .replace(/\*\*(Text-To-Image|Image-To-Video) Prompt:\*\*/g, " ")
+            .replace(/Actor \d+/g, " ").replace(/\d+:\d+|\d+mm|f\/[\d.]+|\d+(\.\d+)?s\b/g, " ");
+        const runs = [];
+        lines.forEach((l) => { const m = strip(l).match(/(?:\b[A-Za-z][A-Za-z'’-]*\b[ ,;:\-]*){4,}/g); if (m) runs.push(...m.map((x) => x.trim())); });
+        const zhChars = (lines.join("").match(/[\u4e00-\u9fff]/g) || []).length;
+        if (runs.length) return { pass: false, reason: `${runs.length} English run(s) in ${lines.length} prompt line(s), e.g. "${runs[0].slice(0, 90)}"` };
+        return { pass: true, reason: `${lines.length} prompt lines, ${zhChars} CJK chars, no English runs` };
+    },
+    tone_no_dark_drift: (output) => {
+        // tone = auto on a plain slice-of-life idea: the model must not escalate into thriller / suspense / horror
+        const hits = output.match(/thriller|suspense|suspenseful|horror|驚悚|懸疑|恐怖/gi) || [];
+        if (hits.length) return { pass: false, reason: `dark-genre drift: ${hits.length} hit(s), e.g. "${hits[0]}"` };
+        return { pass: true, reason: "no thriller / suspense / horror vocabulary" };
+    },
+    tone_comedy_genre: (output) => {
+        const m = output.match(/^.*Genre.*$/mi);
+        if (!m) return { pass: false, reason: "no Genre line found" };
+        if (!/comed|喜劇/i.test(m[0])) return { pass: false, reason: `Genre line lacks comedy: "${m[0].slice(0, 100)}"` };
+        return { pass: true, reason: `Genre: ${m[0].slice(0, 80)}` };
     },
     actor_alias: (output) => {
         const matches = output.match(/\bActor [12]\b/g) || [];
@@ -204,8 +308,8 @@ const ASSERTIONS = {
     },
     full_section_count: (output) => {
         const h1s = (output.match(/^# [^\n]+/gm) || []).length;
-        if (h1s < 7) {
-            return { pass: false, reason: `expected ≥ 7 # sections in full mode, got ${h1s}` };
+        if (h1s < 6) {
+            return { pass: false, reason: `expected ≥ 6 # sections in full mode, got ${h1s}` };
         }
         return { pass: true, reason: `${h1s} # sections` };
     },
@@ -216,31 +320,55 @@ const CASES = [
         name: "videoexpress_real_interview_dialogue",
         state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "real-interview", duration: "45-75 seconds", aspectRatio: "16:9" },
         idea: "孔毅博士 × AI 對人類衝擊的 KOL 訪談，雙人對談（一位 50 多歲博士、一位 30 歲主持人），現代錄音室場景，3D 動畫風格，預期 5-7 個 shot。",
-        assertions: ["dialogue_wrap", "actor_alias", "full_section_count", "zh_dialogue"],
+        assertions: ["dialogue_wrap", "actor_alias", "full_section_count", "zh_dialogue", "ve35_i2v_tags"],
     },
     {
         name: "videoexpress_minimal_dialogue",
         state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "real-interview", outputMode: "minimal", duration: "45-75 seconds", aspectRatio: "16:9" },
         idea: "孔毅博士 × AI 對人類衝擊的 KOL 訪談，雙人對談，現代錄音室場景，3D 動畫風格，預期 5-7 個 shot。",
-        assertions: ["dialogue_wrap", "actor_alias", "minimal_section_purge", "minimal_section_count", "zh_dialogue"],
+        assertions: ["dialogue_wrap", "actor_alias", "minimal_section_purge", "minimal_section_count", "zh_dialogue", "ve35_i2v_tags"],
     },
     {
         name: "sora2_single_shot_dialogue",
         state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "narrative-character", duration: "10-20 seconds", aspectRatio: "16:9", mediaType: "live" },
         idea: "深夜便利店場景：一個 30 歲女性顧客買咖啡，店員微笑說『歡迎光臨』，10 秒 cinematic 真人風格。",
-        assertions: ["dialogue_wrap", "photoreal_face_lock", "zh_dialogue"],
+        assertions: ["dialogue_wrap", "photoreal_face_lock", "zh_dialogue", "ve35_i2v_tags"],
     },
     {
         name: "veo3_single_shot_narrative",
         state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "narrative-scene", dialogueMode: "none", duration: "5-8 seconds", aspectRatio: "16:9", mediaType: "live" },
         idea: "夕陽下的台灣稻田，金黃色光線，鏡頭緩慢推進，遠方中央山脈剪影，6 秒史詩氛圍。",
-        assertions: ["photoreal_no_face_leak"],
+        assertions: ["photoreal_no_face_leak", "ve35_i2v_tags"],
     },
     {
         name: "live_extreme_closeup_portrait",
         state: { mode: "single-shot", platformId: "plat_videoexpress", domain: "narrative-character", dialogueMode: "none", duration: "5-8 seconds", aspectRatio: "16:9", mediaType: "live" },
         idea: "一位 60 歲台灣漁夫的極近特寫肖像，臉部曬痕與皺紋，凝視鏡頭後緩緩眨眼，攝影棚黑背景，6 秒。",
         assertions: ["photoreal_face_lock", "closeup_toolkit"],
+    },
+    {
+        name: "tone_auto_slice_of_life_full",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "narrative-character", outputMode: "full", mediaType: "live", tone: "auto", dialogueMode: "dialogue", duration: "30-45 seconds", aspectRatio: "16:9" },
+        idea: "台北巷口早餐店老闆，每天默默替一位固定來的上班族多加一顆蛋。某天那位客人沒出現，隔天帶著小孩一起來，說要謝謝老闆。",
+        assertions: ["tone_no_dark_drift", "ve35_i2v_tags", "full_section_count"],
+    },
+    {
+        name: "tone_comedy_full",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "narrative-character", outputMode: "full", mediaType: "live", tone: "comedy", dialogueMode: "dialogue", duration: "30-45 seconds", aspectRatio: "16:9" },
+        idea: "上班族第一次在辦公室用手沖壺泡咖啡，每個步驟都做錯，旁邊同事一路憋笑，最後兩人一起喝下難喝的成品。",
+        assertions: ["tone_comedy_genre", "ve35_i2v_tags", "full_section_count"],
+    },
+    {
+        name: "videoexpress_minimal_zh_only",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "real-interview", outputMode: "minimal", mediaType: "live", language: "zh-only", duration: "30-45 seconds", aspectRatio: "16:9" },
+        idea: "台北咖啡店老闆娘接受街訪，聊為什麼堅持手沖；一位 45 歲女性、一位 30 歲男主持人，午後窗光，預期 4-5 個 shot。",
+        assertions: ["actor_alias", "minimal_section_count", "ve35_i2v_tags", "zh_only_prompts"],
+    },
+    {
+        name: "videoexpress_claymation_minimal_nodialogue",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "narrative-character", outputMode: "minimal", mediaType: "claymation", dialogueMode: "none", duration: "30-45 seconds", aspectRatio: "16:9" },
+        idea: "一隻戴黃銅圓框眼鏡的鼴鼠園丁，在迷你溫室裡照顧鬱金香，擦拭牆上的得獎緞帶；黏土停格動畫風格，無對白，預期 4-5 個 shot。",
+        assertions: ["actor_alias", "minimal_section_purge", "minimal_section_count", "ve35_i2v_tags"],
     },
     {
         name: "cinemagraph_illustration_kyoto",
@@ -269,11 +397,14 @@ async function main() {
     if (saveSamples) fs.mkdirSync(samplesDir, { recursive: true });
 
     const secrets = loadSecrets();
-    const apiKey = secrets.GEMINI_API_KEY;
-    if (!apiKey) {
-        console.error("✗ GEMINI_API_KEY not set in ~/.paiop_secrets.json");
+    let provider;
+    try {
+        provider = pickProvider(secrets, args);
+    } catch (e) {
+        console.error(`✗ ${e.message}`);
         process.exit(1);
     }
+    console.log(`provider: ${provider.name} · model: ${provider.model}`);
 
     const api = loadGenerator();
     const cases = targetCase ? CASES.filter((c) => c.name === targetCase) : CASES;
@@ -291,13 +422,14 @@ async function main() {
 
         const userPrompt = `${spec}\n\n---\n\nIDEA: ${c.idea}\n\nExpand this idea into the production-ready output following the spec above. Begin output immediately with the first heading — no preamble.`;
 
-        console.log(`\n... calling ${GEMINI_MODEL} ...`);
+        console.log(`\n... calling ${provider.model} via ${provider.name} ...`);
         const t0 = Date.now();
         let expanded;
         try {
-            expanded = await callGemini(apiKey, userPrompt);
+            expanded = await provider.call(userPrompt);
         } catch (e) {
             console.error(`✗ ${e.message}`);
+            process.exitCode = 1;
             continue;
         }
         const dt = ((Date.now() - t0) / 1000).toFixed(1);
@@ -331,7 +463,10 @@ async function main() {
                 console.log(`  ${r.pass ? "✓" : "✗"} ${r.name}: ${r.reason}`);
             });
             console.log(`  → ${passed}/${results.length} assertions passed`);
-            if (failed > 0) console.log("  (run with --dump <case> to inspect full output)");
+            if (failed > 0) {
+                process.exitCode = 1;
+                console.log("  (run with --dump <case> to inspect full output)");
+            }
         }
 
         // Save sample to samples/eval/{name}.md if requested
@@ -342,7 +477,7 @@ async function main() {
                 `> Auto-generated by \`eval.js --save-samples\` — DO NOT hand-edit; rerun to refresh.`,
                 ``,
                 `**Generated**: ${new Date().toISOString()}`,
-                `**Model**: ${GEMINI_MODEL}`,
+                `**Model**: ${provider.model} (${provider.name})`,
                 `**Spec length**: ${spec.length} chars`,
                 `**Output length**: ${expanded.length} chars`,
                 `**Latency**: ${dt}s`,

@@ -174,8 +174,8 @@ local model with ollama, the whole idea-to-shot-list pipeline runs on your own
 hardware.</p>
 
 <h2>What it does</h2>
-<p>You pick a mode — multi-shot storyboard, single shot, first/last frame,
-talking avatar, or vertical short-form — set duration and aspect, and describe
+<p>You pick a mode — multi-shot storyboard, single shot, or first/last
+frame — a media type, a domain and a tone, set duration and aspect, and describe
 your idea. The app compiles a production spec: hard constraints, platform
 calibrations (field-tested against
 <a href="https://videoexpress.ai">VideoExpress.ai</a>), photorealism rules,
@@ -193,11 +193,11 @@ leaving the page — against your own free Gemini key, any OpenAI-compatible
 endpoint, or a local ollama:</p>
 <ol class="steps">
   <li><strong>Concept → Script</strong><br>
-    Type a one-line story concept. A screenwriting ruleset (adapted from the
+    Type a one-line story concept and tick "write a screenplay first". A screenwriting ruleset (adapted from the
     MIT-licensed <a href="https://github.com/POUND0423/AI-drama-pound">AI-drama-pound</a>) drafts a complete, shootable screenplay —
     scene headings, planted twist clues, no expository dialogue.</li>
   <li><strong>Screenplay → Shot prompts</strong><br>
-    Review the script, move it over with one click. Dialogue is kept verbatim,
+    Review the script (or paste your own — screenplays are detected automatically) and press Generate again. Dialogue is kept verbatim,
     scenes are decomposed into timestamped shots, characters become numbered
     actor aliases with frozen visual descriptions.</li>
   <li><strong>Revise until it's right</strong><br>
@@ -234,13 +234,13 @@ endpoint, or a local ollama:</p>
   <li><strong>T2I drawability rules</strong>: no mirror reflections, no
     picture-in-picture, static pose in T2I with motion reserved for I2V —
     distilled from prompts that actually failed to render</li>
-  <li><strong>Five modes</strong>: storyboard, single shot, first/last frame,
-    talking avatar, vertical short-form — plus minimal / full / run-sheet output</li>
+  <li><strong>Three modes</strong>: storyboard, single shot, first/last frame —
+    plus minimal / full / run-sheet storyboard output</li>
   <li><strong>Run-sheet output for browser agents</strong>: a machine-executable
     work order an agent (e.g. Claude in Chrome) can follow to drive the video
     platform end to end</li>
-  <li><strong>Single file, local-first</strong>: templates and versions live in
-    your browser's localStorage; export and import as JSON anytime</li>
+  <li><strong>Single file, local-first</strong>: the prompt rules are the code
+    itself; only UI preferences and your optional API key touch localStorage</li>
 </ul>
 
 <h2>FAQ</h2>

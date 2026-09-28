@@ -2389,7 +2389,7 @@
                 const subj = subject || (zh ? "<Actor Alias>，<外觀錨點>" : "<Actor Alias>, <continuity anchor>");
                 const subjHead = subj.split(/[,，]/)[0];
                 if (zh) {
-                    const ref = reference || "圖 1 是開場畫面，它決定本鏡的構圖、世界、光線與精確取景；地點、色調與攝影機皆沿用該圖。";
+                    const ref = reference || "以提供的圖片作為本鏡的精確開場畫面；它決定本鏡的構圖、世界、光線與精確取景，地點、色調與攝影機皆沿用該圖。";
                     const speechBeat = dialogue
                         ? '<Actor Alias>，<外觀錨點>，以<語氣>的語氣、自然的台灣國語口音說："<台詞>"'
                         : "<下一個單一動作>";
@@ -2410,7 +2410,7 @@
                 }
                 const ref =
                     reference ||
-                    "Picture 1 is the opening frame - it controls the composition, the world, the lighting and the exact framing of this shot; take the location, palette and camera from it.";
+                    "Use the supplied image as the exact opening frame; it controls the composition, the world, the lighting and the exact framing of this shot, and the location, palette and camera come from it.";
                 const speechBeat = dialogue
                     ? '<Actor Alias>, <continuity anchor>, says in a <tone>, clear <language> accent: "<line>"'
                     : "<next single motion>";

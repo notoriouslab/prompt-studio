@@ -27,7 +27,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const HTML_FILE = path.join(__dirname, "prompt-studio.html");
+const HTML_FILE = process.env.PS_HTML || path.join(__dirname, "prompt-studio.html");
 const GEMINI_MODEL = "gemini-3.6-flash";
 
 // ─── Secrets ─────────────────────────────────────────────────────────
@@ -98,7 +98,14 @@ async function callGemini(apiKey, prompt, { model = GEMINI_MODEL, temperature = 
     if (!res.ok) {
         throw new Error(`Gemini API error: ${JSON.stringify(data).slice(0, 400)}`);
     }
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    // A 200 with no text (finishReason MAX_TOKENS / SAFETY / RECITATION) used to return "" and get saved
+    // as a sample with every assertion red — fail the case instead of recording an empty expansion.
+    const text = (data.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || "").join("");
+    if (!text) {
+        const reason = data.candidates?.[0]?.finishReason || data.promptFeedback?.blockReason || "no candidates";
+        throw new Error(`Gemini returned no text (finishReason: ${reason}; usage: ${JSON.stringify(data.usageMetadata || {})})`);
+    }
+    return text;
 }
 
 // ─── OpenAI-compatible fallbacks ─────────────────────────────────────
@@ -119,7 +126,11 @@ async function callOpenAICompat(cfg, apiKey, prompt, { temperature = 0.7, maxOut
     if (!res.ok || data.error) {
         throw new Error(`${cfg.model} API error: ${JSON.stringify(data).slice(0, 400)}`);
     }
-    return data.choices?.[0]?.message?.content || "";
+    const text = data.choices?.[0]?.message?.content || "";
+    if (!text) {
+        throw new Error(`${cfg.model} returned no text (finish_reason: ${data.choices?.[0]?.finish_reason || "no choices"}; usage: ${JSON.stringify(data.usage || {})})`);
+    }
+    return text;
 }
 
 // Pick the provider: --provider <name>, else Gemini when a real AI Studio key ("AIza…")
@@ -178,6 +189,81 @@ const ASSERTIONS = {
         const stray = (output.match(/Animate this image|Animate natural lipsync/g) || []).length;
         if (stray) return { pass: false, reason: `${stray} legacy boilerplate phrase(s) (Animate this image / Animate natural lipsync) still present` };
         return { pass: true, reason: `${prompts.length} I2V prompt(s), all eight tags in order` };
+    },
+    t2i_depth: (output) => {
+        // Every T2I prompt (shot prompts and Actor portraits) follows the official v3.5 T2I shape:
+        // ≥100 English words (or ≥150 CJK chars), explicit spatial placement, a "no text / watermark"
+        // closer, and none of the legacy comma-list suffix ("aspect ratio, clean unmarked frame").
+        const lines = output.split("\n").filter((l) => /Text-To-Image Prompt|Text-to-Image Prompt|^Actor \d+[:：]/.test(l));
+        // single-shot mode puts the prompt on the line after the "### Text-to-Image Prompt" heading
+        if (!lines.length || lines.every((l) => /^#+ /.test(l))) {
+            const m = output.match(/### Text-to-Image Prompt\s*\n+([^\n]+)/);
+            if (m) lines.splice(0, lines.length, m[1]);
+        }
+        const entries = lines.filter((l) => !/^#+ /.test(l)).map((l) => ({
+            portrait: /^\**Actor \d+[:：]/.test(l),
+            body: l.replace(/^.*?(Text-To-Image Prompt|Text-to-Image Prompt)\*{0,2}[:：]\*{0,2}\s*/i, "").replace(/^\**Actor \d+[:：]\**\s*/, ""),
+        }));
+        const bodies = entries.map((e) => e.body);
+        if (!bodies.length) return { pass: false, reason: "no T2I prompt lines found" };
+        const problems = [];
+        for (const { portrait, body: b } of entries) {
+            const words = (b.match(/[A-Za-z][A-Za-z'’-]*/g) || []).length;
+            const cjk = (b.match(/[一-鿿]/g) || []).length;
+            const long = words >= 100 || cjk >= 150;
+            const spatial = /\b(left|right|cent(er|re)|foreground|background|behind|beside|above|below)\b|[左右中]|前景|背景|身後|旁/.test(b);
+            const closer = /no (visible |readable |on-screen )?(text|lettering)[^.]*watermark|watermark[^.]*\btext\b|無文字|無水印|不出現文字/i.test(b);
+            const legacy = /aspect ratio, clean unmarked frame|畫面比例，乾淨無標記的畫面/.test(b);
+            if (!long) problems.push(`short (${words}w/${cjk}c): ${b.slice(0, 80)}…`);
+            else if (!spatial && !portrait) problems.push(`no spatial placement: ${b.slice(0, 80)}…`); // portraits sit on a plain backdrop by design
+            else if (!closer) problems.push(`no "no text / watermark" closer: …${b.slice(-80)}`);
+            else if (legacy) problems.push(`legacy comma-list suffix: …${b.slice(-80)}`);
+        }
+        if (problems.length) return { pass: false, reason: `${problems.length}/${bodies.length} T2I prompt(s) off-shape — ${problems[0]}` };
+        return { pass: true, reason: `${bodies.length} T2I prompt(s), all ≥100 words with placement + closer` };
+    },
+    camera_variety: (output) => {
+        // Storyboard [CAMERA] segments: no two consecutive shots share the same move, at least two distinct
+        // move types, and locked-off never exceeds half the shots (official v3.5 examples move every shot).
+        const cams = [...output.matchAll(/\[CAMERA\]\s*([^[]+?)\s*(?=\[LIGHT AND IMAGE\])/g)].map((m) => m[1].trim());
+        if (cams.length < 2) return { pass: false, reason: `only ${cams.length} [CAMERA] segment(s) found` };
+        const type = (c) => /locked|固定/i.test(c) ? "locked" : /pull|back|後退|拉開/i.test(c) ? "pull" : /drift|lateral|pan|橫移/i.test(c) ? "drift" : /push|dolly|推/i.test(c) ? "push" : /track|跟/i.test(c) ? "track" : "other";
+        const types = cams.map(type);
+        const dup = cams.findIndex((c, i) => i > 0 && c.replace(/\s+/g, " ") === cams[i - 1].replace(/\s+/g, " "));
+        if (dup >= 0) return { pass: false, reason: `shots ${dup} and ${dup + 1} carry an identical [CAMERA] segment: ${cams[dup].slice(0, 80)}` };
+        const locked = types.filter((t) => t === "locked").length;
+        if (locked * 2 > types.length) return { pass: false, reason: `${locked}/${types.length} shots locked off` };
+        if (new Set(types).size < 2) return { pass: false, reason: `every shot uses the same move type (${types[0]})` };
+        const untargeted = cams.filter((c, i) => types[i] !== "locked" && !/toward|towards|past|from|onto|along|across|reveal|follow|retain|keep|maintain|preserv|hold|向|經過|從|露出|跟隨|保留|維持/i.test(c));
+        if (untargeted.length) return { pass: false, reason: `${untargeted.length}/${cams.length} camera move(s) name no target: ${untargeted[0].slice(0, 80)}` };
+        return { pass: true, reason: `${cams.length} shots · moves ${types.join(" → ")}` };
+    },
+    shot_size_variety: (output) => {
+        // Storyboard T2I prompts (not portraits): ≥3 distinct shot sizes, never three consecutive shots at one size
+        // (speaking shots may hold a close-up for two shots; three in a row is the "one framing" failure).
+        const lines = output.split("\n").filter((l) => /Text-To-Image Prompt/.test(l));
+        if (lines.length < 3) return { pass: false, reason: `only ${lines.length} shot T2I line(s)` };
+        const size = (l) => /extreme close|極近|臉佔滿|face fills/i.test(l) ? "ecu" : /close[- ]up|chest[- ]up|from the chest|head[- ]and[- ]shoulders|shoulders up|特寫|胸部以上|肩部以上/i.test(l) ? "cu" : /waist[- ]up|from the waist|medium shot|medium framing|mid[- ]shot|knees up|腰部以上|膝蓋以上|中景|半身/i.test(l) ? "med" : /full[- ]body|full[- ]length|wide shot|wide framing|head to toe|establishing|全身|遠景|廣角|大遠景/i.test(l) ? "wide" : "unknown";
+        const sizes = lines.map(size);
+        const unknown = sizes.filter((x) => x === "unknown").length;
+        if (unknown) return { pass: false, reason: `${unknown}/${sizes.length} shot T2I(s) state no shot size` };
+        const run = sizes.findIndex((x, i) => i > 1 && x === sizes[i - 1] && x === sizes[i - 2]);
+        if (run >= 0) return { pass: false, reason: `three consecutive shots hold the size "${sizes[run]}" — sizes ${sizes.join(" → ")}` };
+        if (new Set(sizes).size < 3) return { pass: false, reason: `only ${new Set(sizes).size} distinct shot size(s): ${sizes.join(" → ")}` };
+        return { pass: true, reason: `sizes ${sizes.join(" → ")}` };
+    },
+    two_shot_present: (output) => {
+        // Multi-actor storyboards: at least one I2V [IDENTITY / CONTINUITY] lists two distinct actors (a two-shot),
+        // and single-actor shots name a screen direction (facing left/right) so shots cut together.
+        const portraits = new Set((output.match(/^\**Actor (\d+)[:：]/gm) || []).map((m) => m.match(/\d+/)[0]));
+        if (portraits.size < 2) return { pass: false, reason: `only ${portraits.size} actor portrait(s) — brief expected two actors` };
+        const idents = [...output.matchAll(/\[IDENTITY \/ CONTINUITY\]([^[]*)/g)].map((m) => m[1]);
+        const twoShots = idents.filter((t) => new Set([...t.matchAll(/Actor (\d+)/g)].map((m) => m[1])).size >= 2);
+        if (!twoShots.length) return { pass: false, reason: `${idents.length} shots, none with two actors in [IDENTITY / CONTINUITY]` };
+        const t2i = output.split("\n").filter((l) => /Text-To-Image Prompt/.test(l));
+        const noDir = t2i.filter((l) => !/facing (left|right)|toward(s)? frame (left|right)|off-frame (left|right)|(left|right) frame edge|面朝[左右]|朝畫面[左右]|畫框[左右]/i.test(l));
+        if (noDir.length > Math.floor(t2i.length / 2)) return { pass: false, reason: `${noDir.length}/${t2i.length} shot T2I(s) state no screen direction` };
+        return { pass: true, reason: `${twoShots.length}/${idents.length} two-shot(s), ${t2i.length - noDir.length}/${t2i.length} shots with screen direction` };
     },
     zh_only_prompts: (output) => {
         // zh-only: every T2I / I2V prompt body must be Traditional Chinese. Allowed ASCII: the eight
@@ -317,6 +403,18 @@ const ASSERTIONS = {
 
 const CASES = [
     {
+        name: "videoexpress_two_actor_interaction",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "narrative-character", dialogueMode: "none", outputMode: "minimal", duration: "15-30 seconds", aspectRatio: "16:9", mediaType: "paper-cut" },
+        idea: "紙雕停格風格：雨夜巷口，一個 8 歲男孩和一隻流浪的橘色紙貓爭一片掉落的紙板當雨遮，最後男孩把紙板讓給貓；兩個角色要有互動與對峙，預期 4-5 個 shot。",
+        assertions: ["actor_alias", "minimal_section_count", "ve35_i2v_tags", "t2i_depth", "camera_variety", "shot_size_variety", "two_shot_present"],
+    },
+    {
+        name: "videoexpress_live_storyboard_minimal",
+        state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "narrative-character", outputMode: "minimal", duration: "30-45 seconds", aspectRatio: "16:9", mediaType: "live" },
+        idea: "深夜台北老公寓廚房，60 歲母親等晚歸的女兒（28 歲上班族）回家；女兒進門，母親把一碗熱湯推過桌面，兩人各說一句話；真人實拍風格，預期 4-5 個 shot。",
+        assertions: ["dialogue_wrap", "actor_alias", "minimal_section_count", "ve35_i2v_tags", "photoreal_face_lock", "t2i_depth", "camera_variety", "shot_size_variety"],
+    },
+    {
         name: "videoexpress_real_interview_dialogue",
         state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "real-interview", duration: "45-75 seconds", aspectRatio: "16:9" },
         idea: "孔毅博士 × AI 對人類衝擊的 KOL 訪談，雙人對談（一位 50 多歲博士、一位 30 歲主持人），現代錄音室場景，3D 動畫風格，預期 5-7 個 shot。",
@@ -362,13 +460,13 @@ const CASES = [
         name: "videoexpress_minimal_zh_only",
         state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "real-interview", outputMode: "minimal", mediaType: "live", language: "zh-only", duration: "30-45 seconds", aspectRatio: "16:9" },
         idea: "台北咖啡店老闆娘接受街訪，聊為什麼堅持手沖；一位 45 歲女性、一位 30 歲男主持人，午後窗光，預期 4-5 個 shot。",
-        assertions: ["actor_alias", "minimal_section_count", "ve35_i2v_tags", "zh_only_prompts"],
+        assertions: ["actor_alias", "minimal_section_count", "ve35_i2v_tags", "zh_only_prompts", "t2i_depth", "camera_variety", "shot_size_variety"],
     },
     {
         name: "videoexpress_claymation_minimal_nodialogue",
         state: { mode: "storyboard", platformId: "plat_videoexpress", domain: "narrative-character", outputMode: "minimal", mediaType: "claymation", dialogueMode: "none", duration: "30-45 seconds", aspectRatio: "16:9" },
         idea: "一隻戴黃銅圓框眼鏡的鼴鼠園丁，在迷你溫室裡照顧鬱金香，擦拭牆上的得獎緞帶；黏土停格動畫風格，無對白，預期 4-5 個 shot。",
-        assertions: ["actor_alias", "minimal_section_purge", "minimal_section_count", "ve35_i2v_tags"],
+        assertions: ["actor_alias", "minimal_section_purge", "minimal_section_count", "ve35_i2v_tags", "t2i_depth", "camera_variety", "shot_size_variety"],
     },
     {
         name: "cinemagraph_illustration_kyoto",

@@ -25,6 +25,8 @@ yarn-error.log*
 # Private distributions (kept local, not for upstream)
 docs/notebooklm-distribution/
 docs/gemini-gem-distribution/
+skills/ve-director/
+ve-runs/
 
 # patch by-products
 *.rej
